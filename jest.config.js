@@ -4,10 +4,11 @@ const createJestConfig = nextJest({
   dir: './',
 })
 
+/** @type {import('jest').Config} */
 const customJestConfig = {
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
-  preset: 'ts-jest',
-  testEnvironment: 'node',
+  testEnvironment: 'jest-environment-jsdom', // Или 'node', если вы тестируете только API
+  
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
@@ -16,7 +17,9 @@ const customJestConfig = {
     '!src/**/*.d.ts',
     '!src/**/*.stories.{js,jsx,ts,tsx}',
     '!**/node_modules/**',
+    '!<rootDir>/.next/**',
   ],
+  
   coverageThreshold: {
     global: {
       branches: 80,
