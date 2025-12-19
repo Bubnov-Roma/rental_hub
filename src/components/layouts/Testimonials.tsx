@@ -55,8 +55,12 @@ export function Testimonials() {
 		setCurrentIndex((prev) => (prev - 1 + testimonials.length) % testimonials.length);
 	};
 
+	const currentTestimonial = testimonials[currentIndex];
+
+	if (!currentTestimonial) return null;
+
 	return (
-		<section className="py-16 bg-gradient-to-b from-gray-50 to-white">
+		<section className="py-16 bg-linear-to-b from-gray-50 to-white">
 			<div className="container mx-auto px-4">
 				<div className="mx-auto max-w-5xl">
 					<div className="mb-12 text-center">
@@ -69,31 +73,37 @@ export function Testimonials() {
 					</div>
 
 					<div className="relative">
-						<div className="overflow-hidden rounded-2xl bg-gradient-to-br from-white to-gray-50 p-8 shadow-xl md:p-12">
+						<div className="overflow-hidden glassrounded-2xl p-8 shadow-xl md:p-12">
 							<Quote className="mb-6 h-12 w-12 text-blue-100" />
 
 							<div className="mb-8">
 								<p className="text-lg italic text-gray-700 md:text-xl">
-									"{testimonials?.[currentIndex]?.content}"
+									"{currentTestimonial.content}"
 								</p>
 							</div>
 
 							<div className="flex items-center justify-between">
 								<div className="flex items-center gap-4">
-									<div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-purple-500 text-lg font-bold text-white">
-										{testimonials?.[currentIndex]?.avatar}
+									<div className="flex h-14 w-14 items-center justify-center rounded-full bg-linear-to-br from-blue-500 to-purple-500 text-lg font-bold text-white">
+										{currentTestimonial.avatar}
 									</div>
 									<div>
-										<h4 className="font-semibold text-gray-900">
-											{testimonials?.[currentIndex]?.name}
-										</h4>
-										<p className="text-sm text-gray-600">{testimonials?.[currentIndex]?.role}</p>
+										<h4 className="font-semibold text-gray-900">{currentTestimonial?.name}</h4>
+										<p className="text-sm text-gray-600">{currentTestimonial?.role}</p>
 									</div>
 								</div>
 
 								<div className="flex items-center gap-1">
-									{[...Array(5)].map((item, _) => (
-										<Star key={item} className={cn("h-5 w-5", "fill-yellow-400 text-yellow-400")} />
+									{[...Array(5)].map((_, i) => (
+										<Star
+											key={`${currentTestimonial.id}-star-${i}`}
+											className={cn(
+												"h-5 w-5",
+												i < currentTestimonial.rating
+													? "fill-yellow-400 text-yellow-400"
+													: "fill-gray-200 text-gray-200"
+											)}
+										/>
 									))}
 								</div>
 							</div>
