@@ -19,7 +19,15 @@ rental_hub/
 │   ├── 📁 hooks/                 # Custom hooks
 │   ├── 📁 lib/                   # Configs, clients
 │   ├── 📁 stores/                # Zustand stores
-│   └── 📁 styles/                # Styles
+│   └── 📁 styles/
+│       ├─ tokens.css        ← design-tokens(colors, radius, shadow, glow)
+│       ├─ themes.css        ← light / dark themes
+│       ├─ effects.css       ← glass, glow, neumorphism
+│       ├─ globals.css       ← reset + tailwind base
+│       └─ 📁 components/
+│          ├─ card.module.css
+│          ├─ panel.module.css
+│          └─ glow.module.css
 ├── 📁 tests/
 │   ├── 📁 unit/                  # Unit tests
 │   ├── 📁 integration/           # integration tests
