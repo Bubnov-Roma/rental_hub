@@ -5,27 +5,23 @@ import Image from "next/image";
 import { useParams } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { DatePicker } from "@/components/ui/datePicker";
+import { DateTimeRangePicker } from "@/components/ui/dateTimeRangePicker";
 import { useEquipmentDetails } from "@/hooks/useEquipmentDetails";
 
 export default function BookingPage() {
 	const params = useParams();
 	const equipmentId = params.id as string;
 
-	const { equipment, isLoading, availability } = useEquipmentDetails(equipmentId);
-	const [selectedDates, setSelectedDates] = useState<{ from: Date | null; to: Date | null }>({
-		from: null,
-		to: null,
-	});
+	const { equipment, isLoading } = useEquipmentDetails(equipmentId);
+	const [dateRange, setDateRange] = useState<[Date | null, Date | null]>([null, null]);
+	const [startDate, endDate] = dateRange;
+
 	const [insurance, setInsurance] = useState(true);
 
 	const calculateTotal = () => {
-		if (!selectedDates.from || !selectedDates.to || !equipment) return 0;
+		if (!startDate || !endDate || !equipment) return 0;
 
-		const days =
-			Math.ceil(
-				(selectedDates.to.getTime() - selectedDates.from.getTime()) / (1000 * 60 * 60 * 24)
-			) + 1;
+		const days = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
 
 		const equipmentCost = days * equipment.price_per_day;
 		const insuranceCost = insurance ? 500 * days : 0;
@@ -34,10 +30,10 @@ export default function BookingPage() {
 	};
 
 	const handleBook = async () => {
-		// Логика создания бронирования
+		// TODO: Booking logic here
 		console.log("Booking:", {
 			equipmentId,
-			dates: selectedDates,
+			dates: dateRange,
 			insurance,
 			total: calculateTotal(),
 		});
@@ -63,7 +59,7 @@ export default function BookingPage() {
 		<div className="min-h-screen bg-gray-50 py-12">
 			<div className="container mx-auto px-4">
 				<div className="max-w-6xl mx-auto">
-					{/* Хлебные крошки */}
+					{/* Breadcrumbs */}
 					<div className="text-sm text-gray-600 mb-8">
 						<a href="/" className="hover:text-blue-600">
 							Главная
@@ -77,9 +73,9 @@ export default function BookingPage() {
 					</div>
 
 					<div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-						{/* Левая колонка - информация об оборудовании */}
+						{/* Left Column - Equipment Information */}
 						<div>
-							{/* Галерея изображений */}
+							{/* Gallery */}
 							<div className="mb-8">
 								<div className="relative h-96 w-full rounded-2xl overflow-hidden bg-gray-100 mb-4">
 									<Image
@@ -106,7 +102,7 @@ export default function BookingPage() {
 								</div>
 							</div>
 
-							{/* Описание и характеристики */}
+							{/* Description and Specifications */}
 							<div className="bg-white rounded-2xl p-6 shadow-sm">
 								<h2 className="text-2xl font-bold mb-4">Описание</h2>
 								<p className="text-gray-600 mb-8">{equipment.description}</p>
@@ -123,9 +119,9 @@ export default function BookingPage() {
 							</div>
 						</div>
 
-						{/* Правая колонка - бронирование */}
+						{/* Right Column - Booking */}
 						<div className="space-y-6">
-							{/* Карточка бронирования */}
+							{/* Booking Card */}
 							<div className="bg-white rounded-2xl p-6 shadow-sm sticky top-24">
 								<div className="flex justify-between items-start mb-6">
 									<div>
@@ -141,29 +137,20 @@ export default function BookingPage() {
 									</div>
 								</div>
 
-								{/* Выбор дат */}
+								{/* Date Selection */}
 								<div className="mb-6">
 									<div className="flex items-center gap-2 mb-4">
 										<Calendar className="w-5 h-5 text-blue-600" />
 										<h3 className="font-semibold">Выберите даты аренды</h3>
 									</div>
-									<DatePicker
-										selected={selectedDates}
-										onSelect={
-											setSelectedDates as unknown as (
-												dates:
-													| {
-															from: Date | null;
-															to: Date | null;
-													  }
-													| undefined
-											) => void
-										}
-										disabledDates={availability?.bookedDates || []}
+									<DateTimeRangePicker
+										startDate={startDate}
+										endDate={endDate}
+										onChange={(update) => setDateRange(update)}
 									/>
 								</div>
 
-								{/* Страховка */}
+								{/* Insurance */}
 								<div className="mb-6">
 									<div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg">
 										<div className="flex items-center gap-3">
@@ -180,32 +167,30 @@ export default function BookingPage() {
 												checked={insurance}
 												onChange={(e) => setInsurance(e.target.checked)}
 											/>
-											<div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+											<div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
 										</label>
 									</div>
 								</div>
 
-								{/* Итог */}
+								{/* Total */}
 								<div className="mb-6">
 									<div className="space-y-3">
 										<div className="flex justify-between">
 											<span className="text-gray-600">
 												Аренда (
-												{selectedDates.from && selectedDates.to
+												{startDate && endDate
 													? Math.ceil(
-															(selectedDates.to.getTime() - selectedDates.from.getTime()) /
-																(1000 * 60 * 60 * 24)
+															(endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)
 														) + 1
 													: 0}{" "}
 												дней)
 											</span>
 											<span className="font-medium">
-												{selectedDates.from && selectedDates.to
+												{startDate && endDate
 													? (
 															equipment.price_per_day *
 															(Math.ceil(
-																(selectedDates.to.getTime() - selectedDates.from.getTime()) /
-																	(1000 * 60 * 60 * 24)
+																(endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)
 															) +
 																1)
 														).toLocaleString("ru-RU")
@@ -217,12 +202,11 @@ export default function BookingPage() {
 											<div className="flex justify-between">
 												<span className="text-gray-600">Страхование</span>
 												<span className="font-medium">
-													{selectedDates.from && selectedDates.to
+													{startDate && endDate
 														? (
 																500 *
 																(Math.ceil(
-																	(selectedDates.to.getTime() - selectedDates.from.getTime()) /
-																		(1000 * 60 * 60 * 24)
+																	(endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)
 																) +
 																	1)
 															).toLocaleString("ru-RU")
@@ -242,18 +226,18 @@ export default function BookingPage() {
 									</div>
 								</div>
 
-								{/* Кнопка бронирования */}
+								{/* Button for booking */}
 								<Button
 									size="lg"
 									className="w-full py-6 text-lg font-semibold"
 									onClick={handleBook}
-									disabled={!selectedDates.from || !selectedDates.to}
+									disabled={!startDate || !endDate}
 								>
 									<Check className="w-6 h-6 mr-2" />
 									Забронировать сейчас
 								</Button>
 
-								{/* Дополнительная информация */}
+								{/* Additional Information */}
 								<div className="mt-6 space-y-3 text-sm text-gray-600">
 									<div className="flex items-center gap-2">
 										<Clock className="w-4 h-4" />
