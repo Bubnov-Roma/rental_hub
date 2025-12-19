@@ -1,0 +1,17 @@
+.glass {
+  background: var(--bg-panel);
+  backdrop-filter: blur(var(--blur-lg));
+  -webkit-backdrop-filter: blur(var(--blur-lg));
+  border: 1px solid var(--border-soft);
+  box-shadow: var(--shadow-card), var(--shadow-inset);
+}
+
+.glass-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-card);
+}
+
+.glow-accent {
+  box-shadow: var(--glow-primary);
+}

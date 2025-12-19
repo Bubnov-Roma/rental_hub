@@ -1,4 +1,7 @@
-@import 'tailwindcss';
+@import "tailwindcss";
+@import "./tokens.css";
+@import "./themes.css";
+@import "./effects.css";
 
 @theme {
   --color-primary: #2563eb;
