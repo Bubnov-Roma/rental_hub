@@ -9,6 +9,7 @@ export interface Equipment {
 	price_per_day: number;
 	is_available: boolean;
 	imageUrl: string;
+	images: string[];
 	rating: number;
 	reviewsCount: number;
 	specifications: string;
