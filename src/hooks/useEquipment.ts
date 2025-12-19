@@ -1,21 +1,6 @@
 import { useEffect, useState } from "react";
+import type { Equipment } from "@/core/domain/entities/Equipment";
 import { supabase } from "@/lib/supabase";
-
-export interface Equipment {
-	id: string;
-	title: string;
-	description: string;
-	category: string;
-	price_per_day: number;
-	is_available: boolean;
-	imageUrl: string;
-	images: string[];
-	rating: number;
-	reviewsCount: number;
-	specifications: string;
-	created_at: string;
-	updated_at: string;
-}
 
 interface UseEquipmentProps {
 	search?: string;

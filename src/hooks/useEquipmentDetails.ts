@@ -1,8 +1,6 @@
 import { useEffect, useState } from "react";
-
+import type { Equipment } from "@/core/domain/entities/Equipment";
 import { supabase } from "@/lib/supabase";
-
-import type { Equipment } from "./useEquipment";
 
 export function useEquipmentDetails(id: string) {
 	const [equipment, setEquipment] = useState<Equipment | null>(null);
@@ -15,7 +13,7 @@ export function useEquipmentDetails(id: string) {
 			try {
 				setIsLoading(true);
 
-				// Получаем оборудование
+				// Get equipment
 				const { data: equipmentData, error: equipmentError } = await supabase
 					.from("equipment")
 					.select(`
@@ -28,7 +26,7 @@ export function useEquipmentDetails(id: string) {
 
 				if (equipmentError) throw equipmentError;
 
-				// Получаем забронированные даты
+				// Get booking date
 				const { data: bookingsData } = await supabase
 					.from("bookings")
 					.select("start_date, end_date")

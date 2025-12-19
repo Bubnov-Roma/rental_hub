@@ -2,6 +2,7 @@ export interface Equipment {
 	imageUrl: string;
 	rating: number;
 	reviewsCount: number;
+	readonly images: string[];
 	readonly id: string;
 	readonly title: string;
 	readonly description: string;
