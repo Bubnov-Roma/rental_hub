@@ -1,6 +1,7 @@
+import type { CurrentUser, UserProfile } from "@/types/user.type";
 import { supabase } from "./supabase";
 
-export async function getCurrentUser() {
+export async function getCurrentUser(): Promise<CurrentUser> {
 	try {
 		const {
 			data: { user },
@@ -11,12 +12,12 @@ export async function getCurrentUser() {
 
 		if (!user) return null;
 
-		// Получаем дополнительную информацию о пользователе
+		// Receive additional information about the user
 		const { data: profile } = await supabase.from("users").select("*").eq("id", user.id).single();
 
 		return {
 			...user,
-			profile,
+			profile: profile as UserProfile | null,
 		};
 	} catch (error) {
 		console.error("Error getting current user:", error);
@@ -48,7 +49,7 @@ export async function signUp(email: string, password: string, name: string, phon
 
 	if (error) throw error;
 
-	// Создаем профиль пользователя
+	// Create a user profile
 	if (data.user) {
 		await supabase.from("users").insert([
 			{
