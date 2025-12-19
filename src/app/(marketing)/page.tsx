@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { CategoriesGrid, type categoryIcons } from "@/components/core/CategoriesGrid";
 import { EquipmentGrid } from "@/components/core/EquipmentGrid";
@@ -28,6 +29,7 @@ const categories: Category[] = [
 ];
 
 export default function HomePage() {
+	const router = useRouter();
 	const [searchQuery, setSearchQuery] = useState("");
 	const [selectedCategory, setSelectedCategory] = useState("all");
 	const [priceRange, setPriceRange] = useState<[number, number]>([0, 100000]);
@@ -52,24 +54,32 @@ export default function HomePage() {
 	};
 
 	const handleBookEquipment = (id: string) => {
-		// Навигация к странице бронирования
-		window.location.href = `/booking/${id}`;
+		router.push(`/booking/${id}`);
+	};
+
+	const handleViewDetails = (id: string) => {
+		router.push(`/equipment/${id}`);
+	};
+
+	const handleCategoryClick = (categoryId: string) => {
+		setSelectedCategory(categoryId);
+		router.push(`/equipment?category=${categoryId}`);
 	};
 
 	return (
 		<div className="min-h-screen">
-			{/* Hero секция */}
+			{/* HeroSection */}
 			<HeroSection />
 
-			{/* Категории */}
+			{/* Categories */}
 			<section className="py-12 bg-gray-50">
 				<div className="container mx-auto px-4">
 					<h2 className="text-3xl font-bold text-center mb-10">Популярные категории</h2>
-					<CategoriesGrid categories={categories} />
+					<CategoriesGrid categories={categories} onCategoryClick={handleCategoryClick} />
 				</div>
 			</section>
 
-			{/* Каталог оборудования */}
+			{/* Equipment container */}
 			<section className="py-12">
 				<div className="container mx-auto px-4">
 					<div className="flex justify-between items-center mb-8">
@@ -80,7 +90,7 @@ export default function HomePage() {
 						</p>
 					</div>
 
-					{/* Фильтры */}
+					{/* Filters */}
 					<Filters
 						categories={categories}
 						onSearch={handleSearch}
@@ -88,7 +98,7 @@ export default function HomePage() {
 						onPriceRangeChange={handlePriceRangeChange}
 					/>
 
-					{/* Сетка оборудования */}
+					{/* Equipment grid */}
 					{isLoading ? (
 						<div className="text-center py-12">
 							<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
@@ -100,16 +110,14 @@ export default function HomePage() {
 						<EquipmentGrid
 							equipment={equipment}
 							onBook={handleBookEquipment}
-							onViewDetails={handleBookEquipment}
+							onViewDetails={handleViewDetails}
 						/>
 					)}
 				</div>
 			</section>
-
-			{/* Как это работает */}
+			{/* How it works */}
 			<HowItWorks />
-
-			{/* Отзывы */}
+			{/* Testimonials */}
 			<Testimonials />
 		</div>
 	);

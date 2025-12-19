@@ -1,3 +1,5 @@
+"use client";
+
 import { ChevronDown, Filter, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -59,7 +61,7 @@ export function Filters({
 					<Select
 						onValueChange={(value) => {
 							const [min, max] = value.split("-").map(Number);
-							if (min && max) onPriceRangeChange(min, max);
+							onPriceRangeChange(min ?? 0, max ?? Infinity);
 						}}
 					>
 						<SelectTrigger>
@@ -76,9 +78,9 @@ export function Filters({
 
 				{/* Sub filters */}
 				<Button variant="outline" className="whitespace-nowrap">
-					<Filter className="w-4 h-4 mr-2" />
+					<Filter className="mr-2 h-4 w-4" />
 					Фильтры
-					<ChevronDown className="w-4 h-4 ml-2" />
+					<ChevronDown className="ml-2 h-4 w-4" />
 				</Button>
 			</div>
 		</div>
