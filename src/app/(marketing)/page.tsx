@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { CategoriesGrid, type categoryIcons } from "@/components/core/CategoriesGrid";
 import { EquipmentGrid } from "@/components/core/EquipmentGrid";
-import { Filters } from "@/components/core/filters/Filters";
+import { Filters } from "@/components/core/Filters/Filters";
 import { HeroSection } from "@/components/layouts/HeroSection";
 import { HowItWorks } from "@/components/layouts/HowItWorks";
 import { Testimonials } from "@/components/layouts/Testimonials";
