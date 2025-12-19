@@ -6,13 +6,13 @@ import { Input } from "@/components/ui/input";
 
 export function HeroSection() {
 	return (
-		<section className="relative overflow-hidden bg-gradient-to-br from-blue-50 via-white to-purple-50 py-20 md:py-32">
-			<div className="absolute inset-0 bg-grid-slate-100 [mask-image:linear-gradient(0deg,white,rgba(255,255,255,0.6))]"></div>
+		<section className="relative overflow-hidden bg-(--bg-main) text-(--text-main)">
+			<div className="absolute inset-0 bg-grid-slate-100 mask-[linear-gradient(0deg,white,rgba(255,255,255,0.6))]"></div>
 			<div className="container relative mx-auto px-4">
 				<div className="mx-auto max-w-3xl text-center">
 					<h1 className="mb-6 text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl md:text-7xl">
 						Аренда профессионального{" "}
-						<span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+						<span className="bg-linear-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
 							фото-видео оборудования
 						</span>
 					</h1>
@@ -26,7 +26,7 @@ export function HeroSection() {
 							<div className="relative flex-1">
 								<Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
 								<Input
-									placeholder="Что вам нужно? (камера, объектив, свет, микрофон...)"
+									placeholder="Что ввм нужно? (камера, объектив, свет, микрофон...)"
 									className="h-12 pl-10 text-base"
 								/>
 							</div>
