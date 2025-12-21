@@ -13,7 +13,10 @@ export default function BookingPage() {
 	const equipmentId = params.id as string;
 
 	const { equipment, isLoading } = useEquipmentDetails(equipmentId);
-	const [dateRange, setDateRange] = useState<[Date | null, Date | null]>([null, null]);
+	const [dateRange, setDateRange] = useState<[Date | null, Date | null]>([
+		null,
+		null,
+	]);
 	const [startDate, endDate] = dateRange;
 
 	const [insurance, setInsurance] = useState(true);
@@ -21,7 +24,10 @@ export default function BookingPage() {
 	const calculateTotal = () => {
 		if (!startDate || !endDate || !equipment) return 0;
 
-		const days = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+		const days =
+			Math.ceil(
+				(endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)
+			) + 1;
 
 		const equipmentCost = days * equipment.price_per_day;
 		const insuranceCost = insurance ? 500 * days : 0;
@@ -50,7 +56,9 @@ export default function BookingPage() {
 	if (!equipment) {
 		return (
 			<div className="min-h-screen flex items-center justify-center">
-				<h2 className="text-2xl font-bold text-red-600">Оборудование не найдено</h2>
+				<h2 className="text-2xl font-bold text-red-600">
+					Оборудование не найдено
+				</h2>
 			</div>
 		);
 	}
@@ -109,12 +117,17 @@ export default function BookingPage() {
 
 								<h3 className="text-xl font-bold mb-4">Характеристики</h3>
 								<div className="grid grid-cols-2 gap-4">
-									{Object.entries(equipment.specifications).map(([key, value]) => (
-										<div key={key} className="flex justify-between border-b pb-2">
-											<span className="text-gray-600">{key}:</span>
-											<span className="font-medium">{value as string}</span>
-										</div>
-									))}
+									{Object.entries(equipment.specifications).map(
+										([key, value]) => (
+											<div
+												key={key}
+												className="flex justify-between border-b pb-2"
+											>
+												<span className="text-gray-600">{key}:</span>
+												<span className="font-medium">{value as string}</span>
+											</div>
+										)
+									)}
 								</div>
 							</div>
 						</div>
@@ -125,7 +138,9 @@ export default function BookingPage() {
 							<div className="bg-white rounded-2xl p-6 shadow-sm sticky top-24">
 								<div className="flex justify-between items-start mb-6">
 									<div>
-										<h1 className="text-2xl font-bold mb-2">{equipment.title}</h1>
+										<h1 className="text-2xl font-bold mb-2">
+											{equipment.title}
+										</h1>
 										<div className="flex items-center gap-2 text-gray-600">
 											<MapPin className="w-4 h-4" />
 											<span>Москва, Пункт выдачи №1</span>
@@ -133,7 +148,10 @@ export default function BookingPage() {
 									</div>
 									<div className="text-3xl font-bold text-blue-600">
 										{equipment.price_per_day.toLocaleString("ru-RU")} ₽
-										<span className="text-sm font-normal text-gray-500"> / день</span>
+										<span className="text-sm font-normal text-gray-500">
+											{" "}
+											/ день
+										</span>
 									</div>
 								</div>
 
@@ -156,8 +174,12 @@ export default function BookingPage() {
 										<div className="flex items-center gap-3">
 											<Shield className="w-5 h-5 text-blue-600" />
 											<div>
-												<h4 className="font-semibold">Страхование оборудования</h4>
-												<p className="text-sm text-gray-600">500 ₽/день, покрытие до 100 000 ₽</p>
+												<h4 className="font-semibold">
+													Страхование оборудования
+												</h4>
+												<p className="text-sm text-gray-600">
+													500 ₽/день, покрытие до 100 000 ₽
+												</p>
 											</div>
 										</div>
 										<label className="relative inline-flex items-center cursor-pointer">
@@ -180,7 +202,8 @@ export default function BookingPage() {
 												Аренда (
 												{startDate && endDate
 													? Math.ceil(
-															(endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)
+															(endDate.getTime() - startDate.getTime()) /
+																(1000 * 60 * 60 * 24)
 														) + 1
 													: 0}{" "}
 												дней)
@@ -190,7 +213,8 @@ export default function BookingPage() {
 													? (
 															equipment.price_per_day *
 															(Math.ceil(
-																(endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)
+																(endDate.getTime() - startDate.getTime()) /
+																	(1000 * 60 * 60 * 24)
 															) +
 																1)
 														).toLocaleString("ru-RU")
@@ -206,7 +230,8 @@ export default function BookingPage() {
 														? (
 																500 *
 																(Math.ceil(
-																	(endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)
+																	(endDate.getTime() - startDate.getTime()) /
+																		(1000 * 60 * 60 * 24)
 																) +
 																	1)
 															).toLocaleString("ru-RU")

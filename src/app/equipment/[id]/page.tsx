@@ -1,6 +1,14 @@
 "use client";
 
-import { Calendar, Check, ChevronLeft, Clock, MapPin, Shield, Star } from "lucide-react";
+import {
+	Calendar,
+	Check,
+	ChevronLeft,
+	Clock,
+	MapPin,
+	Shield,
+	Star,
+} from "lucide-react";
 import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
@@ -15,7 +23,10 @@ export default function EquipmentDetailsPage() {
 	const equipmentId = params.id as string;
 
 	const { equipment, isLoading } = useEquipmentDetails(equipmentId);
-	const [dateRange, setDateRange] = useState<[Date | null, Date | null]>([null, null]);
+	const [dateRange, setDateRange] = useState<[Date | null, Date | null]>([
+		null,
+		null,
+	]);
 	const [startDate, endDate] = dateRange;
 	const [insurance, setInsurance] = useState(true);
 	const [selectedImage, setSelectedImage] = useState(0);
@@ -23,7 +34,10 @@ export default function EquipmentDetailsPage() {
 	const calculateTotal = () => {
 		if (!startDate || !endDate || !equipment) return 0;
 
-		const days = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+		const days =
+			Math.ceil(
+				(endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)
+			) + 1;
 
 		return days * equipment.price_per_day + (insurance ? 500 * days : 0);
 	};
@@ -43,7 +57,9 @@ export default function EquipmentDetailsPage() {
 	if (!equipment) {
 		return (
 			<div className="flex min-h-screen items-center justify-center">
-				<h2 className="text-2xl font-bold text-red-600">Оборудование не найдено</h2>
+				<h2 className="text-2xl font-bold text-red-600">
+					Оборудование не найдено
+				</h2>
 			</div>
 		);
 	}
@@ -51,7 +67,11 @@ export default function EquipmentDetailsPage() {
 	return (
 		<div className="min-h-screen bg-gray-50 py-8">
 			<div className="container mx-auto px-4">
-				<Button variant="ghost" className="mb-6 gap-2" onClick={() => router.back()}>
+				<Button
+					variant="ghost"
+					className="mb-6 gap-2"
+					onClick={() => router.back()}
+				>
 					<ChevronLeft className="h-4 w-4" />
 					Назад к каталогу
 				</Button>
@@ -80,7 +100,9 @@ export default function EquipmentDetailsPage() {
 										key={img}
 										onClick={() => setSelectedImage(index)}
 										className={`relative aspect-square overflow-hidden rounded-lg border-2 bg-gray-100 ${
-											selectedImage === index ? "border-blue-500" : "border-transparent"
+											selectedImage === index
+												? "border-blue-500"
+												: "border-transparent"
 										}`}
 									>
 										<Image
@@ -107,12 +129,17 @@ export default function EquipmentDetailsPage() {
 							<CardContent className="p-6">
 								<h3 className="mb-4 text-xl font-bold">Характеристики</h3>
 								<div className="grid gap-3">
-									{Object.entries(equipment.specifications || {}).map(([key, value]) => (
-										<div key={key} className="flex justify-between border-b pb-2">
-											<span className="text-gray-600">{key}:</span>
-											<span className="font-medium">{value as string}</span>
-										</div>
-									))}
+									{Object.entries(equipment.specifications || {}).map(
+										([key, value]) => (
+											<div
+												key={key}
+												className="flex justify-between border-b pb-2"
+											>
+												<span className="text-gray-600">{key}:</span>
+												<span className="font-medium">{value as string}</span>
+											</div>
+										)
+									)}
 								</div>
 							</CardContent>
 						</Card>
@@ -125,7 +152,9 @@ export default function EquipmentDetailsPage() {
 							<Card>
 								<CardContent className="p-6">
 									<div className="mb-6">
-										<h1 className="mb-2 text-2xl font-bold">{equipment.title}</h1>
+										<h1 className="mb-2 text-2xl font-bold">
+											{equipment.title}
+										</h1>
 										<div className="flex items-center gap-2 text-gray-600">
 											<MapPin className="h-4 w-4" />
 											<span>Москва, Пункт выдачи №1</span>
@@ -175,7 +204,8 @@ export default function EquipmentDetailsPage() {
 													? (
 															equipment.price_per_day *
 															(Math.ceil(
-																(endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)
+																(endDate.getTime() - startDate.getTime()) /
+																	(1000 * 60 * 60 * 24)
 															) +
 																1)
 														).toLocaleString("ru-RU")
@@ -191,7 +221,8 @@ export default function EquipmentDetailsPage() {
 														? (
 																500 *
 																(Math.ceil(
-																	(endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)
+																	(endDate.getTime() - startDate.getTime()) /
+																		(1000 * 60 * 60 * 24)
 																) +
 																	1)
 															).toLocaleString("ru-RU")
@@ -245,9 +276,13 @@ export default function EquipmentDetailsPage() {
 														}`}
 													/>
 												))}
-												<span className="font-bold">{equipment.rating.toFixed(1)}</span>
+												<span className="font-bold">
+													{equipment.rating.toFixed(1)}
+												</span>
 											</div>
-											<p className="text-sm text-gray-600">{equipment.reviewsCount} отзывов</p>
+											<p className="text-sm text-gray-600">
+												{equipment.reviewsCount} отзывов
+											</p>
 										</div>
 										<Button variant="outline">Оставить отзыв</Button>
 									</div>
