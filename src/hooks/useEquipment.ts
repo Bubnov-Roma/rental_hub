@@ -1,6 +1,7 @@
+"use client";
 import { useEffect, useState } from "react";
 import type { Equipment } from "@/core/domain/entities/Equipment";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase/client";
 
 interface UseEquipmentProps {
 	search?: string;
@@ -20,13 +21,15 @@ export function useEquipment({
 	const [equipment, setEquipment] = useState<Equipment[]>([]);
 	const [isLoading, setIsLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
+	const supabase = createClient();
 
 	useEffect(() => {
 		async function fetchEquipment() {
 			try {
 				setIsLoading(true);
+				setError(null);
 
-				let query = supabase
+				let query = (await supabase)
 					.from("equipment")
 					.select(`
             *,
@@ -54,10 +57,12 @@ export function useEquipment({
 
 				const transformedData = (data || []).map((item) => ({
 					...item,
-					imageUrl: item.equipment_images?.[0]?.url || "/placeholder-equipment.jpg",
+					imageUrl:
+						item.equipment_images?.[0]?.url || "/placeholder-equipment.jpg",
 					rating: item.reviews?.length
 						? item.reviews.reduce(
-								(acc: number, review: { rating: number }) => acc + review.rating,
+								(acc: number, review: { rating: number }) =>
+									acc + review.rating,
 								0
 							) / item.reviews.length
 						: 4.5,
@@ -66,14 +71,16 @@ export function useEquipment({
 
 				setEquipment(transformedData);
 			} catch (err) {
-				setError(err instanceof Error ? err.message : "Ошибка загрузки оборудования");
+				setError(
+					err instanceof Error ? err.message : "Ошибка загрузки оборудования"
+				);
 			} finally {
 				setIsLoading(false);
 			}
 		}
 
 		fetchEquipment();
-	}, [search, category, minPrice, maxPrice, limit]);
+	}, [search, category, minPrice, maxPrice, limit, supabase]);
 
 	return { equipment, isLoading, error };
 }

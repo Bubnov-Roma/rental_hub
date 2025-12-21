@@ -1,12 +1,17 @@
+"use client";
+
 import { useEffect, useState } from "react";
 import type { Equipment } from "@/core/domain/entities/Equipment";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase/client";
 
 export function useEquipmentDetails(id: string) {
 	const [equipment, setEquipment] = useState<Equipment | null>(null);
 	const [isLoading, setIsLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
-	const [availability, setAvailability] = useState<{ bookedDates: Date[] }>({ bookedDates: [] });
+	const [availability, setAvailability] = useState<{ bookedDates: Date[] }>({
+		bookedDates: [],
+	});
+	const supabase = createClient();
 
 	useEffect(() => {
 		async function fetchEquipmentDetails() {
@@ -48,21 +53,29 @@ export function useEquipmentDetails(id: string) {
 
 				const transformedEquipment = {
 					...equipmentData,
-					imageUrl: equipmentData.equipment_images?.[0]?.url || "/placeholder-equipment.jpg",
+					imageUrl:
+						equipmentData.equipment_images?.[0]?.url ||
+						"/placeholder-equipment.jpg",
 					rating: equipmentData.reviews?.length
 						? equipmentData.reviews.reduce(
-								(acc: number, review: { rating: number }) => acc + review.rating,
+								(acc: number, review: { rating: number }) =>
+									acc + review.rating,
 								0
 							) / equipmentData.reviews.length
 						: 4.5,
 					reviewsCount: equipmentData.reviews?.length || 0,
-					images: equipmentData.equipment_images?.map((img: { url: string }) => img.url) || [],
+					images:
+						equipmentData.equipment_images?.map(
+							(img: { url: string }) => img.url
+						) || [],
 				};
 
 				setEquipment(transformedEquipment);
 				setAvailability({ bookedDates });
 			} catch (err) {
-				setError(err instanceof Error ? err.message : "Ошибка загрузки оборудования");
+				setError(
+					err instanceof Error ? err.message : "Ошибка загрузки оборудования"
+				);
 			} finally {
 				setIsLoading(false);
 			}
@@ -71,7 +84,7 @@ export function useEquipmentDetails(id: string) {
 		if (id) {
 			fetchEquipmentDetails();
 		}
-	}, [id]);
+	}, [id, supabase.from]);
 
-	return { equipment, isLoading, error, availability };
+	return { equipment, isLoading, error, availability, supabase };
 }
