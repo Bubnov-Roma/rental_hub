@@ -7,11 +7,13 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { resetPassword } from "@/lib/auth";
+import { createClient } from "@/lib/supabase/client";
 import { getErrorMessage } from "@/utils/error-handler";
 
 export default function ForgotPasswordPage() {
 	const router = useRouter();
+	const supabase = createClient();
+
 	const [email, setEmail] = useState("");
 	const [isLoading, setIsLoading] = useState(false);
 	const [error, setError] = useState("");
@@ -23,10 +25,17 @@ export default function ForgotPasswordPage() {
 		setError("");
 
 		try {
-			await resetPassword(email);
+			const { error: supabaseError } =
+				await supabase.auth.resetPasswordForEmail(email, {
+					// URL, where user will to go after clicking on the email
+					redirectTo: `${window.location.origin}/auth/confirm`, // TODO: update endpoint
+				});
+
+			if (supabaseError) throw supabaseError;
+
 			setSuccess(true);
 		} catch (err) {
-			setError(getErrorMessage(err) || "Произошла ошибка");
+			setError(getErrorMessage(err) || "Произошла ошибка при отправке письма");
 		} finally {
 			setIsLoading(false);
 		}
@@ -41,7 +50,9 @@ export default function ForgotPasswordPage() {
 					</Link>
 					<h1 className="mt-4 text-2xl font-bold">Восстановление пароля</h1>
 					<p className="mt-2 text-gray-600">
-						{success ? "Проверьте свою почту" : "Введите email, указанный при регистрации"}
+						{success
+							? "Проверьте свою почту"
+							: "Введите email, указанный при регистрации"}
 					</p>
 				</div>
 
@@ -51,16 +62,18 @@ export default function ForgotPasswordPage() {
 							<div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
 								<Mail className="h-6 w-6 text-green-600" />
 							</div>
-							<h3 className="text-lg font-semibold text-gray-900">Проверьте вашу почту</h3>
+							<h3 className="text-lg font-semibold text-gray-900">
+								Проверьте вашу почту
+							</h3>
 							<p className="mt-2 text-gray-600">
 								Мы отправили ссылку для сброса пароля на адрес{" "}
 								<span className="font-medium">{email}</span>
 							</p>
-							<p className="mt-2 text-sm text-gray-500">
-								Если письмо не пришло, проверьте папку «Спам»
-							</p>
 						</div>
-						<Button className="w-full" onClick={() => router.push("/auth/login")}>
+						<Button
+							className="w-full"
+							onClick={() => router.push("/auth/login")}
+						>
 							Вернуться к входу
 						</Button>
 					</div>
@@ -71,7 +84,6 @@ export default function ForgotPasswordPage() {
 								<p className="text-sm text-red-600">{error}</p>
 							</div>
 						)}
-
 						<div>
 							<Label htmlFor="email">Email</Label>
 							<div className="relative mt-1">
@@ -87,13 +99,8 @@ export default function ForgotPasswordPage() {
 								/>
 							</div>
 						</div>
-
 						<Button type="submit" className="w-full" disabled={isLoading}>
-							{isLoading ? (
-								<div className="h-5 w-5 animate-spin rounded-full border-b-2 border-white"></div>
-							) : (
-								"Отправить ссылку"
-							)}
+							{isLoading ? "Отправка..." : "Отправить ссылку"}
 						</Button>
 					</form>
 				)}
@@ -103,8 +110,7 @@ export default function ForgotPasswordPage() {
 						href="/auth/login"
 						className="inline-flex items-center gap-2 text-sm text-blue-600 hover:underline"
 					>
-						<ArrowLeft className="h-4 w-4" />
-						Вернуться к входу
+						<ArrowLeft className="h-4 w-4" /> Вернуться к входу
 					</Link>
 				</div>
 			</div>
