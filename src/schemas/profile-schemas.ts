@@ -11,10 +11,15 @@ const baseProfileSchema = z.object({
 		series: z.string().length(4, "Серия паспорта должна содержать 4 цифры"),
 		number: z.string().length(6, "Номер паспорта должен содержать 6 цифр"),
 		issuedBy: z.string().min(5, "Укажите кем выдан паспорт"),
-		issueDate: z.string().regex(/^\d{2}\.\d{2}\.\d{4}$/, "Дата должна быть в формате ДД.ММ.ГГГГ"),
+		issueDate: z
+			.string()
+			.regex(/^\d{2}\.\d{2}\.\d{4}$/, "Дата должна быть в формате ДД.ММ.ГГГГ"),
 		departmentCode: z
 			.string()
-			.regex(/^\d{3}-\d{3}$/, "Код подразделения должен быть в формате XXX-XXX"),
+			.regex(
+				/^\d{3}-\d{3}$/,
+				"Код подразделения должен быть в формате XXX-XXX"
+			),
 	}),
 
 	email: z.string().email("Введите корректный email"),
@@ -55,14 +60,25 @@ const baseProfileSchema = z.object({
 			.number()
 			.min(15000, "Зарплата должна быть не менее 15000")
 			.max(1000000, "Укажите реалистичную зарплату"),
-		website: z.string().url("Введите корректный URL").optional().or(z.literal("")),
+		website: z
+			.string()
+			.url("Введите корректный URL")
+			.optional()
+			.or(z.literal("")),
 	}),
 
 	socialLinks: z
 		.array(
 			z.object({
 				url: z.string().url("Введите корректный URL"),
-				type: z.enum(["vk", "telegram", "instagram", "whatsapp", "facebook", "other"]),
+				type: z.enum([
+					"vk",
+					"telegram",
+					"instagram",
+					"whatsapp",
+					"facebook",
+					"other",
+				]),
 			})
 		)
 		.min(1, "Добавьте хотя бы одну соцсеть"),
@@ -70,7 +86,15 @@ const baseProfileSchema = z.object({
 	emergencyContact: z.object({
 		name: z.string().min(2, "Укажите имя контактного лица"),
 		phone: z.string().min(10, "Введите корректный номер телефона"),
-		relationship: z.enum(["mother", "father", "spouse", "sibling", "friend", "colleague", "other"]),
+		relationship: z.enum([
+			"mother",
+			"father",
+			"spouse",
+			"sibling",
+			"friend",
+			"colleague",
+			"other",
+		]),
 		relationshipOther: z.string().optional(),
 	}),
 
@@ -130,7 +154,10 @@ export const validatedProfileSchema = baseProfileSchema
 	.refine(
 		(data) => {
 			if (data.sameAsRegistration) {
-				return JSON.stringify(data.registrationAddress) === JSON.stringify(data.actualAddress);
+				return (
+					JSON.stringify(data.registrationAddress) ===
+					JSON.stringify(data.actualAddress)
+				);
 			}
 			return true;
 		},

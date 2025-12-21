@@ -13,18 +13,28 @@ export const passwordSchema = z
 	.refine((password) => /\d/.test(password), {
 		message: "Добавьте хотя бы одну цифру",
 	})
-	.refine((password) => /^[A-Za-zА-Яа-я\d!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]+$/.test(password), {
-		message: "Используйте только буквы, цифры и специальные символы",
-	});
+	.refine(
+		(password) =>
+			/^[A-Za-zА-Яа-я\d!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]+$/.test(password),
+		{
+			message: "Используйте только буквы, цифры и специальные символы",
+		}
+	);
 
 // Base email schema
-export const emailSchema = z.email("Введите корректный email").toLowerCase().trim();
+export const emailSchema = z
+	.email("Введите корректный email")
+	.toLowerCase()
+	.trim();
 
 // Base phone schema
 export const phoneSchema = z
 	.string()
 	.min(10, "Введите корректный номер телефона")
-	.regex(/^[\d\s+\-()]+$/, "Номер телефона должен содержать только цифры и специальные символы");
+	.regex(
+		/^[\d\s+\-()]+$/,
+		"Номер телефона должен содержать только цифры и специальные символы"
+	);
 
 // Login schema
 export const loginSchema = z.object({
