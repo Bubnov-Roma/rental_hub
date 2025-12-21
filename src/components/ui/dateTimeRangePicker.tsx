@@ -48,7 +48,10 @@ export function DateTimeRangePicker({
 				excludeDates={disabledDates || []}
 				// Кастомный триггер (кнопка в стиле Shadcn)
 				customInput={
-					<Button variant="outline" className="w-full justify-start text-left font-normal">
+					<Button
+						variant="outline"
+						className="w-full justify-start text-left font-normal"
+					>
 						<CalendarIcon className="mr-2 h-4 w-4" />
 						{startDate
 							? endDate
