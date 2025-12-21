@@ -1,4 +1,9 @@
-import { createCipheriv, createDecipheriv, createHmac, randomBytes } from "node:crypto";
+import {
+	createCipheriv,
+	createDecipheriv,
+	createHmac,
+	randomBytes,
+} from "node:crypto";
 
 // Data encryption and decryption FOR SERVER
 export function encryptData(data: string, secretKey: string): string {
@@ -57,7 +62,10 @@ export async function hashPassword(password: string): Promise<string> {
 }
 
 // Password check function
-export async function verifyPassword(password: string, hashedPassword: string): Promise<boolean> {
+export async function verifyPassword(
+	password: string,
+	hashedPassword: string
+): Promise<boolean> {
 	const [salt, originalHash] = hashedPassword.split(":");
 
 	if (!salt || !originalHash) {
@@ -70,7 +78,9 @@ export async function verifyPassword(password: string, hashedPassword: string): 
 }
 
 // Data masking for logs
-export function maskForLogs(data: Record<string, unknown>): Record<string, unknown> {
+export function maskForLogs(
+	data: Record<string, unknown>
+): Record<string, unknown> {
 	const masked = { ...data };
 	const patterns = {
 		passport: /(\d{4})\d{6}/g,
@@ -101,7 +111,10 @@ export function maskForLogs(data: Record<string, unknown>): Record<string, unkno
 }
 
 // =========================== Data encryption and decryption FOR BROWSER (Web Crypto API)
-export async function encryptDataBrowser(data: string, secretKey: string): Promise<string> {
+export async function encryptDataBrowser(
+	data: string,
+	secretKey: string
+): Promise<string> {
 	const encoder = new TextEncoder();
 	const key = await crypto.subtle.importKey(
 		"raw",
