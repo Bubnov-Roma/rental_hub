@@ -58,7 +58,9 @@ export function EquipmentCard({
 			{/* Контент */}
 			<div className="p-5">
 				<div className="flex justify-between items-start mb-3">
-					<h3 className="font-bold text-lg text-gray-900 line-clamp-1">{title}</h3>
+					<h3 className="font-bold text-lg text-gray-900 line-clamp-1">
+						{title}
+					</h3>
 					<div className="flex items-center gap-1">
 						<Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
 						<span className="font-medium">{rating.toFixed(1)}</span>
@@ -83,10 +85,18 @@ export function EquipmentCard({
 					</div>
 
 					<div className="flex gap-2">
-						<Button variant="outline" size="sm" onClick={() => onViewDetails(id)}>
+						<Button
+							variant="outline"
+							size="sm"
+							onClick={() => onViewDetails(id)}
+						>
 							Подробнее
 						</Button>
-						<Button size="sm" disabled={!isAvailable} onClick={() => onBook(id)}>
+						<Button
+							size="sm"
+							disabled={!isAvailable}
+							onClick={() => onBook(id)}
+						>
 							<Calendar className="w-4 h-4 mr-2" />
 							Забронировать
 						</Button>
