@@ -38,7 +38,9 @@ export function EquipmentCard({
 			<div className="absolute left-3 top-3 z-10">
 				<div
 					className={`rounded-full px-3 py-1 text-sm font-medium ${
-						isAvailable ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+						isAvailable
+							? "bg-green-100 text-green-800"
+							: "bg-red-100 text-red-800"
 					}`}
 				>
 					{isAvailable ? "Доступно" : "Занято"}
@@ -84,10 +86,18 @@ export function EquipmentCard({
 			</CardContent>
 
 			<CardFooter className="flex gap-2 p-4 pt-0">
-				<Button variant="outline" className="flex-1" onClick={() => onViewDetails(id)}>
+				<Button
+					variant="outline"
+					className="flex-1"
+					onClick={() => onViewDetails(id)}
+				>
 					Подробнее
 				</Button>
-				<Button className="flex-1 gap-2" disabled={!isAvailable} onClick={() => onBook(id)}>
+				<Button
+					className="flex-1 gap-2"
+					disabled={!isAvailable}
+					onClick={() => onBook(id)}
+				>
 					<Calendar className="h-4 w-4" />
 					Забронировать
 				</Button>

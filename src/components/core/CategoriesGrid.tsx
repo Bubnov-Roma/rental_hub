@@ -23,7 +23,10 @@ interface CategoriesGridProps {
 	onCategoryClick?: (categoryId: string) => void;
 }
 
-export function CategoriesGrid({ categories, onCategoryClick }: CategoriesGridProps) {
+export function CategoriesGrid({
+	categories,
+	onCategoryClick,
+}: CategoriesGridProps) {
 	return (
 		<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
 			{categories.map((category) => {
@@ -41,7 +44,9 @@ export function CategoriesGrid({ categories, onCategoryClick }: CategoriesGridPr
 							<Icon className="h-6 w-6 text-blue-600" />
 						</div>
 						<h3 className="font-semibold text-gray-900">{category.name}</h3>
-						<p className="mt-1 text-sm text-gray-600">{category.count} единиц</p>
+						<p className="mt-1 text-sm text-gray-600">
+							{category.count} единиц
+						</p>
 						<div className="absolute inset-0 rounded-xl border-2 border-transparent group-hover:border-blue-200"></div>
 					</Button>
 				);

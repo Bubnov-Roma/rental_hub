@@ -52,7 +52,9 @@ export function Testimonials() {
 	};
 
 	const prev = () => {
-		setCurrentIndex((prev) => (prev - 1 + testimonials.length) % testimonials.length);
+		setCurrentIndex(
+			(prev) => (prev - 1 + testimonials.length) % testimonials.length
+		);
 	};
 
 	const currentTestimonial = testimonials[currentIndex];
@@ -88,8 +90,12 @@ export function Testimonials() {
 										{currentTestimonial.avatar}
 									</div>
 									<div>
-										<h4 className="font-semibold text-gray-900">{currentTestimonial?.name}</h4>
-										<p className="text-sm text-gray-600">{currentTestimonial?.role}</p>
+										<h4 className="font-semibold text-gray-900">
+											{currentTestimonial?.name}
+										</h4>
+										<p className="text-sm text-gray-600">
+											{currentTestimonial?.role}
+										</p>
 									</div>
 								</div>
 

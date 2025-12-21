@@ -10,12 +10,14 @@ const steps = [
 	{
 		icon: CalendarCheck,
 		title: "Выберите даты",
-		description: "Укажите удобные даты аренды. Календарь покажет доступность в реальном времени.",
+		description:
+			"Укажите удобные даты аренды. Календарь покажет доступность в реальном времени.",
 	},
 	{
 		icon: CreditCard,
 		title: "Быстрое бронирование",
-		description: "Оплатите онлайн или при получении. Подтверждение приходит мгновенно.",
+		description:
+			"Оплатите онлайн или при получении. Подтверждение приходит мгновенно.",
 	},
 	{
 		icon: Package,
@@ -26,7 +28,8 @@ const steps = [
 	{
 		icon: Star,
 		title: "Верните и оцените",
-		description: "После съемок верните технику и оставьте отзыв. Получайте скидки за активность!",
+		description:
+			"После съемок верните технику и оставьте отзыв. Получайте скидки за активность!",
 	},
 ];
 
@@ -59,7 +62,9 @@ export function HowItWorks() {
 											{index + 1}
 										</div>
 									</div>
-									<h3 className="mb-2 font-semibold text-gray-900">{step.title}</h3>
+									<h3 className="mb-2 font-semibold text-gray-900">
+										{step.title}
+									</h3>
 									<p className="text-sm text-gray-600">{step.description}</p>
 								</div>
 							</div>

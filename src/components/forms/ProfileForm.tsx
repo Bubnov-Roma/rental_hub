@@ -18,7 +18,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
-import { type ProfileFormValues, refinedProfileSchema } from "@/schemas/profile-schemas";
+import {
+	type ProfileFormValues,
+	refinedProfileSchema,
+} from "@/schemas/profile-schemas";
 
 interface ProfileFormProps {
 	initialData?: Partial<ProfileFormValues>;
@@ -101,7 +104,9 @@ export function ProfileForm({ initialData, onSubmit, mode }: ProfileFormProps) {
 	const watchSameAsRegistration = form.watch("sameAsRegistration");
 	const watchEquipmentType = form.watch("equipmentType");
 	const watchReferralSource = form.watch("referralSource");
-	const watchEmergencyContactRelationship = form.watch("emergencyContact.relationship");
+	const watchEmergencyContactRelationship = form.watch(
+		"emergencyContact.relationship"
+	);
 
 	// Address synchronization handler
 	const handleSameAddressChange = useCallback(
@@ -121,7 +126,11 @@ export function ProfileForm({ initialData, onSubmit, mode }: ProfileFormProps) {
 		try {
 			await onSubmit(data);
 		} catch (err) {
-			setError(err instanceof Error ? err.message : "Произошла ошибка при сохранении анкеты");
+			setError(
+				err instanceof Error
+					? err.message
+					: "Произошла ошибка при сохранении анкеты"
+			);
 		} finally {
 			setIsSubmitting(false);
 		}
@@ -132,7 +141,9 @@ export function ProfileForm({ initialData, onSubmit, mode }: ProfileFormProps) {
 			<Card>
 				<CardHeader>
 					<CardTitle>Анкета клиента</CardTitle>
-					<p className="text-sm text-muted-foreground">Заполните все поля для оформления аренды</p>
+					<p className="text-sm text-muted-foreground">
+						Заполните все поля для оформления аренды
+					</p>
 				</CardHeader>
 				<CardContent>
 					{error && (
@@ -142,7 +153,10 @@ export function ProfileForm({ initialData, onSubmit, mode }: ProfileFormProps) {
 					)}
 
 					<TypedForm {...form}>
-						<form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-8">
+						<form
+							onSubmit={form.handleSubmit(handleFormSubmit)}
+							className="space-y-8"
+						>
 							{/* Раздел 1: Личные данные */}
 							<Section title="Личные данные">
 								<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -327,7 +341,9 @@ export function ProfileForm({ initialData, onSubmit, mode }: ProfileFormProps) {
 
 									{!watchSameAsRegistration && (
 										<div className="space-y-4">
-											<h4 className="font-medium">Фактический адрес проживания *</h4>
+											<h4 className="font-medium">
+												Фактический адрес проживания *
+											</h4>
 											<AddressFields form={form} prefix="actualAddress" />
 										</div>
 									)}
@@ -392,7 +408,10 @@ export function ProfileForm({ initialData, onSubmit, mode }: ProfileFormProps) {
 												<FormItem>
 													<FormLabel>Укажите тип техники *</FormLabel>
 													<FormControl>
-														<Input {...field} placeholder="Например, квадроцикл, лодка и т.д." />
+														<Input
+															{...field}
+															placeholder="Например, квадроцикл, лодка и т.д."
+														/>
 													</FormControl>
 													<FormMessage />
 												</FormItem>
@@ -441,7 +460,9 @@ export function ProfileForm({ initialData, onSubmit, mode }: ProfileFormProps) {
 													<Input
 														type="number"
 														{...field}
-														onChange={(e) => field.onChange(Number(e.target.value))}
+														onChange={(e) =>
+															field.onChange(Number(e.target.value))
+														}
 													/>
 												</FormControl>
 												<FormMessage />
@@ -528,7 +549,10 @@ export function ProfileForm({ initialData, onSubmit, mode }: ProfileFormProps) {
 												<FormItem>
 													<FormLabel>Укажите родство *</FormLabel>
 													<FormControl>
-														<Input {...field} placeholder="Например, сосед, родственник и т.д." />
+														<Input
+															{...field}
+															placeholder="Например, сосед, родственник и т.д."
+														/>
 													</FormControl>
 													<FormMessage />
 												</FormItem>
@@ -588,7 +612,10 @@ export function ProfileForm({ initialData, onSubmit, mode }: ProfileFormProps) {
 												<FormItem>
 													<FormLabel>Укажите источник *</FormLabel>
 													<FormControl>
-														<Input {...field} placeholder="Например, рекомендация, улица и т.д." />
+														<Input
+															{...field}
+															placeholder="Например, рекомендация, улица и т.д."
+														/>
 													</FormControl>
 													<FormMessage />
 												</FormItem>
@@ -607,14 +634,19 @@ export function ProfileForm({ initialData, onSubmit, mode }: ProfileFormProps) {
 										render={({ field }) => (
 											<FormItem className="flex flex-row items-start space-x-3 space-y-0">
 												<FormControl>
-													<Checkbox checked={field.value} onCheckedChange={field.onChange} />
+													<Checkbox
+														checked={field.value}
+														onCheckedChange={field.onChange}
+													/>
 												</FormControl>
 												<div className="space-y-1 leading-none">
 													<FormLabel>
-														Я даю согласие на обработку моих персональных данных *
+														Я даю согласие на обработку моих персональных данных
+														*
 													</FormLabel>
 													<p className="text-sm text-muted-foreground">
-														Все данные обрабатываются в соответствии с Федеральным законом №152-ФЗ
+														Все данные обрабатываются в соответствии с
+														Федеральным законом №152-ФЗ
 													</p>
 												</div>
 												<FormMessage />
@@ -628,10 +660,15 @@ export function ProfileForm({ initialData, onSubmit, mode }: ProfileFormProps) {
 										render={({ field }) => (
 											<FormItem className="flex flex-row items-start space-x-3 space-y-0">
 												<FormControl>
-													<Checkbox checked={field.value} onCheckedChange={field.onChange} />
+													<Checkbox
+														checked={field.value}
+														onCheckedChange={field.onChange}
+													/>
 												</FormControl>
 												<div className="space-y-1 leading-none">
-													<FormLabel>Я согласен на получение рекламных материалов</FormLabel>
+													<FormLabel>
+														Я согласен на получение рекламных материалов
+													</FormLabel>
 													<p className="text-sm text-muted-foreground">
 														Вы можете отписаться в любое время
 													</p>
@@ -643,7 +680,11 @@ export function ProfileForm({ initialData, onSubmit, mode }: ProfileFormProps) {
 							</Section>
 
 							<div className="pt-6">
-								<Button type="submit" disabled={isSubmitting} className="w-full">
+								<Button
+									type="submit"
+									disabled={isSubmitting}
+									className="w-full"
+								>
 									{isSubmitting ? "Сохранение..." : "Сохранить анкету"}
 								</Button>
 							</div>
@@ -656,7 +697,13 @@ export function ProfileForm({ initialData, onSubmit, mode }: ProfileFormProps) {
 }
 
 // Вспомогательные компоненты
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({
+	title,
+	children,
+}: {
+	title: string;
+	children: React.ReactNode;
+}) {
 	return (
 		<div className="space-y-4">
 			<div>

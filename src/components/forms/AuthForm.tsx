@@ -16,7 +16,7 @@ import {
 	FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { signIn, signUp } from "@/lib/auth";
+import { createClient } from "@/lib/supabase/client";
 import {
 	type LoginFormValues,
 	loginSchema,
@@ -31,6 +31,8 @@ type AuthFormProps = {
 
 export function AuthForm({ mode }: AuthFormProps) {
 	const router = useRouter();
+	const supabase = createClient();
+
 	const [isLoading, setIsLoading] = useState(false);
 	const [error, setError] = useState("");
 	const [showPassword, setShowPassword] = useState(false);
@@ -60,22 +62,32 @@ export function AuthForm({ mode }: AuthFormProps) {
 
 		try {
 			if (mode === "login") {
-				const loginValues = values as LoginFormValues;
-
-				await signIn(loginValues.email, loginValues.password);
+				const { error: signInError } = await supabase.auth.signInWithPassword({
+					email: values.email,
+					password: values.password,
+				});
+				if (signInError) throw signInError;
 				router.push("/dashboard");
-				router.refresh();
 			} else {
-				const registerValues = values as RegisterFormValues;
-				await signUp(
-					registerValues.email,
-					registerValues.password,
-					registerValues.name,
-					registerValues.phone
-				);
+				const regValues = values as RegisterFormValues;
+				const { error: signUpError } = await supabase.auth.signUp({
+					email: regValues.email,
+					password: regValues.password,
+					options: {
+						// Save profile data in metadata
+						data: {
+							name: regValues.name,
+							phone: regValues.phone,
+						},
+						// Email confirmation link
+						emailRedirectTo: `${window.location.origin}/auth/confirm`,
+					},
+				});
+				if (signUpError) throw signUpError;
+
 				router.push("/dashboard?welcome=true");
-				router.refresh();
 			}
+			router.refresh();
 		} catch (err) {
 			setError(getErrorMessage(err) || "Произошла ошибка при авторизации");
 		} finally {
@@ -90,7 +102,9 @@ export function AuthForm({ mode }: AuthFormProps) {
 					{mode === "login" ? "Вход в аккаунт" : "Регистрация"}
 				</h1>
 				<p className="mt-2 text-gray-600">
-					{mode === "login" ? "Введите свои данные для входа" : "Создайте аккаунт для бронирования"}
+					{mode === "login"
+						? "Введите свои данные для входа"
+						: "Создайте аккаунт для бронирования"}
 				</p>
 			</div>
 
@@ -136,7 +150,9 @@ export function AuthForm({ mode }: AuthFormProps) {
 			<Button
 				variant="outline"
 				className="w-full"
-				onClick={() => router.push(mode === "login" ? "/auth/register" : "/auth/login")}
+				onClick={() =>
+					router.push(mode === "login" ? "/auth/register" : "/auth/login")
+				}
 			>
 				{mode === "login" ? "Создать аккаунт" : "Войти в аккаунт"}
 			</Button>
@@ -145,15 +161,17 @@ export function AuthForm({ mode }: AuthFormProps) {
 				<div className="space-y-4">
 					{/* Requirements for password */}
 					<div className="rounded-lg bg-blue-50 p-4">
-						<h4 className="text-sm font-medium text-blue-800 mb-2">Требования к паролю:</h4>
+						<h4 className="text-sm font-medium text-blue-800 mb-2">
+							Требования к паролю:
+						</h4>
 						<ul className="text-xs text-blue-700 space-y-1">
 							<li>• Минимум 8 символов</li>
 							<li>• Хотя бы одна заглавная буква (A-Z или А-Я)</li>
 							<li>• Хотя бы одна строчная буква (a-z или а-я)</li>
 							<li>• Хотя бы одна цифра</li>
 							<li>
-								• Можно использовать специальные символы: !@#$%^&*()_+-=[]{"{}"};':"\|,. `{">"}` or
-								`&gt;`?
+								• Можно использовать специальные символы: !@#$%^&*()_+-=[]{"{}"}
+								;':"\|,. `{">"}` or `&gt;`?
 							</li>
 						</ul>
 					</div>
@@ -203,7 +221,12 @@ function LoginFormContent({
 						<FormControl>
 							<div className="relative">
 								<Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-								<Input type="email" placeholder="email@example.com" className="pl-10" {...field} />
+								<Input
+									type="email"
+									placeholder="email@example.com"
+									className="pl-10"
+									{...field}
+								/>
 							</div>
 						</FormControl>
 						<FormMessage />
@@ -231,7 +254,11 @@ function LoginFormContent({
 									onClick={() => setShowPassword(!showPassword)}
 									className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
 								>
-									{showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+									{showPassword ? (
+										<EyeOff className="h-4 w-4" />
+									) : (
+										<Eye className="h-4 w-4" />
+									)}
 								</button>
 							</div>
 						</FormControl>
@@ -241,7 +268,10 @@ function LoginFormContent({
 			/>
 
 			<div className="text-right">
-				<Link href="/auth/forgot-password" className="text-sm text-blue-600 hover:underline">
+				<Link
+					href="/auth/forgot-password"
+					className="text-sm text-blue-600 hover:underline"
+				>
 					Забыли пароль?
 				</Link>
 			</div>
@@ -277,26 +307,6 @@ function RegisterFormContent({
 	showConfirmPassword,
 	setShowConfirmPassword,
 }: RegisterFormContentProps) {
-	const formatPhoneNumber = (value: string) => {
-		const numbers = value.replace(/\D/g, "");
-		if (numbers.length <= 1) return "";
-
-		let formatted = "+7";
-		if (numbers.length > 1) {
-			formatted += ` (${numbers.substring(1, 4)}`;
-		}
-		if (numbers.length > 4) {
-			formatted += `) ${numbers.substring(4, 7)}`;
-		}
-		if (numbers.length > 7) {
-			formatted += `-${numbers.substring(7, 9)}`;
-		}
-		if (numbers.length > 9) {
-			formatted += `-${numbers.substring(9, 11)}`;
-		}
-		return formatted;
-	};
-
 	return (
 		<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
 			<FormField
@@ -319,29 +329,78 @@ function RegisterFormContent({
 			<FormField
 				control={form.control}
 				name="phone"
-				render={({ field }) => (
-					<FormItem>
-						<FormLabel>Телефон</FormLabel>
-						<FormControl>
-							<div className="relative">
-								<Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-								<Input
-									placeholder="+7 (999) 999-99-99"
-									className="pl-10"
-									{...field}
-									onChange={(e) => {
-										const formatted = formatPhoneNumber(e.target.value);
-										if (formatted.length <= 18) {
-											field.onChange(formatted);
-										}
-									}}
-									value={field.value}
-								/>
-							</div>
-						</FormControl>
-						<FormMessage />
-					</FormItem>
-				)}
+				render={({ field }) => {
+					// Функция форматирования номера телефона
+					const formatPhoneNumber = (value: string, currentValue: string) => {
+						// Обработка удаления символов
+						if (value.length < currentValue.length) {
+							// Если пользователь удаляет символы, очищаем нецифровые символы
+							const cleaned = value.replace(/\D/g, "");
+							if (cleaned.length === 0) return "";
+							if (cleaned === "7") return "+7";
+
+							// Форматируем оставшиеся цифры
+							let formatted = "+7";
+							const digits = cleaned.startsWith("7")
+								? cleaned.substring(1)
+								: cleaned;
+
+							if (digits.length > 0) formatted += ` (${digits.substring(0, 3)}`;
+							if (digits.length > 3) formatted += `) ${digits.substring(3, 6)}`;
+							if (digits.length > 6) formatted += `-${digits.substring(6, 8)}`;
+							if (digits.length > 8) formatted += `-${digits.substring(8, 10)}`;
+
+							return formatted;
+						}
+
+						// Обработка ввода
+						const numbers = value.replace(/\D/g, "");
+						if (numbers.length === 0) return "";
+						if (numbers === "7") return "+7";
+
+						let formatted = "+7";
+						const digits = numbers.startsWith("7")
+							? numbers.substring(1)
+							: numbers;
+
+						// Ограничиваем общее количество цифр (10 без +7)
+						if (digits.length > 10) return currentValue;
+
+						if (digits.length > 0) formatted += ` (${digits.substring(0, 3)}`;
+						if (digits.length > 3) formatted += `) ${digits.substring(3, 6)}`;
+						if (digits.length > 6) formatted += `-${digits.substring(6, 8)}`;
+						if (digits.length > 8) formatted += `-${digits.substring(8, 10)}`;
+
+						return formatted;
+					};
+
+					return (
+						<FormItem>
+							<FormLabel>Телефон</FormLabel>
+							<FormControl>
+								<div className="relative">
+									<Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+									<Input
+										placeholder="+7 (999) 999-99-99"
+										className="pl-10"
+										{...field}
+										onChange={(e) => {
+											const formatted = formatPhoneNumber(
+												e.target.value,
+												field.value
+											);
+											if (formatted !== undefined) {
+												field.onChange(formatted);
+											}
+										}}
+										value={field.value}
+									/>
+								</div>
+							</FormControl>
+							<FormMessage />
+						</FormItem>
+					);
+				}}
 			/>
 
 			<FormField
@@ -353,7 +412,12 @@ function RegisterFormContent({
 						<FormControl>
 							<div className="relative">
 								<Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-								<Input type="email" placeholder="email@example.com" className="pl-10" {...field} />
+								<Input
+									type="email"
+									placeholder="email@example.com"
+									className="pl-10"
+									{...field}
+								/>
 							</div>
 						</FormControl>
 						<FormMessage />
@@ -381,7 +445,11 @@ function RegisterFormContent({
 									onClick={() => setShowPassword(!showPassword)}
 									className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
 								>
-									{showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+									{showPassword ? (
+										<EyeOff className="h-4 w-4" />
+									) : (
+										<Eye className="h-4 w-4" />
+									)}
 								</button>
 							</div>
 						</FormControl>
