@@ -21,9 +21,10 @@
 	},
 	"formatter": {
 		"enabled": true,
+		"formatWithErrors": false,
 		"indentStyle": "tab",
 		"indentWidth": 2,
-		"lineWidth": 100,
+		"lineWidth": 80,
 		"lineEnding": "lf"
 	},
 	"javascript": {
@@ -40,9 +41,7 @@
 		}
 	},
 	"css": {
-		"formatter": {
-			"indentStyle": "space"
-		}
+		"formatter": { "enabled": true, "indentStyle": "space" }
 	},
 	"linter": {
 		"enabled": true,
@@ -53,7 +52,8 @@
 				"useExhaustiveDependencies": "warn"
 			},
 			"a11y": {
-				"recommended": true
+				"recommended": true,
+				"noSvgWithoutTitle": "off"
 			},
 			"style": {
 				"noNonNullAssertion": "warn"
