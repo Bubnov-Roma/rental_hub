@@ -13,9 +13,13 @@ export default function RegisterPage() {
 			<div className="w-full max-w-md">
 				<div className="mb-8 text-center">
 					<Link href="/" className="inline-flex items-center gap-2">
-						<span className="text-2xl font-bold text-blue-600">Rentacamera</span>
+						<span className="text-2xl font-bold text-blue-600">
+							Rentacamera
+						</span>
 					</Link>
-					<p className="mt-2 text-gray-600">Присоединяйтесь к сообществу профессионалов</p>
+					<p className="mt-2 text-gray-600">
+						Присоединяйтесь к сообществу профессионалов
+					</p>
 				</div>
 
 				<AuthForm mode="register" />

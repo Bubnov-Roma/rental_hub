@@ -13,7 +13,9 @@ export default function LoginPage() {
 			<div className="w-full max-w-md">
 				<div className="mb-8 text-center">
 					<Link href="/" className="inline-flex items-center gap-2">
-						<span className="text-2xl font-bold text-blue-600">Rentacamera</span>
+						<span className="text-2xl font-bold text-blue-600">
+							Rentacamera
+						</span>
 					</Link>
 				</div>
 
