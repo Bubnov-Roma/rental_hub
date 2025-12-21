@@ -58,7 +58,9 @@ export function useErrorHandler() {
 }
 
 // Function to mask sensitive data in form submissions
-export function maskSensitiveData(data: Record<string, unknown>): Record<string, unknown> {
+export function maskSensitiveData(
+	data: Record<string, unknown>
+): Record<string, unknown> {
 	const masked = { ...data };
 
 	const sensitiveFields = [
