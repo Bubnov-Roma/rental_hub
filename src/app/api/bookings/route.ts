@@ -1,18 +1,21 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { getCurrentUser } from "@/lib/auth";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase/server";
 
 export async function POST(request: NextRequest) {
 	try {
-		const user = await getCurrentUser();
-		if (!user) {
+		const supabase = await createClient();
+		const {
+			data: { user },
+			error: userError,
+		} = await supabase.auth.getUser();
+
+		if (userError || !user) {
 			return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
 		}
 
 		const body = await request.json();
 		const { equipment_id, start_date, end_date, total_amount, metadata } = body;
 
-		// Проверяем доступность оборудования
 		const { data: existingBookings } = await supabase
 			.from("bookings")
 			.select("*")
@@ -49,6 +52,9 @@ export async function POST(request: NextRequest) {
 		return NextResponse.json({ booking }, { status: 201 });
 	} catch (error) {
 		console.error("Error creating booking:", error);
-		return NextResponse.json({ error: "Ошибка при создании бронирования" }, { status: 500 });
+		return NextResponse.json(
+			{ error: "Ошибка при создании бронирования" },
+			{ status: 500 }
+		);
 	}
 }
