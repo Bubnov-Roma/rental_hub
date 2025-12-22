@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createClient } from "@/lib/supabase/client";
-import { getErrorMessage } from "@/utils/error-handler";
+import { getErrorMessage } from "@/utils";
 
 export default function ForgotPasswordPage() {
 	const router = useRouter();

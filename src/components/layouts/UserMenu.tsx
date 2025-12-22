@@ -1,9 +1,9 @@
 "use client";
 
-import type { User } from "@supabase/supabase-js";
-import { Bell, LogOut, Package, User as UserIcon } from "lucide-react";
+import { Bell, Package, User as UserIcon } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { SignOutButton } from "@/components/shared/SignOutButton";
 import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
@@ -14,17 +14,10 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { createClient } from "@/lib/supabase/client";
-
-export function UserMenu({ user }: { user: User | null }) {
+import { useAuth } from "@/hooks/useAuth";
+export function UserMenu() {
+	const { user } = useAuth();
 	const router = useRouter();
-	const supabase = createClient();
-
-	const handleSignOut = async () => {
-		await supabase.auth.signOut();
-		router.refresh();
-		router.push("/");
-	};
 
 	if (!user) {
 		return (
@@ -87,9 +80,9 @@ export function UserMenu({ user }: { user: User | null }) {
 						</DropdownMenuItem>
 					</DropdownMenuGroup>
 					<DropdownMenuSeparator />
-					<DropdownMenuItem onClick={handleSignOut} className="text-red-600">
-						<LogOut className="mr-2 h-4 w-4" /> <span>Выйти</span>
-					</DropdownMenuItem>
+					<div className="p-1">
+						<SignOutButton variant="ghost" className="w-full h-8 text-sm" />
+					</div>
 				</DropdownMenuContent>
 			</DropdownMenu>
 		</div>

@@ -1,4 +1,4 @@
-export type AppError = Error & {
+type AppError = Error & {
 	message: string;
 	status?: number;
 	code?: string;

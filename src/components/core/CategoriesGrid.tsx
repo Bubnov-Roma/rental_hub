@@ -1,6 +1,6 @@
 import { Camera, Drone, Headphones, Mic, Video, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { cn } from "@/utils";
 
 export const categoryIcons = {
 	cameras: Camera,
