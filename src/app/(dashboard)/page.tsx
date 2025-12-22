@@ -14,27 +14,23 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function DashboardPage() {
-	// Создаем клиент Supabase с куками
 	const supabase = await createClient();
 
-	// Получаем текущего пользователя
 	const {
 		data: { user },
 	} = await supabase.auth.getUser();
-
-	// Если пользователь не авторизован, перенаправляем на страницу входа
 	if (!user) {
-		redirect("/login");
+		redirect("/auth/login");
 	}
 
-	// Загружаем данные параллельно для лучшей производительности
+	// Load data in parallel for better performance
 	const [
 		{ data: bookingsData },
 		{ count: totalBookings },
 		{ count: activeBookings },
 		{ data: spendingData },
 	] = await Promise.all([
-		// Бронирования пользователя
+		// User reservations
 		supabase
 			.from("bookings")
 			.select(`
@@ -45,20 +41,20 @@ export default async function DashboardPage() {
 			.order("created_at", { ascending: false })
 			.limit(5),
 
-		// Общее количество бронирований
+		// Total number of bookings
 		supabase
 			.from("bookings")
 			.select("*", { count: "exact", head: true })
 			.eq("user_id", user.id),
 
-		// Активные бронирования
+		// Active bookings
 		supabase
 			.from("bookings")
 			.select("*", { count: "exact", head: true })
 			.eq("user_id", user.id)
 			.in("status", ["pending", "confirmed", "active"]),
 
-		// Потраченные средства (только завершенные бронирования)
+		// Funds spent (completed bookings only)
 		supabase
 			.from("bookings")
 			.select("total_amount")
@@ -66,20 +62,20 @@ export default async function DashboardPage() {
 			.eq("status", "completed"),
 	]);
 
-	// Вычисляем общую сумму потраченных средств
+	// Calculate the total amount of money spent
 	const totalSpent =
 		spendingData?.reduce(
 			(acc, item: { total_amount: number }) => acc + (item.total_amount || 0),
 			0
 		) || 0;
 
-	// Подготавливаем данные для отображения
+	// Preparing data for display
 	const bookings = bookingsData || [];
 	const stats = {
 		totalBookings: totalBookings || 0,
 		activeBookings: activeBookings || 0,
 		totalSpent,
-		rating: 4.5, // Статичное значение или можно вычислить из БД
+		rating: 4.5, // TODO: calculate value from db
 	};
 
 	return (
