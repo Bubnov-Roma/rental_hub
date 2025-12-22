@@ -1,6 +1,5 @@
 "use client";
 
-import type { User } from "@supabase/supabase-js";
 import {
 	Bell,
 	Calendar,
@@ -15,11 +14,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-
-interface SidebarProps {
-	user?: User | null;
-}
+import { useAuth } from "@/hooks/useAuth";
+import { cn } from "@/utils/utils";
 
 const navItems = [
 	{ name: "Обзор", href: "/dashboard", icon: LayoutDashboard },
@@ -35,7 +31,8 @@ const navItems = [
 	{ name: "Настройки", href: "/dashboard/settings", icon: Settings },
 ];
 
-export function Sidebar({ user }: SidebarProps) {
+export function Sidebar() {
+	const { user } = useAuth();
 	const pathname = usePathname();
 	const [collapsed, setCollapsed] = useState(false);
 
@@ -49,7 +46,6 @@ export function Sidebar({ user }: SidebarProps) {
 			)}
 		>
 			<div className="flex h-full flex-col">
-				{/* Кнопка сворачивания */}
 				<div className="flex items-center justify-end p-4">
 					<Button
 						variant="ghost"
@@ -65,10 +61,8 @@ export function Sidebar({ user }: SidebarProps) {
 					</Button>
 				</div>
 
-				{/* Навигация */}
 				<nav className="flex-1 space-y-1 p-4">
 					{navItems.map((item) => {
-						// Проверка на активный путь (учитываем вложенные пути)
 						const isActive =
 							pathname === item.href ||
 							(item.href !== "/dashboard" && pathname.startsWith(item.href));
@@ -101,7 +95,6 @@ export function Sidebar({ user }: SidebarProps) {
 					})}
 				</nav>
 
-				{/* Статистика (динамическая на основе user) */}
 				{!collapsed && (
 					<div className="border-t p-4">
 						<div className="rounded-lg bg-blue-50 p-3">
