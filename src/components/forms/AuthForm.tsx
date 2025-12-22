@@ -23,7 +23,7 @@ import {
 	type RegisterFormValues,
 	registerSchema,
 } from "@/schemas/auth-schemas";
-import { getErrorMessage } from "@/utils/error-handler";
+import { getErrorMessage } from "@/utils";
 
 type AuthFormProps = {
 	mode: "login" | "register";

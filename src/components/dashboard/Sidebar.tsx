@@ -15,7 +15,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
-import { cn } from "@/utils/utils";
+import { cn } from "@/utils";
 
 const navItems = [
 	{ name: "Обзор", href: "/dashboard", icon: LayoutDashboard },

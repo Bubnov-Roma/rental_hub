@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { useUnsavedChanges } from "@/state/use-unsaved-changes";
-import { cn } from "@/utils/utils";
+import { cn } from "@/utils";
 
 interface SignOutButtonProps {
 	variant?: "ghost" | "outline" | "default" | "destructive";
