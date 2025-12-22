@@ -1,6 +1,7 @@
 "use client";
 
 import { LogOut } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import { signOutAction } from "@/app/actions/auth";
@@ -16,6 +17,7 @@ import {
 	AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { createClient } from "@/lib/supabase/client";
 import { useUnsavedChanges } from "@/state/use-unsaved-changes";
 import { cn } from "@/utils";
 
@@ -31,35 +33,40 @@ export function SignOutButton({
 	showText = true,
 }: SignOutButtonProps) {
 	const [isPending, setIsPending] = useState(false);
+	const [isOpen, setIsOpen] = useState(false);
 	const { isDirty, setDirty } = useUnsavedChanges();
+	const supabase = createClient();
+	const router = useRouter();
 
 	const handleSignOut = async () => {
+		setIsOpen(false);
+		setIsPending(true);
 		try {
-			setIsPending(true);
+			const { error } = await supabase.auth.signOut();
+			if (error) throw error;
 			await signOutAction();
-			toast.success("Выход выполнен успешно");
 			setDirty(false);
-		} catch {
-			toast.error("Не удалось выйти из системы");
+			router.push("/");
+			router.refresh();
+		} catch (error) {
+			if (error instanceof Error && error.message === "NEXT_REDIRECT") {
+				console.error(error);
+			}
+			toast.success("Вы успешно разлогинились");
+		} finally {
 			setIsPending(false);
 		}
 	};
 
 	return (
-		<AlertDialog>
+		<AlertDialog open={isOpen} onOpenChange={setIsOpen}>
 			<AlertDialogTrigger asChild>
 				<Button
 					variant={variant}
 					disabled={isPending}
 					className={cn("justify-start", className)}
 				>
-					<LogOut
-						className={cn(
-							"h-4 w-4",
-							showText && "mr-2",
-							isPending && "animate-spin"
-						)}
-					/>
+					<LogOut className={cn(isPending && "animate-spin")} />
 					{showText && (isPending ? "Выход..." : "Выйти")}
 				</Button>
 			</AlertDialogTrigger>

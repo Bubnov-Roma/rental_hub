@@ -10,10 +10,8 @@ export async function signOutAction() {
 	const { error } = await supabase.auth.signOut();
 
 	if (error) {
-		throw new Error("Ошибка при выходе из системы");
+		return { error: error.message };
 	}
-
-	await supabase.auth.signOut();
 
 	revalidatePath("/", "layout");
 	redirect("/");
