@@ -1,17 +1,12 @@
 "use client";
 
-import type { User } from "@supabase/supabase-js";
 import { Camera, Menu, X } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { UserMenu } from "./UserMenu";
 
-interface HeaderProps {
-	user: User | null;
-}
-
-export function Header({ user }: HeaderProps) {
+export function Header() {
 	const [isMenuOpen, setIsMenuOpen] = useState(false);
 
 	const navItems = [
@@ -71,7 +66,7 @@ export function Header({ user }: HeaderProps) {
 										</Link>
 									))}
 									<div className="pt-4 border-t">
-										<UserMenu user={user} />
+										<UserMenu />
 									</div>
 								</div>
 							</div>
@@ -80,7 +75,7 @@ export function Header({ user }: HeaderProps) {
 
 					{/* User profile */}
 					<div className="hidden md:block">
-						<UserMenu user={user} />
+						<UserMenu />
 					</div>
 				</div>
 			</div>
