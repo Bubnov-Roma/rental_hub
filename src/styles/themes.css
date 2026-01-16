@@ -1,25 +1,29 @@
 :root {
+  /* light theme */
   --bg-main: oklch(1 0 0);
-  --bg-panel: rgba(255,255,255,0.65);
-  --bg-card: rgba(255,255,255,0.8);
+  --bg-panel: oklch(1 0 0 / 0.65);
+  --bg-card: oklch(1 0 0 / 0.8);
 
   --text-main: oklch(0.145 0 0);
   --text-muted: oklch(0.556 0 0);
 
-  --border-soft: rgba(0,0,0,0.06);
+  --border-soft: oklch(0 0 0 / 0.06);
 
-  --accent: oklch(0.6 0.22 264);
+  --accent-lch: 0.6 0.22 264;
+  --accent: oklch(var(--accent-lch));
 }
 
 .dark {
-  --bg-main: oklch(0.12 0 0);
-  --bg-panel: rgba(20,20,25,0.6);
-  --bg-card: rgba(28,28,34,0.7);
+  /* Dark theme */
+  --bg-main: oklch(0.12 0.04 264); 
+  --bg-panel: oklch(0.14 0.04 264 / 0.6);
+  --bg-card: oklch(0.16 0.04 264 / 0.7);
 
-  --text-main: oklch(0.985 0 0);
-  --text-muted: oklch(0.708 0 0);
+  --text-main: oklch(0.985 0.01 264);
+  --text-muted: oklch(0.708 0.02 264);
 
-  --border-soft: rgba(255,255,255,0.08);
+  --border-soft: oklch(1 0 0 / 0.08);
 
-  --accent: oklch(0.72 0.24 264);
+  --accent-lch: 0.72 0.24 264;
+  --accent: oklch(var(--accent-lch));
 }
