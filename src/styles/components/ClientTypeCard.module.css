@@ -1,0 +1,76 @@
+.card {
+  background: var(--brand-bg);
+  backdrop-filter: blur(var(--blur-md));
+  position: relative;
+  transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+  cursor: pointer;
+  
+  /* Glassmorphism */
+  -webkit-backdrop-filter: blur(12px);
+  
+  /* Граница с эффектом стекла */
+  border: 1px solid var(--border-soft);
+  
+  /* Neumorphism Мягкое свечение */
+  box-shadow: var(--shadow-card), 0 0 30px oklch(var(--accent-lch) / 0.2);
+  border-color: oklch(var(--accent-lch) / 0.4);
+  border-radius: var(--radius-2xl);
+  z-index: 1;
+}
+
+/* Эффект при наведении (Radial Gradient + Lift) */
+.card:hover {
+  transform: translateY(-5px);
+  background: radial-gradient(
+    circle at top left,
+    rgba(255, 255, 255, 0.8) 0%,
+    rgba(255, 255, 255, 0.4) 100%
+  );
+  /* Multi-layer shadow при ховере */
+    border-color: oklch(var(--accent-lch) / 0.8);
+    box-shadow: 0 0 40px oklch(var(--accent-lch) / 0.3);
+}
+
+/* Эффект нажатия (Pure Neumorphism - Вдавленность) */
+.card:active {
+  transform: translateY(-2px) scale(0.98);
+  box-shadow: 
+    inset 6px 6px 12px rgba(0, 0, 0, 0.1),
+    inset -6px -6px 12px rgba(255, 255, 255, 0.8);
+  transition: all 0.2s;
+}
+
+.selected {
+  /* Подсветка выбранной карточки */
+  box-shadow: 
+    0 0 0 4px rgba(var(--brand-rgb), 0),
+    10px 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+/* Круги теперь с радиальным градиентом */
+.circle {
+  position: absolute;
+  width: 200px;
+  height: 200px;
+  background: radial-gradient(circle, var(--brand-color) 0%, transparent 70%);
+  border-radius: 50%;
+  opacity: 0.1;
+  z-index: -1;
+  filter: blur(20px);
+  transition: all 0.6s ease;
+}
+
+.card:hover .circle {
+  opacity: 0.2;
+  transform: scale(1.5);
+}
+
+.iconWrapper {
+  transition: all 0.3s ease;
+  background: rgba(255, 255, 255, 0.5);
+  box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.05);
+}
+
+.card:hover .iconWrapper {
+  box-shadow: 0 10px 20px rgba(var(--brand-rgb), 0.3);
+}
