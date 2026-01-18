@@ -6,12 +6,12 @@ import DatePicker, { registerLocale } from "react-datepicker";
 
 // !IMPORTANT: styles must be imported for react-datepicker to work
 import "react-datepicker/dist/react-datepicker.css";
-import "./date-picker-custom.css"; // For custom styles
+// import "./date-picker-custom.css"; // For custom styles
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/utils";
 
-// Register Russian locale
+// Register locale
 registerLocale("ru", ru);
 
 interface DateTimeRangePickerProps {
@@ -46,7 +46,6 @@ export function DateTimeRangePicker({
 				// Excludes past dates
 				minDate={new Date()}
 				excludeDates={disabledDates || []}
-				// Кастомный триггер (кнопка в стиле Shadcn)
 				customInput={
 					<Button
 						variant="outline"

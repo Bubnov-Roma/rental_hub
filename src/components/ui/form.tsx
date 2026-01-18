@@ -60,6 +60,8 @@ const useFormField = () => {
 		formItemId: `${id}-form-item`,
 		formDescriptionId: `${id}-form-item-description`,
 		formMessageId: `${id}-form-item-message`,
+		formState,
+		fieldState,
 		...fieldState,
 	};
 };
@@ -90,12 +92,13 @@ function FormLabel({
 	className,
 	...props
 }: React.ComponentProps<typeof LabelPrimitive.Root>) {
-	const { error, formItemId } = useFormField();
+	const { error, formItemId, isDirty, formState } = useFormField();
+	const hasError = !!error && (isDirty || formState.isSubmitted);
 
 	return (
 		<Label
 			data-slot="form-label"
-			data-error={!!error}
+			data-error={hasError}
 			className={cn("data-[error=true]:text-destructive", className)}
 			htmlFor={formItemId}
 			{...props}
@@ -104,15 +107,23 @@ function FormLabel({
 }
 
 function FormControl({ ...props }: React.ComponentProps<typeof Slot>) {
-	const { error, formItemId, formDescriptionId, formMessageId } =
-		useFormField();
+	const {
+		error,
+		formItemId,
+		formDescriptionId,
+		formMessageId,
+		isDirty,
+		formState,
+	} = useFormField();
+
+	const hasError = !!error && (isDirty || formState.isSubmitted);
 
 	return (
 		<Slot
 			data-slot="form-control"
 			id={formItemId}
 			aria-describedby={
-				!error
+				!hasError
 					? `${formDescriptionId}`
 					: `${formDescriptionId} ${formMessageId}`
 			}
@@ -136,8 +147,9 @@ function FormDescription({ className, ...props }: React.ComponentProps<"p">) {
 }
 
 function FormMessage({ className, ...props }: React.ComponentProps<"p">) {
-	const { error, formMessageId } = useFormField();
-	const body = error ? String(error?.message ?? "") : props.children;
+	const { error, formMessageId, isDirty, formState } = useFormField();
+	const shouldShow = !!error && (isDirty || formState.isSubmitted);
+	const body = shouldShow ? String(error?.message ?? "") : props.children;
 
 	if (!body) {
 		return null;
