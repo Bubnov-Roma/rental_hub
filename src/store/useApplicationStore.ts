@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { createClient } from "@/lib/supabase/client";
-import type { ClientFormValues } from "@/schemas/client.schema";
+import type { ClientFormValues } from "@/schemas";
 import type { ApplicationStatus, VerificationStatus } from "@/types";
 
 interface ApplicationState {

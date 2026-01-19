@@ -2,7 +2,7 @@
 
 import { useCallback, useState } from "react";
 import type z from "zod";
-import { clientFormSchema } from "@/schemas/client.schema";
+import { clientFormSchema } from "@/schemas";
 
 type ZodTypeName =
 	| "ZodObject"
