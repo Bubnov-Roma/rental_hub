@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { useUnsavedChanges } from "@/state/use-unsaved-changes";
+import { useUnsavedChanges } from "@/store";
 
 export function UnsavedChangesGuard() {
 	const { user } = useAuth();
