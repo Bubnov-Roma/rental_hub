@@ -39,7 +39,8 @@ export async function updateSession(request: NextRequest) {
 
 	// 1. Redirect unauthorized
 	if (!user && (isProtectedRoute || isAdminRoute)) {
-		url.pathname = "/auth/login";
+		url.pathname = "/auth";
+		url.searchParams.set("view", "contact");
 		url.searchParams.set("redirect", pathname);
 		return { supabaseResponse: NextResponse.redirect(url), user: null };
 	}
@@ -52,9 +53,7 @@ export async function updateSession(request: NextRequest) {
 			.eq("id", user.id)
 			.single();
 
-		const role = profile?.role;
-
-		if (role !== "admin" && role !== "manager") {
+		if (profile?.role !== "admin" && profile?.role !== "manager") {
 			url.pathname = "/dashboard";
 			return { supabaseResponse: NextResponse.redirect(url), user };
 		}
@@ -62,8 +61,13 @@ export async function updateSession(request: NextRequest) {
 
 	// 3. Redirect authorized users from login pages
 	if (user && isAuthRoute) {
-		url.pathname = "/dashboard";
-		return { supabaseResponse: NextResponse.redirect(url), user };
+		if (
+			!pathname.startsWith("/auth/callback") &&
+			!pathname.startsWith("/auth/confirm")
+		) {
+			url.pathname = "/dashboard";
+			return { supabaseResponse: NextResponse.redirect(url), user };
+		}
 	}
 
 	return { supabase, user, supabaseResponse };
