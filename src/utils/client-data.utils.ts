@@ -5,7 +5,7 @@ import type {
 	IndividualPartner,
 	LegalClient,
 	LegalPartner,
-} from "@/schemas/client.schema";
+} from "@/schemas";
 
 // ============================================================================
 // TYPE GUARDS
