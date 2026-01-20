@@ -13,9 +13,9 @@ import type { FieldPath } from "react-hook-form";
 // Individual
 import {
 	AddressesSection,
-	AgreementsBlock,
 	ContactsBlock,
 	ExpertiseSection,
+	FinalsSection,
 	IdentitySection,
 } from "@/components/forms/client-forms/client-types/sections/individual";
 // Legal
@@ -86,8 +86,8 @@ export const INDIVIDUAL_STEPS: readonly StepConfig[] = [
 		label: "Завершение",
 		title: "Завершение регистрации",
 		icon: CheckCircle2,
-		component: AgreementsBlock,
-		fields: ["agreements"],
+		component: FinalsSection,
+		fields: ["additional.referralSource"],
 		availableFor: ["individual", "individual_partner"],
 	},
 ] as const;
