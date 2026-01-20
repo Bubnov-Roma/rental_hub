@@ -23,7 +23,7 @@ function Label({
 		<LabelPrimitive.Root
 			data-slot="label"
 			className={cn(
-				"flex text-foreground/70 items-center gap-1.5 text-xs tracking-wider px-1 leading-none font-medium select-none",
+				"flex text-foreground/70 items-center gap-1.5 text-xs tracking-wider px-1 pb-1 leading-none font-stretch-50% select-none",
 				"group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50",
 				"peer-disabled:cursor-not-allowed peer-disabled:opacity-50",
 				required ? "text-foreground/80" : "text-foreground/50",
@@ -33,18 +33,8 @@ function Label({
 		>
 			{children}
 			{required && (
-				<span
-					className={cn(
-						"text-sm",
-						error ? "text-red-400/60" : "text-blue-400/60"
-					)}
-				>
+				<span className={cn(error ? "text-red-400/60" : "text-blue-400/60")}>
 					*
-				</span>
-			)}
-			{optional && !required && (
-				<span className="text-foreground/30 text-[10px] font-normal">
-					(опционально)
 				</span>
 			)}
 		</LabelPrimitive.Root>
