@@ -32,6 +32,11 @@ export const fetchDadata = async <T = DadataBaseSuggestion>(
 	const token = process.env.NEXT_PUBLIC_DADATA_API_KEY;
 	if (!query || query.length < 2 || !token) return [];
 
+	const timeoutId = setTimeout(() => {
+		if (options.signal?.aborted === false) {
+		}
+	}, 5000);
+
 	try {
 		const response = await fetch(
 			`https://suggestions.dadata.ru/suggestions/api/4_1/rs/suggest/${type}`,
@@ -47,11 +52,15 @@ export const fetchDadata = async <T = DadataBaseSuggestion>(
 			}
 		);
 
-		if (!response.ok) return [];
+		clearTimeout(timeoutId);
+
+		if (!response.ok) throw new Error(`Dadata error: ${response.status}`);
 		const data = await response.json();
 		return data.suggestions || [];
 	} catch (err) {
+		clearTimeout(timeoutId);
+		if (err instanceof Error && err.name === "AbortError") return [];
 		console.error(`Dadata ${type} error:`, err);
-		return [];
+		throw err;
 	}
 };
