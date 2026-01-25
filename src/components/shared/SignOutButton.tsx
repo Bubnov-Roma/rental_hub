@@ -1,7 +1,6 @@
 "use client";
 
 import { LogOut } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import { signOutAction } from "@/app/actions/auth";
@@ -17,7 +16,6 @@ import {
 	AlertDialogTrigger,
 	Button,
 } from "@/components/ui";
-import { createClient } from "@/lib/supabase/client";
 import { useUnsavedChanges } from "@/store";
 import { cn } from "@/utils";
 
@@ -33,24 +31,22 @@ export function SignOutButton({
 	const [isPending, setIsPending] = useState(false);
 	const [isOpen, setIsOpen] = useState(false);
 	const { isDirty, setDirty } = useUnsavedChanges();
-	const supabase = createClient();
-	const router = useRouter();
 
 	const handleSignOut = async () => {
 		setIsOpen(false);
 		setIsPending(true);
 		try {
-			const { error } = await supabase.auth.signOut();
-			if (error) throw error;
-			await signOutAction();
-			setDirty(false);
-			setIsOpen(false);
-			router.push("/");
-			router.refresh();
-		} catch (error) {
-			if (error instanceof Error && error.message === "NEXT_REDIRECT") {
-				console.error(error);
+			const result = await signOutAction();
+			if (result?.success) {
+				setDirty(false);
+				window.location.href = "/";
+			} else {
+				toast.error(result?.error || "Ошибка при выходе");
+				setIsPending(false);
 			}
+		} catch (error) {
+			console.error(error);
+			setIsPending(false);
 			toast.success("Вы успешно разлогинились");
 		} finally {
 			setIsPending(false);
@@ -63,14 +59,17 @@ export function SignOutButton({
 				<Button
 					variant="ghost"
 					disabled={isPending}
-					className={cn("gap-3 transition-all active:scale-95", className)}
+					className={cn(
+						"gap-4 rounded-md transition-all active:scale-95 flex justify-start hover:bg-red-500/30 hover:text-foreground",
+						className
+					)}
 				>
 					<LogOut size={18} className={cn(isPending && "animate-spin")} />
 					{showText && (isPending ? "Выход..." : "Выйти")}
 				</Button>
 			</AlertDialogTrigger>
 
-			<AlertDialogContent>
+			<AlertDialogContent className="glass-card">
 				<AlertDialogHeader className="space-y-3">
 					<div
 						className={cn(
@@ -82,10 +81,10 @@ export function SignOutButton({
 					>
 						<LogOut size={24} />
 					</div>
-					<AlertDialogTitle className="text-2xl font-bold text-white">
+					<AlertDialogTitle className="text-2xl font-bold">
 						{isDirty ? "Есть изменения" : "Уже уходите?"}
 					</AlertDialogTitle>
-					<AlertDialogDescription className="text-white/50 text-base leading-relaxed">
+					<AlertDialogDescription className="text-base leading-relaxed">
 						{isDirty
 							? "У вас остались несохраненные правки. Если выйдете сейчас, они исчезнут навсегда."
 							: "Вы уверены, что хотите завершить сеанс? Мы будем ждать вашего возвращения."}
@@ -94,10 +93,7 @@ export function SignOutButton({
 
 				<AlertDialogFooter className="mt-8 gap-3">
 					<AlertDialogCancel asChild>
-						<Button
-							variant="ghost"
-							className="rounded-2xl px-6 h-10 text-white/70 hover:text-white/90 hover:bg-white/5"
-						>
+						<Button variant="ghost" className="rounded-2xl px-6 h-10">
 							Отмена
 						</Button>
 					</AlertDialogCancel>
@@ -112,8 +108,8 @@ export function SignOutButton({
 							className={cn(
 								"rounded-2xl px-6 h-10 transition-all",
 								isDirty
-									? "bg-orange-500 hover:bg-orange-600 shadow-[0_0_20px_rgba(249,115,22,0.3)]"
-									: "bg-red-700/30 text-red/70 hover:text-red hover:bg-red/5 shadow-[0_0_-20px_rgba(239,8,8,0.3)]"
+									? "bg-red-500 hover:bg-orange-600 shadow-[0_0_20px_rgba(249,115,22,0.3)]"
+									: "hover:bg-red-700/70 hover:shadow-[0_0_-20px_rgba(239,8,8,3)] hover:text-white"
 							)}
 							disabled={isPending}
 						>
