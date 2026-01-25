@@ -50,15 +50,25 @@ const InputGroupItem = React.forwardRef<HTMLInputElement, InputGroupItemProps>(
 			position = "middle",
 			orientation = "horizontal",
 			corners,
+			onKeyDown,
 			...props
 		},
 		ref
 	) => {
+		const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+			if (e.key === "Enter") {
+				const form = e.currentTarget.form;
+				if (form) {
+					form.requestSubmit();
+				}
+			}
+			onKeyDown?.(e);
+		};
 		return (
 			<input
 				ref={ref}
 				className={cn(
-					"h-11 flex-1 min-w-0 border px-4 py-2 text-base transition-all outline-none",
+					"h-11 flex-1 min-w-0 px-4 py-2  text-base transition-all outline-none ",
 					"glass-input-neumorphic",
 					"disabled:opacity-20 disabled:cursor-not-allowed",
 					"md:text-sm",
@@ -66,6 +76,7 @@ const InputGroupItem = React.forwardRef<HTMLInputElement, InputGroupItemProps>(
 					getBorderClasses(corners),
 					className
 				)}
+				onKeyDown={handleKeyDown}
 				{...props}
 			/>
 		);
@@ -112,7 +123,8 @@ const InputGroupButton = React.forwardRef<
 			type="button"
 			ref={ref}
 			className={cn(
-				"h-11  border border-white/10 bg-white/5 hover:bg-white/10 transition-colors flex items-center justify-center",
+				"h-11 flex items-center justify-center",
+				"glass-input-neumorphic",
 				getRoundingClasses(corners),
 				getBorderClasses(corners),
 				className

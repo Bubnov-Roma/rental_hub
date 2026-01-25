@@ -5,25 +5,36 @@ import type * as React from "react";
 import { cn } from "@/utils";
 
 const buttonVariants = cva(
-	"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all duration-300 cursor-pointer disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
+	"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-2xl text-sm font-medium transition-all duration-200 cursor-pointer disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive active:scale-95",
 	{
 		variants: {
 			variant: {
+				// Neon
 				default: cn(
-					"bg-primary/10 backdrop-blur-md border border-white/10 shadow-[var(--nm-shadow)] active:shadow-[var(--nm-inset)] active:text-muted-foreground text-primary/40 hover:bg-primary/20",
-					"hover:shadow-glow-accent hover:border-primary/20 hover:text-white"
+					"bg-primary text-primary-foreground shadow-[0_0_20px_var(--brand-glow)] hover:shadow-[0_0_30px_var(--brand-glow)] hover:brightness-110"
+					// "bg-primary/10 backdrop-blur-md border border-white/10 shadow-[var(--nm-shadow)] active:shadow-[var(--nm-inset)] active:text-muted-foreground text-primary/40 hover:bg-primary/20",
+					// "hover:shadow-glow-accent hover:border-primary/20 hover:text-white"
 				),
+				// Glassmorphism
+				glass:
+					"bg-white/5 backdrop-blur-lg border border-white/10 text-foreground hover:bg-white/10 hover:border-primary/50 hover:shadow-[0_0_15px_var(--brand-glow)]",
 				accent:
 					"bg-background border border-primary/20 shadow-[var(--nm-shadow)] hover:shadow-[0_0_15px_rgba(var(--color-accent),0.2)] text-primary",
 				neumorph:
-					"shadow-[6px_6px_12px_rgba(0,0,0,0.5),-6px_-6px_12px_rgba(255,255,255,0.05)] active:shadow-inner disabled:shadow-none disabled:opacity-20",
+					"bg-background shadow-[6px_6px_12px_rgba(0,0,0,0.1),-6px_-6px_12px_rgba(255,255,255,0.05)] text-foreground active:shadow-inner",
+				// cn(
+				// "shadow-[2px_2px_8px_rgba(0,0,0,0.2),1px_-2px_15px_rgba(255,255,255,0.3)] backdrop-blur active:shadow-inner disabled:shadow-none disabled:opacity-20 text-foreground bg-background active:bg-muted-foreground/2 active:text-muted-foreground"
+				// ),
 				destructive:
 					"bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
-				outline: "border border-border hover:shadow-[var(--nm-shadow)]",
+				outline:
+					"border-2 border-primary/20 bg-transparent hover:bg-primary/5 hover:border-primary text-primary",
+				// outline: "border border-border hover:shadow-[var(--nm-shadow)]",
 				secondary:
 					"bg-secondary/50 hover:bg-secondary/100 text-secondary-foreground shadow-inner border border-white/5",
-				ghost:
-					"hover:bg-accent/5 hover:text-accent hover:shadow-[var(--nm-shadow)]",
+				ghost: "hover:bg-primary/10 text-muted-foreground hover:text-primary",
+				// ghost:
+				// 	"hover:bg-accent/5 hover:text-accent hover:shadow-[var(--nm-shadow)]",
 				link: "text-primary underline-offset-4 hover:underline",
 			},
 			size: {
