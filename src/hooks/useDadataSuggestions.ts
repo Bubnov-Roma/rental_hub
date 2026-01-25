@@ -26,12 +26,15 @@ export const useDadataSuggestions = <T extends DadataType>(
 
 	const [suggestions, setSuggestions] = useState<DadataResult<T>[]>([]);
 	const [isLoading, setIsLoading] = useState(false);
+	const [isError, setIsError] = useState(false);
+
 	const abortControllerRef = useRef<AbortController | null>(null);
 
 	useEffect(() => {
 		if (abortControllerRef.current) {
 			abortControllerRef.current.abort();
 		}
+
 		const load = async () => {
 			if (!query || query.length < minLength) {
 				setSuggestions([]);
@@ -41,13 +44,15 @@ export const useDadataSuggestions = <T extends DadataType>(
 
 			setIsLoading(true);
 			abortControllerRef.current = new AbortController();
+
 			try {
-				const results = await fetchDadata<DadataResult<T>>(type, query);
+				const results = await fetchDadata<DadataResult<T>>(type, query, {
+					signal: abortControllerRef.current?.signal,
+				});
 				setSuggestions(results);
-				setIsLoading(false);
 			} catch (error) {
 				if (error instanceof Error && error.name !== "AbortError") {
-					console.error("Dadata error:", error);
+					setIsError(true);
 				}
 			} finally {
 				setIsLoading(false);
@@ -59,11 +64,12 @@ export const useDadataSuggestions = <T extends DadataType>(
 			clearTimeout(timer);
 			abortControllerRef.current?.abort();
 		};
-	}, [query, type, minLength, debounceMs]);
+	}, [query, debounceMs, minLength, type]);
 
 	return {
 		suggestions,
 		isLoading,
+		isError,
 		isEmpty: suggestions.length === 0,
 		hasResults: suggestions.length > 0,
 	};
