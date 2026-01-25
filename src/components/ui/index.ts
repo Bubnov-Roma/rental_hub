@@ -1,4 +1,5 @@
 export * from "./alert-dialog";
+export * from "./animate-spin";
 export * from "./badge";
 export * from "./button";
 export * from "./calendar";
