@@ -1,76 +1,66 @@
 .card {
-  background: var(--brand-bg);
-  backdrop-filter: blur(var(--blur-md));
-  position: relative;
-  transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
-  cursor: pointer;
-  
-  /* Glassmorphism */
-  -webkit-backdrop-filter: blur(12px);
-  
-  /* Граница с эффектом стекла */
+  background: var(--card-bg);
+  backdrop-filter: blur(16px);
   border: 1px solid var(--border-soft);
-  
-  /* Neumorphism Мягкое свечение */
-  box-shadow: var(--shadow-card), 0 0 30px oklch(var(--accent-lch) / 0.2);
-  border-color: oklch(var(--accent-lch) / 0.4);
-  border-radius: var(--radius-2xl);
-  z-index: 1;
+  box-shadow: var(--card-shadow);
+  transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  color: var(--foreground);
 }
 
-/* Эффект при наведении (Radial Gradient + Lift) */
+/* Эффект при наведении */
 .card:hover {
+  border-color: var(--brand-color);
+  box-shadow: var(--card-shadow-hover), 0 0 20px -5px var(--brand-color);
+  background: var(--brand-bg-hover);
   transform: translateY(-5px);
-  background: radial-gradient(
-    circle at top left,
-    rgba(255, 255, 255, 0.8) 0%,
-    rgba(255, 255, 255, 0.4) 100%
-  );
-  /* Multi-layer shadow при ховере */
-    border-color: oklch(var(--accent-lch) / 0.8);
-    box-shadow: 0 0 40px oklch(var(--accent-lch) / 0.3);
 }
 
-/* Эффект нажатия (Pure Neumorphism - Вдавленность) */
+/* Чистый Neumorphism при нажатии (вдавленность) */
 .card:active {
-  transform: translateY(-2px) scale(0.98);
+  transform: translateY(-2px) scale(0.97);
   box-shadow: 
-    inset 6px 6px 12px rgba(0, 0, 0, 0.1),
-    inset -6px -6px 12px rgba(255, 255, 255, 0.8);
-  transition: all 0.2s;
+    inset 4px 4px 12px oklch(0 0 0 / 0.1),
+    inset -4px -4px 12px oklch(1 0 0 / 0.05);
 }
 
+/* Состояние Selected */
 .selected {
-  /* Подсветка выбранной карточки */
-  box-shadow: 
-    0 0 0 4px rgba(var(--brand-rgb), 0),
-    10px 10px 25px rgba(0, 0, 0, 0.1);
+  border-color: var(--brand-color);
+  border-width: 2px;
+  background: var(--brand-bg-hover);
+  box-shadow: 0 10px 30px -10px var(--brand-color);
 }
 
-/* Круги теперь с радиальным градиентом */
+/* Размытые блики (круги) */
 .circle {
   position: absolute;
-  width: 200px;
-  height: 200px;
+  width: 250px;
+  height: 250px;
   background: radial-gradient(circle, var(--brand-color) 0%, transparent 70%);
   border-radius: 50%;
-  opacity: 0.1;
+  opacity: 0.15;
+  filter: blur(40px);
   z-index: -1;
-  filter: blur(20px);
-  transition: all 0.6s ease;
+  transition: all 0.8s ease;
+  pointer-events: none;
 }
 
 .card:hover .circle {
-  opacity: 0.2;
-  transform: scale(1.5);
+  opacity: 0.3;
+  transform: scale(1.2) translate(-10%, -10%);
 }
 
 .iconWrapper {
-  transition: all 0.3s ease;
-  background: rgba(255, 255, 255, 0.5);
-  box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.05);
+  background: oklch(1 0 0 / 0.1);
+  border: 1px solid var(--card-border);
+  transition: all 0.4s ease;
+  color: var(--brand-color);
 }
 
 .card:hover .iconWrapper {
-  box-shadow: 0 10px 20px rgba(var(--brand-rgb), 0.3);
+  transform: scale(1.1) rotate(-5deg);
+  background: var(--brand-color);
+  color: white;
 }
