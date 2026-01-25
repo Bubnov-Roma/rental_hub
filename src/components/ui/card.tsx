@@ -7,21 +7,21 @@ function Card({ className, ...props }: React.ComponentProps<"div">) {
 		<div
 			data-slot="card"
 			className={cn(
-				"glass-card group relative flex flex-col overflow-hidden transition-all duration-500 rounded-[24px] border border-white/10",
+				"glass-card group relative flex flex-col overflow-hidden transition-all duration-200 rounded-[32px] p-2",
 				className
 			)}
 			{...props}
 		>
-			{/* 1. Background Noise Effects (Абсолютное позиционирование, z-0) */}
+			{/* 1. Background Noise Effects ) */}
 			<div
-				className="absolute inset-0 opacity-10 mix-blend-overlay pointer-events-none z-0"
+				className="absolute inset-0 opacity-3 mix-blend-overlay pointer-events-none z-0"
 				style={{
 					backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
 				}}
 			/>
 
 			{/* 2. Hover Glow & Refraction */}
-			<div className="absolute inset-0 bg-linear-to-br from-white/8 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none z-0" />
+			<div className="absolute top-0 left-0 right-0 inset-0 bg-linear-to-br from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none z-0" />
 			<div className="absolute top-0 left-0 right-0 h-px bg-linear-to-r from-transparent via-white/20 to-transparent pointer-events-none z-0" />
 
 			{/* 3. Контентная часть (z-10, чтобы быть выше шума) */}
