@@ -13,7 +13,7 @@ import type { FieldPath } from "react-hook-form";
 // Individual
 import {
 	AddressesSection,
-	ContactsBlock,
+	ContactsSection,
 	ExpertiseSection,
 	FinalsSection,
 	IdentitySection,
@@ -68,7 +68,7 @@ export const INDIVIDUAL_STEPS: readonly StepConfig[] = [
 		label: "Связь",
 		title: "Контактная информация",
 		icon: MessageSquare,
-		component: ContactsBlock,
+		component: ContactsSection,
 		fields: ["applicationData.contacts"],
 		availableFor: ["individual", "individual_partner"],
 	},

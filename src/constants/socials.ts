@@ -57,7 +57,7 @@ export const SOCIAL_OPTIONS: readonly SocialOption[] = [
 		id: "Max",
 		label: "X (Twitter)",
 		icon: X,
-		color: "#FFFFFF",
+		color: "#fEBBED",
 		placeholder: "@username",
 	},
 ] as const;
