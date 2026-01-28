@@ -60,7 +60,7 @@ export function SignOutButton({
 					variant="ghost"
 					disabled={isPending}
 					className={cn(
-						"gap-4 rounded-md transition-all active:scale-95 flex justify-start hover:bg-red-500/30 hover:text-foreground",
+						"gap-4 transition-all active:scale-95 flex justify-start hover:bg-red-500/30 hover:text-foreground",
 						className
 					)}
 				>
@@ -69,14 +69,14 @@ export function SignOutButton({
 				</Button>
 			</AlertDialogTrigger>
 
-			<AlertDialogContent className="glass-card">
+			<AlertDialogContent>
 				<AlertDialogHeader className="space-y-3">
 					<div
 						className={cn(
 							"w-12 h-12 rounded-2xl flex items-center justify-center mb-2 mx-auto sm:mx-0",
 							isDirty
 								? "bg-orange-500/20 text-orange-400"
-								: "bg-red-500/20 text-red-400"
+								: "bg-red-600/60 text-white-400"
 						)}
 					>
 						<LogOut size={24} />
@@ -109,7 +109,7 @@ export function SignOutButton({
 								"rounded-2xl px-6 h-10 transition-all",
 								isDirty
 									? "bg-red-500 hover:bg-orange-600 shadow-[0_0_20px_rgba(249,115,22,0.3)]"
-									: "hover:bg-red-700/70 hover:shadow-[0_0_-20px_rgba(239,8,8,3)] hover:text-white"
+									: "hover:bg-red-600/60 hover:shadow-[0_0_-20px_rgba(239,8,8,3)] hover:text-white"
 							)}
 							disabled={isPending}
 						>

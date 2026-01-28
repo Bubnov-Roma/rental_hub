@@ -32,20 +32,13 @@ function AlertDialogOverlay({
 	...props
 }: React.ComponentProps<typeof AlertDialogPrimitive.Overlay>) {
 	return (
-		<AlertDialogPrimitive.Overlay
-			asChild
-			className={cn(
-				"fixed inset-0 z-50 flex items-center justify-center p-4",
-				className
-			)}
-			{...props}
-		>
+		<AlertDialogPrimitive.Overlay asChild {...props}>
 			<motion.div
 				initial={{ opacity: 0, backdropFilter: "blur(0px)" }}
-				animate={{ opacity: 1, backdropFilter: "blur(16px)" }}
+				animate={{ opacity: 1, backdropFilter: "blur(12px)" }}
 				exit={{ opacity: 0, backdropFilter: "blur(0px)" }}
-				transition={{ duration: 0.4 }}
-				className="fixed inset-0 bg-black/40"
+				transition={{ duration: 0.3, ease: "easeOut" }}
+				className="fixed inset-0 z-70"
 			>
 				<div className="absolute inset-0 bg-noise opacity-[0.03]" />
 			</motion.div>
@@ -61,35 +54,34 @@ function AlertDialogContent({
 	return (
 		<AlertDialogPortal>
 			<AlertDialogOverlay />
-			<motion.div
-				initial={{ opacity: 0, scale: 0.95, y: 10 }}
-				animate={{ opacity: 1, scale: 1, y: 0 }}
-				exit={{ opacity: 0, scale: 0.95, y: 10 }}
-				transition={{
-					type: "spring",
-					damping: 25,
-					stiffness: 400,
-					delay: 0.4,
-				}}
-				className="fixed z-50 left-0 top-0 w-full h-full pointer-events-none flex items-center justify-center"
-			>
-				<AlertDialogPrimitive.Content
-					data-slot="alert-dialog-content"
-					className={cn(
-						"relative pointer-events-auto",
-						"border-white/10 rounded-[32px] p-8 overflow-hidden",
-						"bg-glass-bg border border-glass-border shadow-2xl;",
-						"fixed top-[50%] left-[50%] translate-x-[-50%] translate-y-[-50%]",
-						"w-full max-w-[calc(100%-2rem)] sm:max-w-lg shadow-2xl",
-						className
-					)}
-					{...props}
+			<div className="fixed inset-0 z-70 pointer-events-none flex items-center justify-center">
+				<motion.div
+					initial={{ opacity: 0, scale: 0.95, y: 8 }}
+					animate={{ opacity: 1, scale: 1, y: 0 }}
+					exit={{ opacity: 0, scale: 0.95, y: 10 }}
+					transition={{
+						type: "keyframes",
+						damping: 20,
+						stiffness: 10,
+					}}
+					className="w-full max-w-lg"
 				>
-					<div className="absolute inset-0 bg-noise opacity-[0.09] pointer-events-none" />
-					<div className="absolute inset-0 glass-glow-subtle pointer-events-none" />
-					<div className="relative z-10">{children}</div>
-				</AlertDialogPrimitive.Content>
-			</motion.div>
+					<AlertDialogPrimitive.Content
+						data-slot="alert-dialog-content"
+						className={cn(
+							"relative pointer-events-auto bg-background/70 backdrop-blur-2xl",
+							"rounded-[32px] p-8 overflow-hidden shadow-2xl border border-white/10",
+							"outline-none",
+							className
+						)}
+						{...props}
+					>
+						<div className="absolute inset-0 bg-noise opacity-[0.09] pointer-events-none" />
+						<div className="absolute inset-0 glass-glow-subtle pointer-events-none" />
+						<div className="relative z-10">{children}</div>
+					</AlertDialogPrimitive.Content>
+				</motion.div>
+			</div>
 		</AlertDialogPortal>
 	);
 }
