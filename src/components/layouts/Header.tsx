@@ -1,5 +1,6 @@
 "use client";
 
+import { AnimatePresence, motion } from "framer-motion";
 import { Camera, Menu, X } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
@@ -16,69 +17,86 @@ export function Header() {
 	];
 
 	return (
-		<header className="sticky top-0 z-50 border-b bg-white/95 backdrop-blur supports-backdrop-filter:bg-white/60">
-			<div className="container mx-auto px-4">
-				<div className="flex h-16 items-center justify-between">
-					{/* Login */}
-					<Link href="/" className="flex items-center gap-2">
-						<Camera className="h-8 w-8 text-blue-600" />
-						<span className="text-xl font-bold">RentalHub</span>
-					</Link>
-
-					{/* For desktop */}
-					<nav className="hidden md:flex items-center gap-8">
-						{navItems.map((item) => (
-							<Link
-								key={item.href}
-								href={item.href}
-								className="text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors"
-							>
-								{item.label}
-							</Link>
-						))}
-					</nav>
-
-					{/* Sidebar for mobile */}
-					<div className="md:hidden">
-						<Button
-							variant="ghost"
-							size="icon"
-							onClick={() => setIsMenuOpen(!isMenuOpen)}
+		<>
+			<header className="header-glass">
+				<div className="container mx-auto">
+					<div className="flex h-20 items-center justify-between">
+						{/* Logo */}
+						<Link
+							href="/"
+							className="flex items-center gap-2.5 group relative z-60"
 						>
-							{isMenuOpen ? (
-								<X className="h-5 w-5" />
-							) : (
-								<Menu className="h-5 w-5" />
-							)}
-						</Button>
-
-						{isMenuOpen && (
-							<div className="fixed inset-0 top-16 z-50 bg-white">
-								<div className="flex flex-col p-6 space-y-4">
-									{navItems.map((item) => (
-										<Link
-											key={item.href}
-											href={item.href}
-											className="py-3 text-lg font-medium text-gray-900 hover:text-blue-600"
-											onClick={() => setIsMenuOpen(false)}
-										>
-											{item.label}
-										</Link>
-									))}
-									<div className="pt-4 border-t">
-										<UserMenu />
-									</div>
-								</div>
+							<div className="p-2 rounded-xl bg-primary/10 text-primary group-hover:scale-110 transition-transform shadow-[0_0_15px_var(--brand-glow)]">
+								<Camera className="h-6 w-6" />
 							</div>
-						)}
-					</div>
+							<span className="text-xl font-black tracking-tight bg-clip-text text-foreground">
+								Linza
+							</span>
+						</Link>
+						{/* Desktop Nav */}
+						<nav className="hidden md:flex items-center gap-1 p-1.5 rounded-full z-50">
+							{navItems.map((item) => (
+								<Link
+									key={item.href}
+									href={item.href}
+									className="px-5 py-2 text-sm font-semibold text-foreground/60 hover:text-foreground hover:scale-102 rounded-full transition-all"
+								>
+									{item.label}
+								</Link>
+							))}
+						</nav>
 
-					{/* User profile */}
-					<div className="hidden md:block">
-						<UserMenu />
+						{/* Actions */}
+						<div className="flex items-center gap-3 relative z-60">
+							<div className="hidden md:block">
+								<UserMenu />
+							</div>
+							{/* Mobile Toggle */}
+							<Button
+								variant="glass"
+								size="icon"
+								className="md:hidden rounded-xl size-10"
+								onClick={() => setIsMenuOpen(!isMenuOpen)}
+							>
+								{isMenuOpen ? <X size={20} /> : <Menu size={20} />}
+							</Button>
+						</div>
 					</div>
 				</div>
-			</div>
-		</header>
+			</header>
+			{/* Mobile Menu Overlay */}
+			<AnimatePresence>
+				{isMenuOpen && (
+					<motion.div
+						initial={{ opacity: 0, y: -10 }}
+						animate={{ opacity: 1, y: 0 }}
+						exit={{ opacity: 0, y: -20 }}
+						transition={{ duration: 0.3, ease: "easeInOut" }}
+						className="fixed inset-0 z-35 md:hidden bg-card/80 backdrop-blur-xl"
+					>
+						<div className="flex flex-col p-10 pt-24 space-y-8">
+							{navItems.map((item, i) => (
+								<Link
+									key={item.href}
+									href={item.href}
+									style={{ transitionDelay: `${i * 50}ms` }}
+									className="text-2xl font-bold text-foreground animate-in slide-in-from-left-8 fill-mode-both"
+								>
+									{item.label}
+								</Link>
+							))}
+							<motion.div
+								initial={{ opacity: 0 }}
+								animate={{ opacity: 1 }}
+								transition={{ delay: 0.4 }}
+								className="pt-8 border-t border-foreground/10"
+							>
+								<UserMenu />
+							</motion.div>
+						</div>
+					</motion.div>
+				)}
+			</AnimatePresence>
+		</>
 	);
 }

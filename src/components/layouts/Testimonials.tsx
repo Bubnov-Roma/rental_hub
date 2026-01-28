@@ -62,21 +62,21 @@ export function Testimonials() {
 	if (!currentTestimonial) return null;
 
 	return (
-		<section className="py-16 bg-linear-to-b from-gray-50 to-white">
+		<section className="py-16 bg-linear-to-b from-gray-50 to-background">
 			<div className="container mx-auto px-4">
 				<div className="mx-auto max-w-5xl">
 					<div className="mb-12 text-center">
-						<h2 className="mb-4 text-3xl font-bold text-gray-900 sm:text-4xl">
+						<h2 className="mb-4 text-3xl font-bold text-foreground/90 sm:text-4xl">
 							Отзывы наших клиентов
 						</h2>
-						<p className="text-lg text-gray-600">
+						<p className="text-lg text-foreground/60">
 							Более 1000 успешных аренд и 98% положительных отзывов
 						</p>
 					</div>
 
 					<div className="relative">
-						<div className="overflow-hidden glassrounded-2xl p-8 shadow-xl md:p-12">
-							<Quote className="mb-6 h-12 w-12 text-blue-100" />
+						<div className="overflow-hidden rounded-2xl p-8 shadow-xs md:p-12 bg-white">
+							<Quote className="mb-6 h-12 w-12 text-blue-200" />
 
 							<div className="mb-8">
 								<p className="text-lg italic text-gray-700 md:text-xl">
@@ -90,10 +90,10 @@ export function Testimonials() {
 										{currentTestimonial.avatar}
 									</div>
 									<div>
-										<h4 className="font-semibold text-gray-900">
+										<h4 className="font-semibold text-gray-800">
 											{currentTestimonial?.name}
 										</h4>
-										<p className="text-sm text-gray-600">
+										<p className="text-sm text-gray-500">
 											{currentTestimonial?.role}
 										</p>
 									</div>

@@ -1,11 +1,12 @@
 "use client";
 
-import { Bell, Package, User as UserIcon } from "lucide-react";
+import { Package, User as UserIcon } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { ThemeToggle } from "@/components/shared";
 import { SignOutButton } from "@/components/shared/SignOutButton";
-import { Button } from "@/components/ui/button";
 import {
+	Button,
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuGroup,
@@ -13,22 +14,21 @@ import {
 	DropdownMenuLabel,
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@/components/ui";
 import { useAuth } from "@/hooks/useAuth";
+
 export function UserMenu() {
 	const { user } = useAuth();
 	const router = useRouter();
 
 	if (!user) {
 		return (
-			<div className="flex gap-2">
-				<Button variant="ghost" onClick={() => router.push("/auth/login")}>
-					Войти
-				</Button>
-				<Button onClick={() => router.push("/auth/register")}>
-					Регистрация
-				</Button>
-			</div>
+			<Button
+				variant="default"
+				onClick={() => router.push("/auth?view=contact")}
+			>
+				Войти
+			</Button>
 		);
 	}
 
@@ -36,19 +36,13 @@ export function UserMenu() {
 	const avatar = user.user_metadata?.avatar_url;
 
 	return (
-		<div className="flex items-center gap-4">
-			<Button
-				variant="ghost"
-				size="icon"
-				className="relative"
-				onClick={() => router.push("/dashboard/notifications")}
-			>
-				<Bell className="h-5 w-5" />
-			</Button>
-
+		<div className="flex items-center gap-3">
 			<DropdownMenu>
 				<DropdownMenuTrigger asChild>
-					<Button variant="ghost" className="relative h-10 w-10 rounded-full">
+					<Button
+						variant="ghost"
+						className="relative h-10 w-10 rounded-full p-2"
+					>
 						{avatar ? (
 							<Image
 								src={avatar}
@@ -57,13 +51,16 @@ export function UserMenu() {
 								className="rounded-full object-cover"
 							/>
 						) : (
-							<div className="flex h-full w-full items-center justify-center rounded-full bg-blue-600 text-white">
+							<div className="flex h-full w-full items-center justify-center rounded-full bg-primary text-white">
 								{name?.charAt(0).toUpperCase()}
 							</div>
 						)}
 					</Button>
 				</DropdownMenuTrigger>
-				<DropdownMenuContent className="w-56" align="end">
+				<DropdownMenuContent
+					className="z-65 w-56 shadow-glass glass-card bg-background/60 backdrop-blur-2xl rounded-2xl border-white/20 mx-2"
+					align="end"
+				>
 					<DropdownMenuLabel>
 						<div className="flex flex-col space-y-1">
 							<p className="text-sm font-medium">{name}</p>
@@ -73,16 +70,20 @@ export function UserMenu() {
 					<DropdownMenuSeparator />
 					<DropdownMenuGroup>
 						<DropdownMenuItem onClick={() => router.push("/dashboard")}>
-							<Package className="mr-2 h-4 w-4" /> <span>Мои бронирования</span>
+							<Package className="mr-2 h-4 w-4" />
+							<span>Бронирования</span>
 						</DropdownMenuItem>
 						<DropdownMenuItem onClick={() => router.push("/dashboard/profile")}>
-							<UserIcon className="mr-2 h-4 w-4" /> <span>Профиль</span>
+							<UserIcon className="mr-2 h-4 w-4" />
+							<span>Профиль</span>
+						</DropdownMenuItem>
+
+						<DropdownMenuItem>
+							<ThemeToggle className="w-full" />
 						</DropdownMenuItem>
 					</DropdownMenuGroup>
 					<DropdownMenuSeparator />
-					<div className="p-1">
-						<SignOutButton variant="ghost" className="w-full h-8 text-sm" />
-					</div>
+					<SignOutButton className="w-full h-8 text-sm" />
 				</DropdownMenuContent>
 			</DropdownMenu>
 		</div>
