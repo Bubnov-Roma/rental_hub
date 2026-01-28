@@ -3,14 +3,14 @@ import Link from "next/link";
 
 export function Footer() {
 	return (
-		<footer className="border-t bg-gray-50">
+		<footer>
 			<div className="container mx-auto px-4 py-12">
 				<div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4">
 					{/* Brand */}
 					<div>
 						<Link href="/" className="flex items-center gap-2">
 							<Camera className="h-8 w-8 text-blue-600" />
-							<span className="text-xl font-bold">Rentacamera</span>
+							<span className="text-xl font-bold">Linza</span>
 						</Link>
 						<p className="mt-4 text-gray-600">
 							Платформа для аренды профессионального фото-видео оборудования
@@ -130,7 +130,7 @@ export function Footer() {
 				<div className="mt-8 border-t pt-8">
 					<div className="flex flex-col items-center justify-between gap-4 md:flex-row">
 						<p className="text-sm text-gray-600">
-							© {new Date().getFullYear()} RentalHub. Все права защищены.
+							© {new Date().getFullYear()} Linza. Все права защищены.
 						</p>
 						<div className="flex gap-6">
 							<Link
