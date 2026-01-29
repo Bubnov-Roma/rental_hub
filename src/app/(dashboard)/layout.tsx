@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { createClient } from "@/lib/supabase/server";
+import { ApplicationInitializer } from "@/providers/application-initializer";
 
 export default async function DashboardLayout({
 	children,
@@ -17,12 +18,20 @@ export default async function DashboardLayout({
 		redirect("/auth/login");
 	}
 
+	const { data: initialApp } = await supabase
+		.from("client_applications")
+		.select("*")
+		.eq("user_id", user.id)
+		.single();
+
 	return (
-		<div className="flex min-h-screen">
-			<Sidebar />
-			<div className="flex-1">
-				<div className="container mx-auto p-6">{children}</div>
-			</div>
+		<div className="min-h-screen">
+			<ApplicationInitializer userId={user.id} initialData={initialApp}>
+				<div className="flex">
+					<Sidebar />
+					<main className="flex-1 overflow-y-auto">{children}</main>
+				</div>
+			</ApplicationInitializer>
 		</div>
 	);
 }
