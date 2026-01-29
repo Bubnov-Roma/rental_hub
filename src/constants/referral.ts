@@ -17,12 +17,12 @@ export const REFERRAL_OPTIONS = [
 		id: "photo_school",
 		label: "Фотошкола",
 		color: "#fbbf24",
-		placeholder: "Расскажите в какой фотошколе Вы узнали про нас",
+		placeholder: "Расскажите в какой фотошколе вы узнали про нас",
 	},
 	{
 		id: "other",
 		label: "Другое",
 		color: "#a78bfa",
-		placeholder: "Поделитесь историей как Вы нас нашли",
+		placeholder: "Поделитесь историей как вы нас нашли",
 	},
 ];
