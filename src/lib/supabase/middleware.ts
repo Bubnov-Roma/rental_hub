@@ -25,50 +25,58 @@ export async function updateSession(request: NextRequest) {
 		}
 	);
 
-	const {
-		data: { user },
-	} = await supabase.auth.getUser();
-	const url = request.nextUrl.clone();
-	const { pathname } = url;
+	try {
+		const {
+			data: { user },
+			error: userError,
+		} = await supabase.auth.getUser();
 
-	// Paths
-	const isAuthRoute = pathname.startsWith("/auth");
-	const isAdminRoute = pathname.startsWith("/admin");
-	const isProtectedRoute =
-		pathname.startsWith("/dashboard") || pathname.startsWith("/booking");
-
-	// 1. Redirect unauthorized
-	if (!user && (isProtectedRoute || isAdminRoute)) {
-		url.pathname = "/auth";
-		url.searchParams.set("view", "contact");
-		url.searchParams.set("redirect", pathname);
-		return { supabaseResponse: NextResponse.redirect(url), user: null };
-	}
-
-	// 2.Checking ROLES in the database for the admin panel
-	if (user && isAdminRoute) {
-		const { data: profile } = await supabase
-			.from("profiles")
-			.select("role")
-			.eq("id", user.id)
-			.single();
-
-		if (profile?.role !== "admin" && profile?.role !== "manager") {
-			url.pathname = "/dashboard";
-			return { supabaseResponse: NextResponse.redirect(url), user };
+		if (userError?.message.includes("fetch")) {
+			return { supabaseResponse, user: null };
 		}
-	}
-
-	// 3. Redirect authorized users from login pages
-	if (user && isAuthRoute) {
-		if (
-			!pathname.startsWith("/auth/callback") &&
-			!pathname.startsWith("/auth/confirm")
-		) {
-			url.pathname = "/dashboard";
-			return { supabaseResponse: NextResponse.redirect(url), user };
+		const url = request.nextUrl.clone();
+		const { pathname } = url;
+		/* Paths */
+		const isAuthRoute = pathname.startsWith("/auth");
+		const isAdminRoute = pathname.startsWith("/admin");
+		const isProtectedRoute =
+			pathname.startsWith("/dashboard") || pathname.startsWith("/booking");
+		/* check network */
+		if (userError?.message.includes("fetch")) {
+			return { supabaseResponse, user: null };
 		}
-	}
+		/* Redirect unauthorized */
+		if (!user && (isProtectedRoute || isAdminRoute)) {
+			url.pathname = "/auth";
+			url.searchParams.set("view", "contact");
+			url.searchParams.set("redirect", pathname);
+			return { supabaseResponse: NextResponse.redirect(url), user: null };
+		}
+		/* Checking roles in the database for the admin panel */
+		if (user && isAdminRoute) {
+			const { data: profile } = await supabase
+				.from("profiles")
+				.select("role")
+				.eq("id", user.id)
+				.single();
 
-	return { supabase, user, supabaseResponse };
+			if (profile?.role !== "admin" && profile?.role !== "manager") {
+				url.pathname = "/dashboard";
+				return { supabaseResponse: NextResponse.redirect(url), user };
+			}
+		}
+		/*  Redirect authorized users from login pages */
+		if (user && isAuthRoute) {
+			if (
+				!pathname.startsWith("/auth/callback") &&
+				!pathname.startsWith("/auth/confirm")
+			) {
+				url.pathname = "/dashboard";
+				return { supabaseResponse: NextResponse.redirect(url), user };
+			}
+		}
+		return { supabase, user, supabaseResponse };
+	} catch {
+		return { supabaseResponse, user: null };
+	}
 }
