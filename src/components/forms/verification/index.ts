@@ -1,2 +1,2 @@
-export * from "./RadarAnimation";
-export * from "./VerificationRadar";
+export * from "./VerificationBadge";
+export * from "./VerificationBanner";
