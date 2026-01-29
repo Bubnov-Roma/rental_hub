@@ -8,6 +8,7 @@ import {
 	useEffect,
 	useState,
 } from "react";
+import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { getErrorMessage } from "@/utils";
 
@@ -55,6 +56,11 @@ export function AuthProvider({
 		async (userId: string) => {
 			if (!userId) return;
 
+			if (typeof window !== "undefined" && !window.navigator.onLine) {
+				console.warn("Offline: skipping profile fetch");
+				return;
+			}
+
 			try {
 				const { data, error } = await supabase
 					.from("profiles")
@@ -64,15 +70,20 @@ export function AuthProvider({
 
 				if (error) {
 					if (error.code === "PGRST116") {
-						console.warn("Profile not found for user:", userId);
+						setProfile(null);
 					} else {
 						throw error;
 					}
 				}
 				setProfile(data as Profile);
 			} catch (err) {
-				console.error("Error fetching profile:", getErrorMessage(err) || err);
-				setProfile(null);
+				const errMsg = getErrorMessage(err);
+				if (errMsg.includes("Failed to fetch") || !window.navigator.onLine) {
+					console.error("Network error, keeping current profile state");
+					toast.error("Проблемы с интернетом, проверьте соединение");
+				} else {
+					setProfile(null);
+				}
 			} finally {
 				setIsLoading(false);
 			}
