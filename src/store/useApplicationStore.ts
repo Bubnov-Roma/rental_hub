@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { createClient } from "@/lib/supabase/client";
 import type { ClientFormValues } from "@/schemas";
-import type { ApplicationStatus, VerificationStatus } from "@/types";
+import type { ApplicationStatus } from "@/types";
 
 interface ApplicationState {
 	status: ApplicationStatus;
@@ -41,7 +41,7 @@ export const useApplicationStore = create<ApplicationState>((set) => ({
 				(payload) => {
 					console.log("Realtime update received:", payload.new);
 					set({
-						status: payload.new.status as VerificationStatus,
+						status: payload.new.status,
 						applicationData: payload.new.application_data,
 					});
 				}
