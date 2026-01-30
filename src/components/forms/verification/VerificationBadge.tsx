@@ -9,6 +9,9 @@ import {
 	DialogHeader,
 	DialogTitle,
 	DialogTrigger,
+	Tooltip,
+	TooltipContent,
+	TooltipTrigger,
 } from "@/components/ui";
 import { Button } from "@/components/ui/button";
 import { VERIFICATION_CONFIG as config } from "@/constants";
@@ -23,32 +26,31 @@ export const VerificationBadge: React.FC<Props> = ({
 	isClientPartner = false,
 }) => {
 	const status = useApplicationStore((state) => state.status);
-
 	const current = config[status] || config.pending;
 
-	const IconComponent = current.icon;
 	return (
 		<Dialog>
 			<form>
-				<DialogTrigger asChild>
-					<div
-						className={cn(
-							"flex items-center gap-2 px-3 py-1 rounded-full border transition-all duration-500",
-							current.bg,
-							current.border
-						)}
-					>
-						<current.icon className={cn("w-4 h-4", current.color)} />
-						<span
-							className={cn(
-								"text-[10px] font-bold uppercase tracking-widest",
-								current.color
-							)}
-						>
-							{isClientPartner ? "Partner" : current.title}
-						</span>
-					</div>
-				</DialogTrigger>
+				<Tooltip key={current.title}>
+					<TooltipTrigger asChild>
+						<DialogTrigger asChild>
+							<Button className={cn(current.bg, current.border)}>
+								<current.icon
+									className={cn("w-4 h-4 md:hidden", current.color)}
+								/>
+								<span
+									className={cn(
+										"hidden md:inline-block text-[10px] font-bold uppercase tracking-widest",
+										current.color
+									)}
+								>
+									{isClientPartner ? "Partner" : current.title}
+								</span>
+							</Button>
+						</DialogTrigger>
+					</TooltipTrigger>
+					<TooltipContent className="md:hidden">{current.title}</TooltipContent>
+				</Tooltip>
 				<DialogContent
 					className={cn(
 						"glass items-center justify-center text-center flex-col transition-all rounded-2xl sm:max-w-106.25 backdrop-blur-xl",
@@ -61,7 +63,9 @@ export const VerificationBadge: React.FC<Props> = ({
 					>
 						<DialogTitle>{current.title}</DialogTitle>
 						<DialogDescription
-							className={cn("flex items-center justify-center text-center")}
+							className={cn(
+								"flex items-center justify-center text-center whitespace-pre-line"
+							)}
 						>
 							{current.desc}
 						</DialogDescription>
@@ -75,7 +79,7 @@ export const VerificationBadge: React.FC<Props> = ({
 							)}
 							style={{ willChange: "filter" }}
 						>
-							<IconComponent className={cn("w-20 h-20", current.color)} />
+							<current.icon className={cn("w-20 h-20", current.color)} />
 						</div>
 						{status === "clarification" && (
 							<>
