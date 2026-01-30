@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { Camera, Menu, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -26,9 +26,9 @@ export function Header() {
 							href="/"
 							className="flex items-center gap-2.5 group relative z-60"
 						>
-							<div className="p-2 rounded-xl bg-primary/10 text-primary group-hover:scale-110 transition-transform shadow-[0_0_15px_var(--brand-glow)]">
+							{/* <div className="p-2 rounded-xl bg-primary/10 text-primary group-hover:scale-110 transition-transform shadow-[0_0_15px_var(--brand-glow)]">
 								<Camera className="h-6 w-6" />
-							</div>
+							</div> */}
 							<span className="text-xl font-black tracking-tight bg-clip-text text-foreground">
 								Linza
 							</span>
