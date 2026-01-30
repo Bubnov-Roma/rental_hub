@@ -2,9 +2,9 @@
 @import "tw-animate-css";
 
 @theme {
-  /* Цвета привязаны к переменным, которые мы определим ниже */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-muted-foreground: var(--muted-foreground);
   --color-primary: var(--brand-color);
   --color-primary-foreground: var(--brand-contrast);
   --color-card: var(--bg-card);
@@ -15,12 +15,16 @@
   
   --shadow-glass: 0 20px 50px rgba(0, 0, 0, 0.3);
   --shadow-neumorph-inset: inset 6px 6px 12px rgba(0, 0, 0, 0.1), inset -6px -6px 12px rgba(255, 255, 255, 0.05);
+
+  --shadow-brand-glow: 0 0 15px rgba(59, 130, 246, 0.4);
+  --shadow-error-glow: 0 0 15px rgba(249, 115, 22, 0.4);
 }
 
 :root {
   /* Базовые токены (Светлая тема) */
   --background: oklch(0.98 0.01 20);
   --foreground: oklch(0.2 0.05 264);
+  --muted-foreground: oklch(0.2 0.05 264 / 0.5);
   --bg-card: oklch(1 0 0 / 0.9);
   --border-soft: oklch(0 0 0 / 0.1);
   
@@ -31,33 +35,36 @@
   --brand-bg-soft: oklch(0.6 0.22 264 / 0.04);
 
   /* Тени для светлой темы */
-  --input-shadow: 0 2px 8px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 1);
+  --input-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
   --input-border: oklch(0 0 0 / 0.1);
-  --input-bg-hover: oklch(0 0 0 / 0.01);
-
+  --input-bg-hover: oklch(21.342% 0.00002 271.152 / 0.01);
+  --input-shadow-focus: inset 0 1px 0 rgba(255, 255, 255, 1), 0 2px 6px rgba(0, 0, 0, 0.2);
+  --input-bg-focus: oklch(1 0 0 / 0.9);
   font-family: 'Montserrat', sans-serif;
 }
 
 .dark {
   --background: oklch(0.15 0.02 264);
   --foreground: oklch(0.98 0.01 264);
-  --bg-card: oklch(0.2 0.03 264 / 1);
+  --muted-foreground: oklch(0.98 0.01 264 / 0.5);
+  --bg-card: oklch(21.013% 0.01423 272.613 / 0.9);
   --border-soft: oklch(1 0 0 / 0.5);
   --brand-bg-soft: oklch(0.75 0.15 250 / 0.08);
-
-  /* Тени для темной темы */
   --input-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.5);
   --input-border: oklch(1 0 0 / 0.1);
-  --input-bg-hover: oklch(100% 0.00011 271.152 / 0.184);
+  --input-bg-hover: oklch(93.403% 0.00011 271.152 / 0.232);
+  --input-shadow-focus: 0 1px 4px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.5);
+  --input-bg-focus: oklch(93.403% 0.00011 271.152 / 0.282);
 }
 
-/* Динамический брендинг на основе атрибута (Legal / Individual) */
+/* Legal / Individual branding */
 [data-client-type="individual"] {
   --brand-color: oklch(0.6 0.22 264);
 }
 
 [data-client-type="legal"] {
   --brand-color: oklch(0.65 0.2 160); 
+  --shadow-brand-glow: 0 0 15px rgba(104, 165, 125, 0.4);
 }
 
 @layer base {
@@ -68,6 +75,49 @@
 }
 
 @layer components {
+  .header-glass {
+    @apply sticky top-0 z-50 justify-center pb-6 px-4 transition-all duration-300;
+    backdrop-filter: blur(30px);
+      mask-image: linear-gradient(
+      to bottom,
+      black -20%,
+      black 20%,   
+      rgba(0, 0, 0, 0.8) 45%, 
+      rgba(0, 0, 0, 0.3) 65%, 
+      rgba(0, 0, 0, 0.1) 90%, 
+      transparent 100% 
+    );
+
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      black -20%,
+      black 20%,
+      rgba(0, 0, 0, 0.8) 75%,
+      rgba(0, 0, 0, 0.1) 90%,
+      transparent 100%
+    );
+
+    background: linear-gradient(
+      in oklch to bottom,
+      var(--background) 0%,
+      oklch(from var(--background) l c h / 0.5) 40%,
+      oklch(from var(--background) l c h / 0.3) 60%,
+      oklch(from var(--background) l c h / 0.2) 70%,
+      oklch(from var(--background) l c h / 0.1) 80%,
+      transparent 100%
+    );
+  }
+
+  .header-border {
+    @apply absolute bottom-0 left-0 right-0 h-px;
+    background: linear-gradient(
+      to right,
+      transparent,
+      var(--border-soft),
+      transparent
+    );
+  }
+  
   .glass-card {
     @apply backdrop-blur-2xl border border-white/10 shadow-glass relative overflow-hidden;
     background: var(--bg-card);
@@ -98,10 +148,11 @@
   }
 
   .glass-input:focus {
-    @apply ring-4 ring-primary/20;
-    box-shadow: 0 2px 2px oklch(0 0 0 / 0.1), var(--input-shadow);
-    background: var(--bg-card);
+    box-shadow: 0 2px 2px oklch(0 0 0 / 0.1), var(--input-shadow-focus);
+    background: var(--input-bg-focus);
   }
+
+    /* background: var(--brand-contrast); */
 
   .glass-input-neumorphic {
     @apply border border-foreground/10 drop-shadow-md dark:bg-white/5 shadow-md;
@@ -126,5 +177,5 @@
 .animate-rotate-gradient { 
   animation: rotate-gradient 3s linear infinite;
   will-change: transform;
-  transform: translateZ(0); /* Force GPU acceleration */
+  transform: translateZ(0);
  }
