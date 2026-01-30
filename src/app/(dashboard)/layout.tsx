@@ -11,10 +11,9 @@ export default async function DashboardLayout({
 	const supabase = await createClient();
 	const {
 		data: { user },
-		error,
 	} = await supabase.auth.getUser();
 
-	if (error || !user) {
+	if (!user) {
 		redirect("/auth/login");
 	}
 
@@ -22,7 +21,7 @@ export default async function DashboardLayout({
 		.from("client_applications")
 		.select("*")
 		.eq("user_id", user.id)
-		.single();
+		.maybeSingle();
 
 	return (
 		<div className="min-h-screen">
