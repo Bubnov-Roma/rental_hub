@@ -24,7 +24,7 @@ export const ValidatedTextarea = React.forwardRef<
 				{...props}
 				rows={rows}
 				className={cn(
-					"resize-none overflow-y-auto custom-scrollbar",
+					"overflow-y-auto custom-scrollbar",
 					error && "border-red-400/50"
 				)}
 			/>

@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { SendHorizontal } from "lucide-react";
-import { AnimateSpin, Button } from "@/components/ui";
+import { RainbowSpinner } from "@/components/shared";
+import { Button } from "@/components/ui";
 import { cn } from "@/utils";
 
 interface NeonSubmitButtonProps {
@@ -39,7 +40,7 @@ export const SubmitButton = ({
 				)}
 			>
 				{isSubmitting ? (
-					<AnimateSpin />
+					<RainbowSpinner />
 				) : (
 					<div className="flex items-center gap-2">
 						<span className="hidden md:inline">Отправить</span>
