@@ -2,17 +2,17 @@
 
 import { Bell, HelpCircle, Search } from "lucide-react";
 import Image from "next/image";
-import { SignOutButton } from "@/components/shared/SignOutButton";
-import { Button } from "@/components/ui/button";
+import { SignOutButton } from "@/components/shared";
 import {
+	Button,
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuItem,
 	DropdownMenuLabel,
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
+	Input,
+} from "@/components/ui";
 import { useAuth } from "@/hooks/useAuth";
 
 export function AdminHeader() {
@@ -73,10 +73,7 @@ export function AdminHeader() {
 							<DropdownMenuItem>Настройки</DropdownMenuItem>
 							<DropdownMenuSeparator />
 							<div className="p-1">
-								<SignOutButton
-									variant="ghost"
-									className="w-full h-8 px-2 text-sm text-red-600 focus:bg-red-50"
-								/>
+								<SignOutButton className="w-full h-8 px-2 text-sm text-red-600 focus:bg-red-50" />
 							</div>
 						</DropdownMenuContent>
 					</DropdownMenu>
