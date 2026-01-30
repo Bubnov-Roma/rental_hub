@@ -73,9 +73,8 @@ export default function HomePage() {
 		<div className="min-h-screen">
 			{/* HeroSection */}
 			<HeroSection />
-
 			{/* Categories */}
-			<section className="py-12 bg-gray-50">
+			<section className="py-12">
 				<div className="container mx-auto px-4">
 					<h2 className="text-3xl font-bold text-center mb-10">
 						Популярные категории
@@ -86,7 +85,6 @@ export default function HomePage() {
 					/>
 				</div>
 			</section>
-
 			{/* Equipment container */}
 			<section className="py-12">
 				<div className="container mx-auto px-4">
@@ -100,7 +98,6 @@ export default function HomePage() {
 							единиц техники
 						</p>
 					</div>
-
 					{/* Filters */}
 					<Filters
 						categories={categories}
@@ -108,11 +105,10 @@ export default function HomePage() {
 						onCategoryChange={handleCategoryChange}
 						onPriceRangeChange={handlePriceRangeChange}
 					/>
-
 					{/* Equipment grid */}
 					{isLoading ? (
 						<div className="text-center py-12">
-							<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+							<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto" />
 							<p className="mt-4 text-gray-600">Загружаем оборудование...</p>
 						</div>
 					) : error ? (
@@ -128,9 +124,7 @@ export default function HomePage() {
 					)}
 				</div>
 			</section>
-			{/* How it works */}
 			<HowItWorks />
-			{/* Testimonials */}
 			<Testimonials />
 		</div>
 	);
