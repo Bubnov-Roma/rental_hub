@@ -4,11 +4,18 @@ import {
 	LayoutDashboard,
 	Package,
 	Settings,
+	ShieldUser,
 	UserIcon,
 } from "lucide-react";
 
-export const CLIENT_NAV_ITEMS = [
+export const CLIENT_SIDEBAR_NAV_ITEMS = [
 	{ name: "Дашборд", href: "/dashboard", icon: LayoutDashboard },
+	{
+		name: "Управление",
+		href: "/admin",
+		icon: ShieldUser,
+		roles: ["admin", "manager"],
+	},
 	{ name: "Бронирования", href: "/dashboard/bookings", icon: Package },
 	{ name: "Календарь", href: "/dashboard/calendar", icon: Calendar },
 	{
