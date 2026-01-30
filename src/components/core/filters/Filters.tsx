@@ -25,12 +25,12 @@ export function Filters({
 	onPriceRangeChange,
 }: FiltersProps) {
 	return (
-		<div className="bg-white rounded-xl shadow-sm p-6 mb-6">
+		<div className="bg-card rounded-xl shadow-sm p-6 mb-6">
 			<div className="flex flex-col md:flex-row gap-4">
 				{/* Search */}
 				<div className="flex-1">
 					<div className="relative">
-						<Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+						<Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-foreground/30 w-5 h-5 z-1" />
 						<Input
 							placeholder="Искать оборудование (камера, объектив, свет...)"
 							className="pl-10"

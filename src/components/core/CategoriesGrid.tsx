@@ -36,7 +36,7 @@ export function CategoriesGrid({
 						key={category.id}
 						onClick={() => onCategoryClick?.(category.id)}
 						className={cn(
-							"group relative flex flex-col items-center justify-center rounded-xl border bg-white p-6 transition-all hover:border-blue-300 hover:bg-blue-50 hover:shadow-lg",
+							"group relative flex flex-col items-center justify-center rounded-xl border bg-white p-6 transition-all hover:border-secondary hover:shadow-lg",
 							"focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
 						)}
 					>
@@ -44,10 +44,10 @@ export function CategoriesGrid({
 							<Icon className="h-6 w-6 text-blue-600" />
 						</div>
 						<h3 className="font-semibold text-gray-900">{category.name}</h3>
-						<p className="mt-1 text-sm text-gray-600">
+						<p className="mt-1 text-sm text-foreground/60">
 							{category.count} единиц
 						</p>
-						<div className="absolute inset-0 rounded-xl border-2 border-transparent group-hover:border-blue-200"></div>
+						<div className="absolute inset-0 rounded-xl border-2 border-transparent"></div>
 					</Button>
 				);
 			})}
