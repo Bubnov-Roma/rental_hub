@@ -30,7 +30,7 @@ export const FinalsSection = () => {
 		<SectionWrapper className="lg:grid-cols-1">
 			<FormRadioGroup
 				name="additional.referralSource"
-				label="Как Вы о нас узнали?"
+				label="Как вы о нас узнали?"
 				options={REFERRAL_OPTIONS}
 				required
 			/>

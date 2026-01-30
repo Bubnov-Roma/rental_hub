@@ -83,12 +83,6 @@ export const Stepper = ({
 												? "1px solid var(--border-soft)"
 												: "none",
 									}}
-
-									// ${status.state === "active" ? "shadow-brand-glow" : ""}
-									// ${status.state === "error" ? "bg-orange-500.5 hover:border-orange-500/20" : ""}
-									// ${status.state === "completed" ? "bg-foreground/0 border-foreground/5 opacity-40 hover:opacity-100" : ""}
-									// ${status.state === "untouched" ? "bg-foreground/0 border-foreground/10" : ""}
-									// `}
 								>
 									<Icon
 										className={cn(
@@ -99,13 +93,6 @@ export const Stepper = ({
 													? "text-orange-400"
 													: "text-foreground/60"
 										)}
-										// className={`w-5 h-5 transition-colors ${
-										// 	status.state === "active"
-										// 		? "text-blue-400"
-										// 		: status.state === "error"
-										// 			? "text-orange-400"
-										// 			: "text-foreground/60"
-										// }`}
 									/>
 								</div>
 							</button>
