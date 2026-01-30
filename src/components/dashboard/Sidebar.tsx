@@ -1,119 +1,111 @@
 "use client";
 
-import {
-	Bell,
-	Calendar,
-	ChevronLeft,
-	ChevronRight,
-	LayoutDashboard,
-	Package,
-	Settings,
-	User as UserIcon,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight, Menu } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
+import { Fab } from "@/components/ui";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/hooks/useAuth";
+import { CLIENT_SIDEBAR_NAV_ITEMS as config } from "@/constants";
 import { cn } from "@/utils";
 
-const navItems = [
-	{ name: "Обзор", href: "/dashboard", icon: LayoutDashboard },
-	{ name: "Мои бронирования", href: "/dashboard/bookings", icon: Package },
-	{ name: "Календарь", href: "/dashboard/calendar", icon: Calendar },
-	{
-		name: "Уведомления",
-		href: "/dashboard/notifications",
-		icon: Bell,
-		badge: 3,
-	},
-	{ name: "Профиль", href: "/dashboard/profile", icon: UserIcon },
-	{ name: "Настройки", href: "/dashboard/settings", icon: Settings },
-];
-
 export function Sidebar() {
-	const { user } = useAuth();
 	const pathname = usePathname();
-	const [collapsed, setCollapsed] = useState(false);
+	const [collapsed, setCollapsed] = useState(true);
 
-	const isVerified = user?.user_metadata?.verified || false;
+	const { push } = useRouter();
+
+	const fabItems = config.map((item) => ({
+		id: item.href,
+		icon: item.icon,
+		label: item.name,
+		badge: item?.badge || undefined,
+		onClick: () => push(item.href),
+		color:
+			pathname === item.href
+				? "text-primary border-primary/40 bg-primary/10"
+				: "text-foreground hover:bg-foreground/5 hover:text-foreground",
+	}));
 
 	return (
-		<aside
-			className={cn(
-				"sticky top-0 h-screen border-r bg-white transition-all duration-300",
-				collapsed ? "w-16" : "w-64"
-			)}
-		>
-			<div className="flex h-full flex-col">
-				<div className="flex items-center justify-end p-4">
-					<Button
-						variant="ghost"
-						size="icon"
-						onClick={() => setCollapsed(!collapsed)}
-						className="h-8 w-8"
-					>
-						{collapsed ? (
-							<ChevronRight className="h-4 w-4" />
-						) : (
-							<ChevronLeft className="h-4 w-4" />
-						)}
-					</Button>
-				</div>
-
-				<nav className="flex-1 space-y-1 p-4">
-					{navItems.map((item) => {
-						const isActive =
-							pathname === item.href ||
-							(item.href !== "/dashboard" && pathname.startsWith(item.href));
-
-						return (
-							<Link
-								key={item.href}
-								href={item.href}
-								className={cn(
-									"flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-									isActive
-										? "bg-blue-50 text-blue-700"
-										: "text-gray-700 hover:bg-gray-100"
-								)}
-							>
-								<item.icon
-									className={cn(
-										"h-5 w-5 shrink-0",
-										isActive && "text-blue-700"
-									)}
-								/>
-								{!collapsed && <span className="flex-1">{item.name}</span>}
-								{item.badge && !collapsed && (
-									<span className="ml-auto rounded-full bg-red-500 px-2 py-0.5 text-[10px] text-white">
-										{item.badge}
-									</span>
-								)}
-							</Link>
-						);
-					})}
-				</nav>
-
-				{!collapsed && (
-					<div className="border-t p-4">
-						<div className="rounded-lg bg-blue-50 p-3">
-							<p className="text-[10px] uppercase tracking-wider font-bold text-blue-700">
-								Статус
-							</p>
-							<p className="mt-1 text-sm font-semibold text-blue-900">
-								{isVerified ? "Проверенный профиль" : "Базовый уровень"}
-							</p>
-							<div className="mt-2 flex items-center gap-2">
-								<div className="h-1.5 flex-1 overflow-hidden rounded-full bg-blue-200">
-									<div className="h-full w-3/4 rounded-full bg-blue-600"></div>
-								</div>
-								<span className="text-xs text-blue-700 font-medium">75%</span>
-							</div>
-						</div>
-					</div>
-				)}
+		<>
+			<div className="md:hidden">
+				<Fab items={fabItems} mainIcon={<Menu />} />
 			</div>
-		</aside>
+			<aside className="hidden md:block sticky top-0 h-screen w-20 z-40">
+				<div
+					className={cn(
+						"absolute left-0 top-0 h-full transition-all duration-300 ease-in-out overflow-hidden shadow-2xl border-r border-foreground/10",
+						"bg-card/40 backdrop-blur-xl rounded-r-2xl",
+						collapsed ? "w-20" : "w-64"
+					)}
+				>
+					<div className="flex h-full flex-col">
+						<div className="flex items-center justify-center p-6 h-20 shrink-0">
+							<Button
+								variant="ghost"
+								size="icon"
+								className="hover:bg-primary/10 hover:text-primary transition-colors"
+								onClick={() => setCollapsed(!collapsed)}
+							>
+								{collapsed ? (
+									<ChevronRight className="w-5 h-5" />
+								) : (
+									<ChevronLeft className="w-5 h-5" />
+								)}
+							</Button>
+						</div>
+
+						{/* Навигация */}
+						<nav className="flex-1 space-y-2 p-4">
+							{config.map((item) => {
+								const isActive = pathname.startsWith(item.href);
+								return (
+									<Link
+										key={item.href}
+										href={item.href}
+										className={cn(
+											"group flex items-center h-12 rounded-xl px-3 transition-all duration-300 relative",
+											isActive && pathname === item.href
+												? "bg-primary/20 text-primary shadow-[inset_0_0_20px_rgba(var(--primary),0.1)]"
+												: "text-foreground hover:bg-foreground/5 hover:text-foreground"
+										)}
+									>
+										<item.icon
+											className={cn(
+												"h-5 w-5 shrink-0 transition-transform group-hover:scale-110"
+											)}
+										/>
+										<div
+											className={cn(
+												"ml-3 overflow-hidden transition-all duration-300 ease-in-out whitespace-nowrap",
+												collapsed ? "w-0 opacity-0" : "w-40 opacity-100"
+											)}
+										>
+											<span className="font-medium tracking-tight">
+												{item.name}
+											</span>
+										</div>
+
+										{item.badge && (
+											<span
+												className={cn(
+													"absolute right-3 rounded-full bg-primary px-1.5 py-0.5 text-[10px] text-primary-foreground font-black transition-all duration-300",
+													collapsed
+														? "scale-0 opacity-0"
+														: "scale-100 opacity-100"
+												)}
+											>
+												{item.badge}
+											</span>
+										)}
+									</Link>
+								);
+							})}
+						</nav>
+					</div>
+				</div>
+			</aside>
+		</>
 	);
 }
