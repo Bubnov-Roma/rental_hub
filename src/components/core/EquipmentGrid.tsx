@@ -35,7 +35,7 @@ export function EquipmentGrid({
 					key={item.id}
 					id={item.id}
 					title={item.title}
-					description={item.description}
+					description={item.description || "Нет описания"}
 					pricePerDay={item.price_per_day}
 					imageUrl={item.imageUrl || "/placeholder-equipment.jpg"}
 					rating={item.rating || 4.5}
