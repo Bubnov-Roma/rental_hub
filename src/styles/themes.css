@@ -1,0 +1,24 @@
+:root {
+  /* База светлой темы */
+  --bg-main: oklch(0.98 0.01 20);
+  --card-bg: oklch(1 0 0 / 0.4);
+  --card-border: oklch(0 0 0 / 0.08);
+  --card-shadow: 0 10px 30px -10px oklch(0 0 0 / 0.1);
+  --card-shadow-hover: 0 20px 40px -15px oklch(0 0 0 / 0.15);
+  
+  /* Цвета для индивидуального лица */
+  --brand-color: oklch(0.6 0.18 250); /* Blue */
+  --brand-bg-soft: oklch(0.6 0.18 250 / 0.05);
+}
+
+.dark {
+  --bg-main: oklch(0.15 0.02 264);
+  --card-bg: oklch(0.2 0.03 264 / 0.3);
+  --card-border: oklch(1 0 0 / 0.1);
+  --card-shadow: 0 10px 40px -10px oklch(0 0 0 / 0.5);
+  --card-shadow-hover: 0 20px 60px -12px oklch(0 0 0 / 0.7);
+  
+  /* Neon */
+  --brand-color: oklch(0.75 0.15 250);
+  --brand-bg-soft: oklch(0.75 0.15 250 / 0.1);
+}

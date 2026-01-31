@@ -1,0 +1,66 @@
+.card {
+  background: var(--card-bg);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--border-soft);
+  box-shadow: var(--card-shadow);
+  transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  color: var(--foreground);
+}
+
+/* Эффект при наведении */
+.card:hover {
+  border-color: var(--brand-color);
+  box-shadow: var(--card-shadow-hover), 0 0 20px -5px var(--brand-color);
+  background: var(--brand-bg-hover);
+  transform: translateY(-5px);
+}
+
+/* Чистый Neumorphism при нажатии (вдавленность) */
+.card:active {
+  transform: translateY(-2px) scale(0.97);
+  box-shadow: 
+    inset 4px 4px 12px oklch(0 0 0 / 0.1),
+    inset -4px -4px 12px oklch(1 0 0 / 0.05);
+}
+
+/* Состояние Selected */
+.selected {
+  border-color: var(--brand-color);
+  border-width: 2px;
+  background: var(--brand-bg-hover);
+  box-shadow: 0 10px 30px -10px var(--brand-color);
+}
+
+/* Размытые блики (круги) */
+.circle {
+  position: absolute;
+  width: 250px;
+  height: 250px;
+  background: radial-gradient(circle, var(--brand-color) 0%, transparent 70%);
+  border-radius: 50%;
+  opacity: 0.15;
+  filter: blur(40px);
+  z-index: -1;
+  transition: all 0.8s ease;
+  pointer-events: none;
+}
+
+.card:hover .circle {
+  opacity: 0.3;
+  transform: scale(1.2) translate(-10%, -10%);
+}
+
+.iconWrapper {
+  background: oklch(1 0 0 / 0.1);
+  border: 1px solid var(--card-border);
+  transition: all 0.4s ease;
+  color: var(--brand-color);
+}
+
+.card:hover .iconWrapper {
+  transform: scale(1.1) rotate(-5deg);
+  background: var(--brand-color);
+  color: white;
+}

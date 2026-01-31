@@ -1,0 +1,37 @@
+.animated-logo-container svg {
+  /* Можешь менять размер здесь, например, width: 80px; height: auto; */
+  width: 100%; 
+  max-width: 145px; 
+  height: auto;
+  display: block;
+}
+
+/* Исходное состояние частей - невидимые */
+.logo-part {
+  opacity: 0;
+  /* will-change помогает браузеру оптимизировать анимацию появления */
+  will-change: opacity;
+}
+
+/* Анимация появления */
+@keyframes logoAppear {
+  to { opacity: 1; }
+}
+
+/* Классы для очередности появления */
+/* forwards означает, что после анимации элемент останется видимым */
+
+.fade-in-1 {
+  /* Появляется сразу за 0.8 секунды */
+  animation: logoAppear 0.8s ease-out forwards;
+}
+
+.fade-in-2 {
+  /* Задержка 0.4 секунды перед началом */
+  animation: logoAppear 0.8s ease-out 0.4s forwards;
+}
+
+.fade-in-3 {
+  /* Задержка 0.8 секунды перед началом */
+  animation: logoAppear 0.8s ease-out 0.8s forwards;
+}
