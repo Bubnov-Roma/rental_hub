@@ -5,6 +5,7 @@ import { Header } from "@/components/layouts/Header";
 import { Toaster } from "@/components/ui/sonner";
 import { createClient } from "@/lib/supabase/server";
 import "./globals.css";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { ThemeProvider } from "next-themes";
 import NextTopLoader from "nextjs-toploader";
 import { AuthProvider } from "@/providers/auth-provider";
@@ -62,6 +63,7 @@ export default async function RootLayout({
 						</ThemeProvider>
 					</QueryProvider>
 				</AuthProvider>
+				<SpeedInsights />
 			</body>
 		</html>
 	);
