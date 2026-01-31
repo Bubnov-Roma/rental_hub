@@ -1,4 +1,4 @@
-import { EquipmentCard } from "@/components/core/EquipmentCard/EquipmentCard";
+import { EquipmentCard } from "@/components/core/EquipmentCard";
 import type { Equipment } from "@/core/domain/entities/Equipment";
 
 interface EquipmentGridProps {
