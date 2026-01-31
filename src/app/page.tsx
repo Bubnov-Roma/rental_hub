@@ -7,7 +7,7 @@ import {
 	type categoryIcons,
 } from "@/components/core/CategoriesGrid";
 import { EquipmentGrid } from "@/components/core/EquipmentGrid";
-import { Filters } from "@/components/core/Filters/Filters";
+import { Filters } from "@/components/core/Filters";
 import { HeroSection } from "@/components/layouts/HeroSection";
 import { HowItWorks } from "@/components/layouts/HowItWorks";
 import { Testimonials } from "@/components/layouts/Testimonials";
