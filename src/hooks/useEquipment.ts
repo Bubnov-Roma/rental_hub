@@ -1,86 +1,54 @@
-"use client";
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import type { Equipment } from "@/core/domain/entities/Equipment";
 import { createClient } from "@/lib/supabase/client";
 
-interface UseEquipmentProps {
+interface EquipmentFilters {
 	search?: string;
 	category?: string;
 	minPrice?: number;
 	maxPrice?: number;
-	limit?: number;
 }
 
-export function useEquipment({
-	search = "",
-	category = "all",
-	minPrice = 0,
-	maxPrice = 100000,
-	limit = 20,
-}: UseEquipmentProps = {}) {
-	const [equipment, setEquipment] = useState<Equipment[]>([]);
-	const [isLoading, setIsLoading] = useState(true);
-	const [error, setError] = useState<string | null>(null);
+export function useEquipment(filters: EquipmentFilters = {}) {
 	const supabase = createClient();
 
-	useEffect(() => {
-		async function fetchEquipment() {
-			try {
-				setIsLoading(true);
-				setError(null);
+	return useQuery({
+		queryKey: ["equipment", filters],
+		queryFn: async () => {
+			let query = supabase
+				.from("equipment")
+				.select(`
+          *,
+          equipment_images(url),
+          reviews(rating)
+        `)
+				.eq("is_available", true);
 
-				let query = (await supabase)
-					.from("equipment")
-					.select(`
-            *,
-            equipment_images(url),
-            reviews(rating)
-          `)
-					.limit(limit);
-
-				if (search) {
-					query = query.ilike("title", `%${search}%`);
-				}
-
-				if (category !== "all") {
-					query = query.eq("category", category);
-				}
-
-				query = query
-					.gte("price_per_day", minPrice)
-					.lte("price_per_day", maxPrice)
-					.eq("is_available", true);
-
-				const { data, error: supabaseError } = await query;
-
-				if (supabaseError) throw supabaseError;
-
-				const transformedData = (data || []).map((item) => ({
-					...item,
-					imageUrl:
-						item.equipment_images?.[0]?.url || "/placeholder-equipment.jpg",
-					rating: item.reviews?.length
-						? item.reviews.reduce(
-								(acc: number, review: { rating: number }) =>
-									acc + review.rating,
-								0
-							) / item.reviews.length
-						: 4.5,
-					reviewsCount: item.reviews?.length || 0,
-				}));
-
-				setEquipment(transformedData);
-			} catch (err) {
-				setError(
-					err instanceof Error ? err.message : "Ошибка загрузки оборудования"
-				);
-			} finally {
-				setIsLoading(false);
+			if (filters.search) {
+				query = query.ilike("title", `%${filters.search}%`);
 			}
-		}
+			if (filters.category && filters.category !== "all") {
+				query = query.eq("category", filters.category);
+			}
+			if (filters.minPrice)
+				query = query.gte("price_per_day", filters.minPrice);
+			if (filters.maxPrice)
+				query = query.lte("price_per_day", filters.maxPrice);
 
-		fetchEquipment();
-	}, [search, category, minPrice, maxPrice, limit, supabase]);
+			const { data, error } = await query;
+			if (error) throw error;
 
-	return { equipment, isLoading, error };
+			return (data || []).map((item) => ({
+				...item,
+				imageUrl: item.equipment_images?.[0]?.url || "/placeholder.jpg",
+				rating: item.reviews?.length
+					? item.reviews.reduce(
+							(acc: number, r: Equipment) => acc + r.rating,
+							0
+						) / item.reviews.length
+					: 5.0,
+			})) as Equipment[];
+		},
+		staleTime: 1000 * 60 * 5, // 5 minutes
+	});
 }
