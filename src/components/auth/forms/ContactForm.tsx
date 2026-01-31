@@ -7,11 +7,10 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import { RainbowSpinner } from "@/components/shared";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Button, Input, Label } from "@/components/ui";
 import { useOtpAuth } from "@/hooks/useOtpAuth";
 import { createClient } from "@/lib/supabase/client";
+import { getURL } from "@/utils";
 
 export function ContactForm({ mode }: { mode: string }) {
 	const [email, setEmail] = useState("");
@@ -27,7 +26,7 @@ export function ContactForm({ mode }: { mode: string }) {
 			const { error } = await supabase.auth.signInWithOAuth({
 				provider: "google",
 				options: {
-					redirectTo: `${window.location.origin}/auth/callback`,
+					redirectTo: `${getURL()}auth/callback`,
 				},
 			});
 
