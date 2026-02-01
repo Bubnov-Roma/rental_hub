@@ -2,13 +2,14 @@
 import { type FieldPath, useFormContext, useWatch } from "react-hook-form";
 import { PatternFormat } from "react-number-format";
 import { FormFieldWrapper } from "@/components/forms/shared/FormFieldWrapper";
+import { cn } from "@/lib/utils";
 import type { ClientFormValues } from "@/schemas";
 import type {
 	CornerRounding,
 	InputGroupOrientation,
 	InputPosition,
 } from "@/types";
-import { cn, getBorderClasses, getRoundingClasses } from "@/utils";
+import { getBorderClasses, getRoundingClasses } from "@/utils";
 
 interface PhoneInputProps {
 	name: FieldPath<ClientFormValues>;

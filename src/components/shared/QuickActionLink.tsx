@@ -1,6 +1,6 @@
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
-import { cn } from "@/utils";
+import { cn } from "@/lib/utils";
 
 interface QuickActionLinkProps {
 	href: string;

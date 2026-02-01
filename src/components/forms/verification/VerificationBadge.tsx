@@ -15,8 +15,8 @@ import {
 } from "@/components/ui";
 import { Button } from "@/components/ui/button";
 import { VERIFICATION_CONFIG as config } from "@/constants";
+import { cn } from "@/lib/utils";
 import { useApplicationStore } from "@/store";
-import { cn } from "@/utils";
 
 interface Props {
 	isClientPartner?: boolean;

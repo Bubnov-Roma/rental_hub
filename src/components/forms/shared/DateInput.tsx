@@ -4,8 +4,9 @@ import { type FieldPath, useFormContext, useWatch } from "react-hook-form";
 import { PatternFormat } from "react-number-format";
 import { FormFieldWrapper } from "@/components/forms/shared/FormFieldWrapper";
 import type { CornerRounding } from "@/components/ui";
+import { cn } from "@/lib/utils";
 import type { ClientFormValues } from "@/schemas";
-import { cn, getBorderClasses, getRoundingClasses } from "@/utils";
+import { getBorderClasses, getRoundingClasses } from "@/utils";
 
 interface DateInputProps {
 	name: FieldPath<ClientFormValues>;

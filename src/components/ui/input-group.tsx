@@ -1,11 +1,7 @@
 import * as React from "react";
+import { cn } from "@/lib/utils";
 import type { CornerRounding, InputPosition } from "@/types";
-import {
-	cn,
-	getBorderClasses,
-	getCornerStyles,
-	getRoundingClasses,
-} from "@/utils";
+import { getBorderClasses, getCornerStyles, getRoundingClasses } from "@/utils";
 
 type InputGroupOrientation = "horizontal" | "vertical";
 

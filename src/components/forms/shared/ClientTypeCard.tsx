@@ -1,7 +1,7 @@
 import { Building2, User } from "lucide-react";
 import type { FC } from "react";
+import { cn } from "@/lib/utils";
 import styles from "@/styles/components/client-type-card.module.css";
-import { cn } from "@/utils";
 
 interface ClientTypeCardProps {
 	type: "individual" | "legal";

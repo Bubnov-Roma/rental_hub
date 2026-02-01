@@ -7,7 +7,7 @@ import { useState } from "react";
 import { Fab } from "@/components/ui";
 import { Button } from "@/components/ui/button";
 import { CLIENT_SIDEBAR_NAV_ITEMS as config } from "@/constants";
-import { cn } from "@/utils";
+import { cn } from "@/lib/utils";
 
 export function Sidebar() {
 	const pathname = usePathname();

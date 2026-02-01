@@ -25,7 +25,7 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui";
 import { useAuth } from "@/hooks/useAuth";
-import { cn } from "@/utils";
+import { cn } from "@/lib/utils";
 
 export function UserMenu() {
 	const { user, profile, isLoading } = useAuth();

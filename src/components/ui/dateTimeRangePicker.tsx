@@ -9,7 +9,7 @@ import "react-datepicker/dist/react-datepicker.css";
 // import "./date-picker-custom.css"; // For custom styles
 
 import { Button } from "@/components/ui/button";
-import { cn } from "@/utils";
+import { cn } from "@/lib/utils";
 
 // Register locale
 registerLocale("ru", ru);

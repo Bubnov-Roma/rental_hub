@@ -5,7 +5,7 @@ import { ArrowLeft, Loader2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useOtpAuth } from "@/hooks/useOtpAuth";
-import { cn } from "@/utils";
+import { cn } from "@/lib/utils";
 
 export function OtpForm() {
 	const router = useRouter();

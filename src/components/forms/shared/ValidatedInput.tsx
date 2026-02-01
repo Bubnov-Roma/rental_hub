@@ -1,7 +1,7 @@
 import React from "react";
 import { FormFieldWrapper } from "@/components/forms/shared/FormFieldWrapper";
 import { Input } from "@/components/ui/input";
-import { cn } from "@/utils";
+import { cn } from "@/lib/utils";
 
 interface ValidatedInputProps
 	extends React.InputHTMLAttributes<HTMLInputElement> {

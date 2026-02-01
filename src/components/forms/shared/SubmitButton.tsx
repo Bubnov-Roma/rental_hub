@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { SendHorizontal } from "lucide-react";
 import { RainbowSpinner } from "@/components/shared";
 import { Button } from "@/components/ui";
-import { cn } from "@/utils";
+import { cn } from "@/lib/utils";
 
 interface NeonSubmitButtonProps {
 	isSubmitting: boolean;

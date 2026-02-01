@@ -2,7 +2,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Stepper } from "@/components/forms/client-forms/shared";
 import { SubmitButton } from "@/components/forms/shared";
 import { Button } from "@/components/ui";
-import { cn } from "@/utils";
+import { cn } from "@/lib/utils";
 
 interface FormNavigationProps {
 	prev: () => void;

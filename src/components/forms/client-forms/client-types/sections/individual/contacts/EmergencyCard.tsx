@@ -17,8 +17,8 @@ import {
 	InputGroupWrapper,
 } from "@/components/ui/input-group";
 import { RELATION_OPTIONS } from "@/constants";
+import { cn } from "@/lib/utils";
 import type { ClientFormValues } from "@/schemas";
-import { cn } from "@/utils";
 
 interface EmergencyCardProps {
 	index: number;
