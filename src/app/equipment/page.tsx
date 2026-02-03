@@ -9,7 +9,6 @@ import {
 	BreadcrumbPage,
 	BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { Progress } from "@/components/ui/progress";
 import { CATEGORIES } from "@/constants";
 import { useEquipment } from "@/hooks/useEquipment";
 import { formatPlural } from "@/utils";
@@ -62,15 +61,12 @@ export default function EquipmentPage({ searchParams }: EquipmentPageProps) {
 				<h1 className="text-4xl font-black tracking-tight uppercase italic">
 					{categorySlug === "all" ? "Вся техника" : currentCategory?.name}
 				</h1>
-				{isLoading ? (
-					<div className="mt-2 flex items-center gap-2">
-						<Progress />
-					</div>
-				) : (
+				{!isLoading && items && items.length === 0 && (
+					<p className="text-muted-foreground mt-2">Позиций не найдено</p>
+				)}
+				{!isLoading && items && items.length > 0 && (
 					<p className="text-muted-foreground mt-2">
-						{items?.length
-							? `Найдено ${formatPlural(items.length, "equipment")}`
-							: "Позиций не найдено"}
+						Найдено {formatPlural(items.length, "equipment")}
 					</p>
 				)}
 			</div>
