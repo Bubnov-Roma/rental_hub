@@ -4,3 +4,4 @@ export * from "./error-handler";
 export * from "./get-url";
 export * from "./input-group.utils";
 export * from "./is-value-filled";
+export * from "./pluralize";
