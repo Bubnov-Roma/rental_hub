@@ -36,8 +36,6 @@ export function EquipmentForm({ categories }: { categories: string[] }) {
 
 		const objectUrls = files.map((file) => URL.createObjectURL(file));
 		setPreviews(objectUrls);
-
-		// Clearing memory when unmounting
 		return () =>
 			objectUrls.forEach((url) => {
 				URL.revokeObjectURL(url);
@@ -149,7 +147,13 @@ export function EquipmentForm({ categories }: { categories: string[] }) {
 								key={url}
 								className="relative aspect-square rounded-md overflow-hidden border"
 							>
-								<Image src={url} alt="Preview" fill className="object-cover" />
+								<Image
+									src={url}
+									alt="Preview"
+									fill
+									sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+									className="object-cover"
+								/>
 								<button
 									type="button"
 									onClick={() => removeFile(i)}
