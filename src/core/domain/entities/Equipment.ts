@@ -39,6 +39,12 @@ export interface Equipment {
 	readonly updated_at: string;
 }
 
+export interface GroupedEquipment extends Equipment {
+	total_count: number;
+	available_count: number;
+	readonly all_unit_ids: string[];
+}
+
 export interface EquipmentImage {
 	readonly id: string;
 	readonly equipment_id: string;
