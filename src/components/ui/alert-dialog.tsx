@@ -1,7 +1,7 @@
 "use client";
 
-import * as AlertDialogPrimitive from "@radix-ui/react-alert-dialog";
 import { motion } from "framer-motion";
+import { AlertDialog as AlertDialogPrimitive } from "radix-ui";
 import type * as React from "react";
 import { cn } from "@/lib/utils";
 
