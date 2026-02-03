@@ -85,7 +85,8 @@ export function UserMenu() {
 									<Image
 										src={user.user_metadata.avatar_url}
 										alt="Avatar"
-										fill
+										width={40}
+										height={40}
 										className="object-cover rounded-full"
 									/>
 								) : (

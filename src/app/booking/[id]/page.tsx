@@ -87,8 +87,9 @@ export default function BookingPage() {
 							<div className="mb-8">
 								<div className="relative h-96 w-full rounded-2xl overflow-hidden bg-gray-100 mb-4">
 									<Image
-										src={equipment.imageUrl || "/placeholder-equipment.jpg"}
+										src={equipment.imageUrl || "/placeholder-equipment.png"}
 										alt={equipment.title}
+										sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
 										fill
 										className="object-cover"
 									/>

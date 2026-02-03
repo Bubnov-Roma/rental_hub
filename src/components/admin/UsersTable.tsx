@@ -115,7 +115,7 @@ export default function UsersTable({
 											{user.avatar_url ? (
 												<Image
 													src={user.avatar_url}
-													alt=""
+													alt={user.name ?? "user avatar"}
 													width={40}
 													height={40}
 												/>

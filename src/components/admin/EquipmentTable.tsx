@@ -127,8 +127,9 @@ export default function EquipmentTable({
 										{item.images?.[0]?.url ? (
 											<Image
 												src={item.images[0].url}
-												alt=""
-												fill
+												alt={item.title}
+												width={40}
+												height={40}
 												className="object-cover"
 											/>
 										) : (
