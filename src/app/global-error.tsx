@@ -1,6 +1,7 @@
 "use client";
 
 import GlobalErrorPage from "@/components/shared/GlobalErrorPage";
+import "./globals.css";
 
 export default function GlobalError({
 	reset,
@@ -10,10 +11,14 @@ export default function GlobalError({
 	reset: () => void;
 }) {
 	return (
-		<GlobalErrorPage
-			title={`Упс!\n Что-то пошло не так ${error?.digest ?? error?.message}`}
-			message="Возможно, пропало соединение с интернетом или сервер временно недоступен."
-			reset={reset}
-		/>
+		<html lang="ru">
+			<body>
+				<GlobalErrorPage
+					title={`Упс!\n Что-то пошло не так`}
+					message={error?.message || "Произошла системная ошибка"}
+					reset={reset}
+				/>
+			</body>
+		</html>
 	);
 }
