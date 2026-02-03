@@ -50,7 +50,7 @@ export const ValidatedInput = React.forwardRef<
 					{...props}
 					placeholder={placeholder}
 					onKeyDown={handleKeyDown}
-					className={cn(className, error && "border-red-400/50")}
+					className={cn("glass-input", error && "border-red-400/50", className)}
 				/>
 			</FormFieldWrapper>
 		);

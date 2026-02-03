@@ -19,6 +19,7 @@ export * from "./progress";
 export * from "./radio-group";
 export * from "./select";
 export * from "./separator";
+export * from "./skeleton";
 export * from "./sonner";
 export * from "./table";
 export * from "./tabs";

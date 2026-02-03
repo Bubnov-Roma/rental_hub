@@ -32,8 +32,6 @@ export default async function DashboardPage() {
 
 	const showBanner = application?.status === "no_application";
 
-	console.log("showBanner", showBanner, "application", application?.status);
-	// Load data in parallel for better performance
 	const [
 		{ data: bookingsData },
 		{ count: totalBookings },

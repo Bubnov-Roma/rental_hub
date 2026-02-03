@@ -10,6 +10,7 @@ import { RainbowSpinner } from "@/components/shared";
 import { Button, Input, Label } from "@/components/ui";
 import { useOtpAuth } from "@/hooks/useOtpAuth";
 import { createClient } from "@/lib/supabase/client";
+import { cn } from "@/lib/utils";
 import { getURL } from "@/utils";
 
 export function ContactForm({ mode }: { mode: string }) {
@@ -62,7 +63,12 @@ export function ContactForm({ mode }: { mode: string }) {
 						<Input
 							type="email"
 							placeholder="example@mail.com"
-							className="glass-input w-full pl-12"
+							className={cn(
+								"glass-input w-full pl-12",
+								"h-11 min-w-0 text-base transition-all outline-none",
+								"disabled:opacity-20 disabled:cursor-not-allowed",
+								"md:text-sm"
+							)}
 							value={email}
 							onChange={(e) => setEmail(e.target.value)}
 							required

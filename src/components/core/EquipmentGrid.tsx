@@ -1,50 +1,59 @@
-import { EquipmentCard } from "@/components/core/EquipmentCard";
+"use client";
+
+import { Box } from "lucide-react";
+import { Progress, Skeleton } from "@/components/ui";
 import type { Equipment } from "@/core/domain/entities/Equipment";
+import { EquipmentCard } from "./EquipmentCard";
 
 interface EquipmentGridProps {
-	equipment: Equipment[];
-	onBook: (id: string) => void;
-	onViewDetails: (id: string) => void;
+	items: Equipment[];
+	isLoading: boolean;
 }
 
-export function EquipmentGrid({
-	equipment,
-	onBook,
-	onViewDetails,
-}: EquipmentGridProps) {
-	if (equipment.length === 0) {
+export function EquipmentGrid({ items, isLoading }: EquipmentGridProps) {
+	if (isLoading) {
 		return (
-			<div className="py-12 text-center">
-				<div className="mx-auto max-w-md">
-					<div className="mb-4 text-6xl">📷</div>
-					<h3 className="mb-2 text-xl font-semibold">
-						Оборудование не найдено
-					</h3>
-					<p className="text-gray-600">
-						Попробуйте изменить параметры поиска или выберите другую категорию
-					</p>
+			<div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
+				<div className="fixed top-16 left-0 w-full z-50">
+					<Progress
+						value={undefined}
+						className="h-1 rounded-none bg-PRIMARY/20"
+					/>
 				</div>
+				{[...Array(8)].map(() => {
+					const uniqueKey = crypto.randomUUID();
+					return (
+						<Skeleton
+							key={uniqueKey}
+							className="h-105 rounded-[2rem] bg-foreground/5 animate-pulse"
+						/>
+					);
+				})}
+			</div>
+		);
+	}
+
+	if (items.length === 0) {
+		return (
+			<div className="flex flex-col items-center justify-center py-20 text-center">
+				<div className="w-20 h-20 mb-4 bg-foreground/5 rounded-full flex items-center justify-center">
+					<Box size={40} className="text-muted-foreground opacity-20" />
+				</div>
+				<h3 className="text-xl font-bold">Ничего не найдено</h3>
+				<p className="text-muted-foreground">
+					Попробуйте изменить фильтры или категорию
+				</p>
 			</div>
 		);
 	}
 
 	return (
-		<div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-			{equipment.map((item) => (
+		<div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
+			{items.map((item) => (
 				<EquipmentCard
 					key={item.id}
-					id={item.id}
-					title={item.title}
-					description={item.description || "Нет описания"}
-					pricePerDay={item.price_per_day}
-					imageUrl={item.imageUrl || "/placeholder-equipment.jpg"}
-					rating={item.rating || 4.5}
-					reviewsCount={item.reviewsCount || 12}
-					location="Москва"
-					category={item.category}
-					isAvailable={item.is_available}
-					onBook={onBook}
-					onViewDetails={onViewDetails}
+					item={item}
+					onBook={(id) => console.log("Book", id)}
 				/>
 			))}
 		</div>
