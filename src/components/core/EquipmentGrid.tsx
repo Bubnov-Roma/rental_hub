@@ -14,13 +14,10 @@ export function EquipmentGrid({ items, isLoading }: EquipmentGridProps) {
 	if (isLoading) {
 		return (
 			<div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
-				<div className="fixed top-16 left-0 w-full z-50">
-					<Progress
-						value={undefined}
-						className="h-1 rounded-none bg-PRIMARY/20"
-					/>
+				<div className="fixed top-16 left-0 w-full z-5">
+					<Progress className="relative h-1 rounded-none bg-primary/50" />
 				</div>
-				{[...Array(8)].map(() => {
+				{[...Array(6)].map(() => {
 					const uniqueKey = crypto.randomUUID();
 					return (
 						<Skeleton
