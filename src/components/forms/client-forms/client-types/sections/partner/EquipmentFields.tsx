@@ -1,8 +1,7 @@
 import { Plus, Trash2 } from "lucide-react";
 import { type UseFormReturn, useFieldArray } from "react-hook-form";
-import { ImageUploader } from "@/components/shared/ImageUploader";
-import { Section } from "@/components/shared/Section";
-import { Button } from "@/components/ui/button";
+import { ImageUploader, Section } from "@/components/shared";
+import { Button } from "@/components/ui";
 import {
 	FormControl,
 	FormField,
@@ -188,11 +187,9 @@ export function EquipmentFields({ form }: EquipmentFieldsProps) {
 										<FormControl>
 											<ImageUploader
 												currentImageUrl={
-													typeof field.value === "string"
-														? field.value
-														: undefined
+													typeof field.value === "string" ? field.value : ""
 												}
-												aspectRatio="video"
+												aspectRatio={16 / 9}
 												onFileSelect={(file) => {
 													field.onChange(file);
 												}}
