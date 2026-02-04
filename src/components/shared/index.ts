@@ -1,4 +1,3 @@
-export * from "./ImageUploader";
 export * from "./LogoIcon";
 export * from "./QuickActionLink";
 export * from "./RainbowSpinner";

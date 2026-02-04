@@ -1,7 +1,7 @@
 import { Plus, Trash2 } from "lucide-react";
 import { type UseFormReturn, useFieldArray } from "react-hook-form";
-import { ImageUploader, Section } from "@/components/shared";
-import { Button } from "@/components/ui";
+import { Section } from "@/components/shared";
+import { Button, ImageUploader } from "@/components/ui";
 import {
 	FormControl,
 	FormField,
