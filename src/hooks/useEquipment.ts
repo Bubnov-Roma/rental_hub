@@ -1,10 +1,20 @@
 import { useQuery } from "@tanstack/react-query";
+import { useMemo } from "react";
 import { CATEGORIES } from "@/constants/categories";
 import type {
 	GroupedEquipment,
 	OwnershipType,
 } from "@/core/domain/entities/Equipment";
 import { createClient } from "@/lib/supabase/client";
+
+export interface SupabaseImage {
+	id: string;
+	url: string;
+}
+
+interface SupabaseLink {
+	images: SupabaseImage | null;
+}
 
 interface DbEquipment {
 	id: string;
@@ -28,7 +38,8 @@ interface DbEquipment {
 	specifications: Record<string, unknown> | null;
 	created_at: string;
 	updated_at: string;
-	images: { url: string }[];
+	equipment_image_links: SupabaseLink[];
+	images_data: SupabaseImage[];
 }
 
 export function useEquipment(
@@ -38,66 +49,81 @@ export function useEquipment(
 		minPrice?: number;
 		maxPrice?: number;
 		limit?: number;
+		group?: boolean;
 	} = {}
 ) {
 	const supabase = createClient();
+	const memoFilters = useMemo(
+		() => ({
+			search: filters.search?.trim() || undefined,
+			categorySlug: filters.categorySlug || "all",
+			limit: filters.limit,
+			group: filters.group ?? true,
+		}),
+		[filters.search, filters.categorySlug, filters.limit, filters.group]
+	);
 
 	return useQuery<GroupedEquipment[]>({
-		queryKey: ["equipment", filters],
+		queryKey: ["equipment", memoFilters],
 		queryFn: async () => {
 			let query = supabase.from("equipment").select(`
-          *,
-          images!images_equipment_id_fkey(url)
-        `);
-
-			if (filters.search) query = query.ilike("title", `%${filters.search}%`);
-
-			if (filters.categorySlug && filters.categorySlug !== "all") {
-				const cat = CATEGORIES.find((c) => c.slug === filters.categorySlug);
-				if (cat) query = query.eq("category", cat.id);
+        *,
+        equipment_image_links(images(id, url))
+      `);
+			// search by name
+			if (memoFilters.search) {
+				query = query.ilike("title", `%${memoFilters.search}%`);
 			}
 
-			if (filters.minPrice)
-				query = query.gte("price_per_day", filters.minPrice);
-			if (filters.maxPrice)
-				query = query.lte("price_per_day", filters.maxPrice);
-
-			if (filters.limit) query = query.limit(filters.limit);
-
+			// filter by category (skip if "all")
+			if (memoFilters.categorySlug && memoFilters.categorySlug !== "all") {
+				const cat = CATEGORIES.find((c) => c.slug === memoFilters.categorySlug);
+				if (cat) query = query.eq("category", cat.id);
+			}
+			if (memoFilters.limit) query = query.limit(memoFilters.limit);
 			const { data, error } = await query;
 			if (error) throw error;
-
 			const dbItems = (data as unknown as DbEquipment[]) || [];
+			// for non-grouped view (ADMIN TABLE)
+			if (!memoFilters.group) {
+				return dbItems.map((item) => {
+					const imagesData =
+						item.equipment_image_links
+							?.map((l) => l.images)
+							.filter((img): img is SupabaseImage => Boolean(img)) || [];
+
+					return {
+						...item,
+						imageUrl: imagesData[0]?.url || "/placeholder-equipment.png",
+						images: imagesData.map((img) => img.url),
+						images_data: imagesData,
+						total_count: 1,
+						available_count: item.is_available ? 1 : 0,
+						all_unit_ids: [item.id],
+					} as unknown as GroupedEquipment;
+				});
+			}
 			const groupedMap = dbItems.reduce<Record<string, GroupedEquipment>>(
 				(acc, item) => {
 					const title = item.title;
+					const imageUrls: string[] = item.equipment_image_links
+						.map((link) => link.images?.url)
+						.filter((url): url is string => Boolean(url));
 					if (!acc[title]) {
 						acc[title] = {
-							id: item.id,
-							title: item.title,
+							...item,
 							description: item.description || "Нет описания",
-							category: item.category,
-							subcategory: item.subcategory,
-							inventory_number: item.inventory_number,
-							price_per_day: item.price_per_day,
-							price_4h: item.price_4h,
-							price_8h: item.price_8h,
-							deposit: item.deposit,
-							replacement_value: item.replacement_value,
 							ownership_type: item.ownership_type as OwnershipType,
 							status: "available",
-							is_available: item.is_available,
-							partner_name: item.partner_name,
-							defects: item.defects,
 							kit: item.kit_description,
 							related_ids: item.related_ids || [],
-							imageUrl: item.images?.[0]?.url || "/placeholder-equipment.png",
-							images: item.images?.map((img) => img.url) || [],
+							imageUrl: imageUrls[0] || "/placeholder-equipment.png",
+							images: imageUrls,
 							rating: 5.0,
 							reviewsCount: 0,
-							specifications: item.specifications || {},
-							created_at: item.created_at,
-							updated_at: item.updated_at,
+							specifications:
+								(item.specifications as Record<string, string>) || {},
+							images_data: item.images_data,
 							total_count: 0,
 							available_count: 0,
 							all_unit_ids: [],
@@ -105,17 +131,17 @@ export function useEquipment(
 					}
 					acc[title].total_count += 1;
 					acc[title].all_unit_ids.push(item.id);
-					if (item.status === "available" && item.is_available)
+					if (item.status === "available" && item.is_available) {
 						acc[title].available_count += 1;
+					}
 					return acc;
 				},
 				{}
 			);
 			return Object.values(groupedMap);
 		},
-		enabled: Boolean(
-			filters.categorySlug || (filters.search && filters.search.length > 0)
-		),
+		enabled: true,
 		staleTime: 1000 * 60 * 5,
+		retry: 1,
 	});
 }
