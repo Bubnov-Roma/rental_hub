@@ -2,7 +2,9 @@ import type { Area } from "react-easy-crop";
 
 export async function getCroppedImg(
 	imageSrc: string,
-	pixelCrop: Area
+	pixelCrop: Area,
+	backgroundColor: string = "#ffffff",
+	fileType: string = "image/webp"
 ): Promise<Blob> {
 	const image = new window.Image();
 	image.src = imageSrc;
@@ -17,6 +19,16 @@ export async function getCroppedImg(
 
 	if (!ctx) throw new Error("No 2d context");
 
+	// If not WebP/PNG or if the user chose a color, fill the background
+	// For transparent formats, if transparent mode is selected, skip fill
+	if (
+		fileType === "image/jpeg" ||
+		(fileType === "image/webp" && backgroundColor !== "transparent")
+	) {
+		ctx.fillStyle = backgroundColor;
+		ctx.fillRect(0, 0, canvas.width, canvas.height);
+	}
+
 	ctx.drawImage(
 		image,
 		pixelCrop.x,
@@ -29,13 +41,14 @@ export async function getCroppedImg(
 		pixelCrop.height
 	);
 
-	return new Promise((resolve) => {
+	return new Promise((resolve, reject) => {
 		canvas.toBlob(
 			(blob) => {
 				if (blob) resolve(blob);
+				else reject(new Error("Canvas is empty"));
 			},
-			"image/jpeg",
-			0.95
+			fileType,
+			0.85
 		);
 	});
 }
