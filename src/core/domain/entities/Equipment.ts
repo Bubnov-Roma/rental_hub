@@ -1,3 +1,5 @@
+import type { SupabaseImage } from "@/hooks";
+
 export type EquipmentStatus = "available" | "rented" | "reserved" | "broken";
 export type OwnershipType = "internal" | "sublease";
 
@@ -42,6 +44,7 @@ export interface Equipment {
 export interface GroupedEquipment extends Equipment {
 	total_count: number;
 	available_count: number;
+	images_data: SupabaseImage[];
 	readonly all_unit_ids: string[];
 }
 

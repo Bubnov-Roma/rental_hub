@@ -11,7 +11,6 @@ export * from "./dialog";
 export * from "./dropdown-menu";
 export * from "./fab";
 export * from "./form";
-export * from "./image-uploader";
 export * from "./input";
 export * from "./input-group";
 export * from "./label";
