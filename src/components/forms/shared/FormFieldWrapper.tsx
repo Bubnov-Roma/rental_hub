@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { Label } from "@/components/ui/label";
-import { cn } from "@/utils";
+import { cn } from "@/lib/utils";
 
 interface FormFieldWrapperProps {
 	label: string;

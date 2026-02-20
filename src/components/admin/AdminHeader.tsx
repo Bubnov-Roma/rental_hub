@@ -48,6 +48,8 @@ export function AdminHeader() {
 							>
 								{user?.user_metadata?.avatar_url ? (
 									<Image
+										width={48}
+										height={48}
 										src={user.user_metadata.avatar_url}
 										alt={user.user_metadata.name}
 										className="h-full w-full rounded-full object-cover"

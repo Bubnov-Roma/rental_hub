@@ -1,5 +1,8 @@
 "use client";
 
+import { ArrowRight } from "lucide-react";
+import Link from "next/link";
+import { useState } from "react";
 import { ValidatedTextarea } from "@/components/forms/shared";
 import {
 	Dialog,
@@ -14,82 +17,114 @@ import {
 	TooltipTrigger,
 } from "@/components/ui";
 import { Button } from "@/components/ui/button";
-import { VERIFICATION_CONFIG as config } from "@/constants";
-import { useApplicationStore } from "@/store";
-import { cn } from "@/utils";
+import type { StatusAction } from "@/constants";
+import { useApplicationStatus } from "@/hooks/use-application-status";
+import { cn } from "@/lib/utils";
 
 interface Props {
 	isClientPartner?: boolean;
 }
 
+function ActionLink({
+	action,
+	onClose,
+}: {
+	action: StatusAction;
+	onClose: () => void;
+}) {
+	return (
+		<Link
+			href={action.href}
+			onClick={onClose}
+			className="inline-flex items-center gap-1 text-xs font-bold text-primary hover:underline mt-1.5"
+		>
+			{action.label}
+			<ArrowRight size={11} />
+		</Link>
+	);
+}
+
 export const VerificationBadge: React.FC<Props> = ({
 	isClientPartner = false,
 }) => {
-	const status = useApplicationStore((state) => state.status);
-	const current = config[status] || config.pending;
+	const [open, setOpen] = useState(false);
+	const { status, config } = useApplicationStatus();
+	const {
+		Icon,
+		label,
+		description,
+		color,
+		bgColor,
+		borderColor,
+		glowColor,
+		action,
+	} = config;
 
 	return (
-		<Dialog>
+		<Dialog open={open} onOpenChange={setOpen}>
 			<form>
-				<Tooltip key={current.title}>
+				<Tooltip key={label}>
 					<TooltipTrigger asChild>
 						<DialogTrigger asChild>
-							<Button className={cn(current.bg, current.border)}>
-								<current.icon
-									className={cn("w-4 h-4 md:hidden", current.color)}
-								/>
+							<Button
+								className={cn("transition-all border", bgColor, borderColor)}
+							>
+								{/* Мобильная версия — только иконка */}
+								<Icon className={cn("w-4 h-4 md:hidden", color)} />
+								{/* Десктоп — текстовый лейбл */}
 								<span
 									className={cn(
 										"hidden md:inline-block text-[10px] font-bold uppercase tracking-widest",
-										current.color
+										color
 									)}
 								>
-									{isClientPartner ? "Partner" : current.title}
+									{isClientPartner ? "Partner" : label}
 								</span>
 							</Button>
 						</DialogTrigger>
 					</TooltipTrigger>
-					<TooltipContent className="md:hidden">{current.title}</TooltipContent>
+					<TooltipContent className="md:hidden">{label}</TooltipContent>
 				</Tooltip>
+
 				<DialogContent
 					className={cn(
-						"glass items-center justify-center text-center flex-col transition-all rounded-2xl sm:max-w-106.25 backdrop-blur-xl",
-						current.border,
-						current.bg
+						"glass items-center justify-center text-center flex-col transition-all rounded-2xl sm:max-w-106.25 backdrop-blur-xl border",
+						borderColor,
+						bgColor
 					)}
 				>
-					<DialogHeader
-						className={cn("flex items-center justify-center text-center")}
-					>
-						<DialogTitle>{current.title}</DialogTitle>
-						<DialogDescription
-							className={cn(
-								"flex items-center justify-center text-center whitespace-pre-line"
+					<DialogHeader className="flex items-center justify-center text-center">
+						<DialogTitle className={color}>{label}</DialogTitle>
+						<DialogDescription className="flex flex-col items-center justify-center text-center whitespace-pre-line">
+							{description}
+							{/* Ссылка-действие под описанием — закрывает диалог при переходе */}
+							{action && (
+								<ActionLink action={action} onClose={() => setOpen(false)} />
 							)}
-						>
-							{current.desc}
 						</DialogDescription>
 					</DialogHeader>
-					<div className={cn("flex-col items-center justify-center w-full")}>
+
+					<div className="flex flex-col items-center justify-center w-full gap-4">
+						{/* Большая иконка с подсветкой */}
 						<div
 							className={cn(
 								"z-10 flex items-center justify-center",
-								status === "loading" ? "" : current.glow,
-								current.color
+								status !== "loading" && glowColor,
+								color
 							)}
 							style={{ willChange: "filter" }}
 						>
-							<current.icon className={cn("w-20 h-20", current.color)} />
+							<Icon className={cn("w-20 h-20", color)} />
 						</div>
+
+						{/* Форма уточнения — только при статусе clarification */}
 						{status === "clarification" && (
 							<>
-								<ValidatedTextarea label="Поле для ответа" />
-								<DialogFooter className={cn("flex justify-between w-full")}>
-									{status === "clarification" && (
-										<Button size="xs" type="submit">
-											Отправить
-										</Button>
-									)}
+								<ValidatedTextarea label="Поле для ответа" className="w-full" />
+								<DialogFooter className="flex justify-between w-full">
+									<Button size="xs" type="submit">
+										Отправить
+									</Button>
 								</DialogFooter>
 							</>
 						)}

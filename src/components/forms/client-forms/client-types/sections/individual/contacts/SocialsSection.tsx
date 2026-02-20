@@ -253,7 +253,7 @@ export const SocialsSection = () => {
 					/>
 				</div>
 				<Button
-					variant="neumorph"
+					variant="glass"
 					onClick={handleAddOrUpdate}
 					disabled={!selectedPlatform || inputValue.length < 2}
 					className={`w-11 h-11 mb-5 rounded-xl flex items-center justify-center transition-all`}

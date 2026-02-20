@@ -1,9 +1,9 @@
 "use client";
 
-import * as AlertDialogPrimitive from "@radix-ui/react-alert-dialog";
 import { motion } from "framer-motion";
+import { AlertDialog as AlertDialogPrimitive } from "radix-ui";
 import type * as React from "react";
-import { cn } from "@/utils";
+import { cn } from "@/lib/utils";
 
 function AlertDialog({
 	...props
@@ -35,10 +35,10 @@ function AlertDialogOverlay({
 		<AlertDialogPrimitive.Overlay asChild {...props}>
 			<motion.div
 				initial={{ opacity: 0, backdropFilter: "blur(0px)" }}
-				animate={{ opacity: 1, backdropFilter: "blur(12px)" }}
+				animate={{ opacity: 1, backdropFilter: "blur(10px)" }}
 				exit={{ opacity: 0, backdropFilter: "blur(0px)" }}
-				transition={{ duration: 0.3, ease: "easeOut" }}
-				className="fixed inset-0 z-70"
+				transition={{ duration: 0.1, ease: "easeOut" }}
+				className="fixed inset-0 z-70 bg-muted-foreground/10"
 			>
 				<div className="absolute inset-0 bg-noise opacity-[0.03]" />
 			</motion.div>
@@ -64,13 +64,13 @@ function AlertDialogContent({
 						damping: 20,
 						stiffness: 10,
 					}}
-					className="w-full max-w-lg"
+					className="max-w-lg mx-2"
 				>
 					<AlertDialogPrimitive.Content
 						data-slot="alert-dialog-content"
 						className={cn(
-							"relative pointer-events-auto bg-background/70 backdrop-blur-2xl",
-							"rounded-[32px] p-8 overflow-hidden shadow-2xl border border-white/10",
+							"relative pointer-events-auto bg-background/80",
+							"rounded-[32px] py-6 px-2 mx-auto overflow-hidden shadow-2xl border border-white/10",
 							"outline-none",
 							className
 						)}
@@ -78,7 +78,7 @@ function AlertDialogContent({
 					>
 						<div className="absolute inset-0 bg-noise opacity-[0.09] pointer-events-none" />
 						<div className="absolute inset-0 glass-glow-subtle pointer-events-none" />
-						<div className="relative z-10">{children}</div>
+						<div className="relative z-10 p-2">{children}</div>
 					</AlertDialogPrimitive.Content>
 				</motion.div>
 			</div>

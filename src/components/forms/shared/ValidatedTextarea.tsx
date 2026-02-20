@@ -1,7 +1,7 @@
 import React from "react";
 import { FormFieldWrapper } from "@/components/forms/shared/FormFieldWrapper";
 import { Textarea } from "@/components/ui/textarea";
-import { cn } from "@/utils";
+import { cn } from "@/lib/utils";
 
 interface ValidatedTextareaProps
 	extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {

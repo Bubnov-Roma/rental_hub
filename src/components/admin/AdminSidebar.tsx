@@ -18,7 +18,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { SignOutButton } from "@/components/shared/SignOutButton";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/utils";
+import { cn } from "@/lib/utils";
 
 const navItems = [
 	{

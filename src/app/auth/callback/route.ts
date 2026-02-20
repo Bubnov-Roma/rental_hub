@@ -28,9 +28,12 @@ export async function GET(request: Request) {
 
 		const { error } = await supabase.auth.exchangeCodeForSession(code);
 		if (!error) {
+			// Если все ок, редиректим на целевую страницу
 			return NextResponse.redirect(`${origin}${next}`);
 		}
 	}
-
-	return NextResponse.redirect(`${origin}/auth?view=error`);
+	// Если ошибка, возвращаем на страницу входа с ошибкой
+	return NextResponse.redirect(
+		`${origin}/auth?view=login&error=auth_code_error`
+	);
 }

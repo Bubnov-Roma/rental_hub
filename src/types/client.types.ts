@@ -8,7 +8,8 @@ export type ApplicationStatus =
 	| "approved"
 	| "loading"
 	| "no_application"
-	| "rejected";
+	| "rejected"
+	| "blocked";
 
 export type ClientVariants =
 	| "individual"

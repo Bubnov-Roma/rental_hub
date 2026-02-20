@@ -3,8 +3,14 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
-      { protocol: 'https', hostname: 'your-supabase-domain.supabase.co' }, 
-      {protocol: 'https',
+      { 
+        protocol: 'https', 
+        hostname: 'xesbocpjxavyeobmuxca.supabase.co', 
+        port: '',
+        pathname: '/storage/v1/object/public/**', 
+      }, 
+      {
+        protocol: 'https',
         hostname: 'lh3.googleusercontent.com',
         port: '',
         pathname: '/**',

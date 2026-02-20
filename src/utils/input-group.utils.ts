@@ -1,4 +1,4 @@
-import type { CornerRounding } from "@/components/ui/input-group";
+import type { CornerRounding } from "@/types";
 
 export const getRoundingClasses = (corners?: CornerRounding): string => {
 	if (!corners) return "";

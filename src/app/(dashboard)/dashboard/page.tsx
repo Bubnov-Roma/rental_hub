@@ -1,7 +1,8 @@
+import { format } from "date-fns";
+import { ru } from "date-fns/locale";
 import {
 	ArrowRight,
 	Calendar,
-	Clock,
 	Package,
 	Star,
 	TrendingUp,
@@ -14,6 +15,7 @@ import { QuickActionLink } from "@/components/shared/QuickActionLink";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/server";
+import { cn } from "@/lib/utils";
 
 export default async function DashboardPage() {
 	const supabase = await createClient();
@@ -32,20 +34,19 @@ export default async function DashboardPage() {
 
 	const showBanner = application?.status === "no_application";
 
-	console.log("showBanner", showBanner, "application", application?.status);
-	// Load data in parallel for better performance
 	const [
 		{ data: bookingsData },
 		{ count: totalBookings },
 		{ count: activeBookings },
 		{ data: spendingData },
 	] = await Promise.all([
-		// User reservations
 		supabase
 			.from("bookings")
 			.select(`
 				*,
-				equipment:equipment(*)
+				booking_items (
+      equipment (title, imageUrl)
+    )
 			`)
 			.eq("user_id", user.id)
 			.order("created_at", { ascending: false })
@@ -123,11 +124,7 @@ export default async function DashboardPage() {
 						Ваш кабинет управления арендой техники.
 					</p>
 				</div>
-				<Button
-					variant="social"
-					asChild
-					className="rounded-2xl border-white/10 hover:bg-white/5 transition-all mr-8"
-				>
+				<Button asChild className="cursor-pointer mr-8">
 					<Link href="/equipment" className="flex items-center gap-2">
 						Каталог техники <ArrowRight />
 					</Link>
@@ -175,56 +172,52 @@ export default async function DashboardPage() {
 					</CardHeader>
 					<CardContent>
 						{bookings.length > 0 ? (
-							<div className="space-y-4">
+							// Замени блок в Card истории на этот:
+							<div className="space-y-2">
 								{bookings.map((booking) => (
 									<div
 										key={booking.id}
-										className="flex items-center justify-between rounded-lg border p-4"
+										className="group flex items-center justify-between p-4 rounded-2xl hover:bg-white/5 transition-colors border border-transparent hover:border-white/5"
 									>
 										<div className="flex items-center gap-4">
-											<div className="rounded-lg bg-blue-100 p-2">
-												<Package className="h-6 w-6 text-blue-600" />
-											</div>
-											<div>
-												<h4 className="font-medium">
-													{booking.equipment?.title}
-												</h4>
-												<div className="flex items-center gap-2 text-sm text-gray-500">
-													<Clock className="h-3 w-3" />
-													<span>
-														{new Date(booking.startDate).toLocaleDateString(
-															"ru-RU"
-														)}{" "}
-														-{" "}
-														{new Date(booking.endDate).toLocaleDateString(
-															"ru-RU"
-														)}
-													</span>
+											{/* Аватар первого предмета в заказе */}
+											<div className="w-12 h-12 rounded-xl overflow-hidden bg-muted relative shrink-0 border border-white/10">
+												{/* Здесь можно добавить Image если в запросе есть imageUrl */}
+												<div className="absolute inset-0 flex items-center justify-center bg-primary/10 text-primary">
+													<Package size={20} />
 												</div>
 											</div>
+
+											<div>
+												<h4 className="font-bold text-sm leading-tight">
+													{booking.booking_items[0]?.equipment.title}
+													{booking.booking_items.length > 1 && (
+														<span className="text-primary ml-1">
+															+{booking.booking_items.length - 1}
+														</span>
+													)}
+												</h4>
+												<p className="text-[10px] text-muted-foreground uppercase mt-1">
+													{format(new Date(booking.start_date), "d MMMM", {
+														locale: ru,
+													})}
+												</p>
+											</div>
 										</div>
+
 										<div className="text-right">
-											<div className="font-bold">
-												{(booking.totalAmount || 0).toLocaleString("ru-RU")} ₽
+											<div className="font-black text-sm">
+												{booking.total_amount.toLocaleString()} ₽
 											</div>
 											<div
-												className={`text-sm ${
-													booking.status === "completed"
-														? "text-green-600"
-														: booking.status === "cancelled"
-															? "text-red-600"
-															: booking.status === "confirmed"
-																? "text-blue-600"
-																: "text-yellow-600"
-												}`}
+												className={cn(
+													"text-[9px] uppercase font-bold tracking-widest",
+													booking.status === "pending"
+														? "text-yellow-500"
+														: "text-primary"
+												)}
 											>
-												{booking.status === "completed"
-													? "Завершено"
-													: booking.status === "cancelled"
-														? "Отменено"
-														: booking.status === "confirmed"
-															? "Подтверждено"
-															: "Ожидание"}
+												{booking.status}
 											</div>
 										</div>
 									</div>
@@ -271,6 +264,52 @@ export default async function DashboardPage() {
 							/>
 							{/* Upcoming events */}
 							<div className="mt-8">
+								<h4 className="mb-4 font-semibold text-sm opacity-70">
+									Предстоящие аренды
+								</h4>
+								<div className="space-y-3">
+									{bookings
+										.filter((b) => {
+											const endDate = new Date(b.end_date); // исправлено
+											return endDate > new Date() && b.status !== "cancelled";
+										})
+										.slice(0, 2)
+										.map((booking) => (
+											<div
+												key={booking.id}
+												className="rounded-2xl border border-white/5 bg-white/5 p-4 transition-all hover:bg-white/10"
+											>
+												<div className="flex items-center justify-between gap-4">
+													<div className="min-w-0">
+														<p className="font-bold text-sm truncate uppercase tracking-tighter">
+															{booking.booking_items?.[0]?.equipment?.title ||
+																"Заказ"}
+														</p>
+														<p className="text-[10px] text-muted-foreground mt-1">
+															Возврат:{" "}
+															{format(
+																new Date(booking.end_date),
+																"d MMM HH:mm",
+																{ locale: ru }
+															)}
+														</p>
+													</div>
+													<Button
+														size="sm"
+														variant="outline"
+														className="rounded-xl shrink-0"
+														asChild
+													>
+														<Link href={`/dashboard/bookings/${booking.id}`}>
+															Инфо
+														</Link>
+													</Button>
+												</div>
+											</div>
+										))}
+								</div>
+							</div>
+							{/* <div className="mt-8">
 								<h4 className="mb-4 font-semibold">Предстоящие события</h4>
 								<div className="space-y-3">
 									{bookings
@@ -303,7 +342,7 @@ export default async function DashboardPage() {
 											</div>
 										))}
 								</div>
-							</div>
+							</div> */}
 						</CardContent>
 					</Card>
 				</div>

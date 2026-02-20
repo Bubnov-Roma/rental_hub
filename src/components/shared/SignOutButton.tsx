@@ -16,8 +16,8 @@ import {
 	AlertDialogTrigger,
 	Button,
 } from "@/components/ui";
+import { cn } from "@/lib/utils";
 import { useUnsavedChanges } from "@/store";
-import { cn } from "@/utils";
 
 interface SignOutButtonProps {
 	className?: string;
