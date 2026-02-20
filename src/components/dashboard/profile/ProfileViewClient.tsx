@@ -1,8 +1,8 @@
 "use client";
 
 import { ProfileDetails } from "@/components/dashboard/profile/ProfileDetails";
+import { ProfileSkeleton } from "@/components/dashboard/profile/ProfileSkeleton";
 import { ClientForm } from "@/components/forms";
-import { RainbowSpinner } from "@/components/shared";
 import { useApplicationStore } from "@/store";
 import type { ClientApplication } from "@/types";
 
@@ -16,7 +16,7 @@ export const ProfileViewClient: React.FC<ProfileViewClientProps> = () => {
 	const status = useApplicationStore((state) => state.status);
 
 	if (status === "loading") {
-		return <RainbowSpinner />;
+		return <ProfileSkeleton variant="form" />;
 	}
 
 	return (

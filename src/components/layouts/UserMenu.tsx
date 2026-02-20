@@ -1,6 +1,7 @@
 "use client";
 
 import {
+	ChevronsUpDown,
 	Circle,
 	LayoutDashboard,
 	Moon,
@@ -24,15 +25,18 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui";
+import { useSidebar } from "@/components/ui/sidebar";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 
 export function UserMenu() {
 	const { user, profile, isLoading } = useAuth();
 	const { theme, setTheme } = useTheme();
+	const { state, isMobile } = useSidebar();
 	const router = useRouter();
-
 	const [isOnline, setIsOnline] = useState(true);
+
+	const isCollapsed = state === "collapsed" && !isMobile;
 
 	useEffect(() => {
 		setIsOnline(navigator.onLine);
@@ -46,128 +50,176 @@ export function UserMenu() {
 		};
 	}, []);
 
-	if (isLoading) {
-		return (
-			<div className="h-10 w-10 rounded-full bg-primary/10 animate-pulse border border-white/10" />
-		);
-	}
+	if (isLoading)
+		return <div className="h-12 w-full animate-pulse bg-white/5 rounded-xl" />;
 
 	if (!user) {
+		if (isCollapsed) return null; // Или иконка входа
 		return (
 			<Button
-				variant="default"
-				onClick={() => router.push("/auth?view=contact")}
-				className="rounded-xl"
+				onClick={() => router.push("/auth?view=login")}
+				className="w-full rounded-xl"
 			>
 				Войти
 			</Button>
 		);
 	}
 
-	const name = profile?.name || user?.user_metadata?.name || user?.email;
+	const name =
+		profile?.name || user?.user_metadata?.name || user.email?.split("@")[0];
+	const avatarUrl = user.user_metadata?.avatar_url;
+
 	const isOfflineMode = !isOnline || (!profile && !isLoading);
 
 	return (
-		<div className="flex items-center gap-3">
-			<DropdownMenu>
-				<DropdownMenuTrigger asChild>
-					<Button
-						variant="ghost"
-						className={cn(
-							"relative h-10 w-10 p-0 rounded-full ring-1 focus:ring-2 active:ring-2",
-							isOfflineMode ? "ring-3 ring-yellow-500" : "ring-primary/50"
-						)}
-					>
-						{/* Avatar */}
-						<div className="relative">
-							<div className="h-10 w-10 rounded-full overflow-hidden">
-								{user.user_metadata?.avatar_url ? (
-									<Image
-										src={user.user_metadata.avatar_url}
-										alt="Avatar"
-										width={40}
-										height={40}
-										className="object-cover rounded-full"
-									/>
-								) : (
-									<div className="flex h-full w-full items-center justify-center bg-primary text-white">
-										{name?.charAt(0).toUpperCase()}
-									</div>
-								)}
-							</div>
-						</div>
-					</Button>
-				</DropdownMenuTrigger>
-				<DropdownMenuContent
-					className="z-65 w-56 shadow-glass glass-card bg-background/60 backdrop-blur-2xl rounded-2xl border-white/20 mx-2"
-					align="end"
+		<DropdownMenu>
+			<DropdownMenuTrigger asChild>
+				<Button
+					variant="ghost"
+					className={cn(
+						"h-14 w-full justify-start gap-3 rounded-xl px-2 hover:bg-foreground/10 transition-all",
+						isCollapsed && "h-12 w-12 justify-center px-0"
+					)}
 				>
-					<DropdownMenuLabel className="pb-3">
-						<div className="flex flex-col space-y-1">
-							<div className="flex items-center gap-2">
-								<p className="text-sm font-bold truncate max-w-37.5">{name}</p>
-								{isOfflineMode && (
-									<span className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-yellow-500/10 text-[9px] text-yellow-500 uppercase font-black tracking-tighter border border-yellow-500/20">
-										<WifiOff size={10} /> Offline
-									</span>
-								)}
-							</div>
-							<p className="text-[10px] text-muted-foreground truncate">
-								{user.email}
-							</p>
-						</div>
-					</DropdownMenuLabel>
-					<DropdownMenuSeparator />
-					<DropdownMenuGroup>
-						<DropdownMenuItem onClick={() => router.push("/dashboard")}>
-							<LayoutDashboard className="mr-2 h-4 w-4" />
-							<span>Дашборд</span>
-						</DropdownMenuItem>
-						<DropdownMenuItem
-							onClick={() => router.push("/dashboard/bookings")}
-						>
-							<Package className="mr-2 h-4 w-4" />
-							<span>Бронирования</span>
-						</DropdownMenuItem>
-						<DropdownMenuItem onClick={() => router.push("/dashboard/profile")}>
-							<UserIcon className="mr-2 h-4 w-4" />
-							<span>Профиль</span>
-						</DropdownMenuItem>
-						<DropdownMenuItem
-							onSelect={(e) => {
-								e.preventDefault();
-								setTheme(theme === "dark" ? "light" : "dark");
-								if (navigator.vibrate) navigator.vibrate(5);
-							}}
-							className="flex items-center justify-between cursor-pointer"
-						>
-							<div className="flex items-center gap-2">
-								<ThemeToggleIcon
-									theme={theme ?? "system"}
-									className="mr-2 h-4 w-4 text-foreground/50"
+					<div className="relative shrink-0">
+						<div className="h-9 w-9 rounded-lg overflow-hidden border border-white/10 bg-white/5">
+							{avatarUrl ? (
+								<Image
+									src={avatarUrl}
+									alt={name}
+									width={36}
+									height={36}
+									className="object-cover"
 								/>
-								<span>{theme === "dark" ? "Темная" : "Светлая"} тема</span>
-							</div>
-							<div
-								className={cn(
-									"w-8 h-4 rounded-full bg-foreground/10 relative transition-colors",
-									theme === "dark" && "bg-primary/40"
-								)}
-							>
+							) : (
 								<div
 									className={cn(
-										"absolute top-1 left-1 w-2 h-2 rounded-full bg-foreground transition-all",
-										theme === "dark" && "translate-x-4 bg-primary"
+										"flex h-full w-full items-center justify-center bg-primary text-primary-foreground font-bold",
+										isOfflineMode && "bg-yellow-500"
 									)}
-								/>
+								>
+									{name?.charAt(0).toUpperCase()}
+								</div>
+							)}
+						</div>
+						{/* Индикатор офлайна */}
+						{!isOnline && (
+							<div className="absolute -bottom-1 -right-1 rounded-full bg-background p-0.5">
+								<WifiOff size={10} className="text-yellow-500" />
 							</div>
-						</DropdownMenuItem>
-					</DropdownMenuGroup>
-					<DropdownMenuSeparator />
-					<SignOutButton className="w-full h-8 text-sm" />
-				</DropdownMenuContent>
-			</DropdownMenu>
-		</div>
+						)}
+					</div>
+
+					{/* Скрываем текст если свернуто */}
+					{!isCollapsed && (
+						<>
+							<div className="flex flex-col items-start flex-1 text-left min-w-0 leading-tight">
+								<span className="text-sm font-semibold truncate w-full">
+									{name}
+								</span>
+								<span className="text-xs text-muted-foreground truncate w-full">
+									{user.email}
+								</span>
+							</div>
+							<ChevronsUpDown className="ml-auto size-4 text-muted-foreground/50" />
+						</>
+					)}
+				</Button>
+			</DropdownMenuTrigger>
+
+			{/* Контент меню */}
+			<DropdownMenuContent
+				className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-xl bg-background/80 backdrop-blur-xl border-white/10 shadow-2xl pb-2"
+				side={isMobile ? "bottom" : "right"}
+				align="end"
+				sideOffset={8}
+			>
+				<DropdownMenuLabel className="pb-3">
+					<div className="flex flex-col space-y-1">
+						<div className="flex DropdownMenuContentitems-center gap-2">
+							<p className="text-sm font-bold truncate max-w-37.5">{name}</p>
+							{isOfflineMode && (
+								<span className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-yellow-500/10 text-[9px] text-yellow-500 uppercase font-black tracking-tighter border border-yellow-500/20">
+									<WifiOff size={10} /> Offline
+								</span>
+							)}
+						</div>
+						<p className="text-[10px] text-muted-foreground truncate">
+							{user.email}
+						</p>
+					</div>
+				</DropdownMenuLabel>
+				<DropdownMenuSeparator />
+				<DropdownMenuGroup>
+					<DropdownMenuItem onClick={() => router.push("/dashboard")}>
+						<LayoutDashboard className="mr-2 h-4 w-4" />
+						<span>Дашборд</span>
+					</DropdownMenuItem>
+					<DropdownMenuItem onClick={() => router.push("/dashboard/bookings")}>
+						<Package className="mr-2 h-4 w-4" />
+						<span>Бронирования</span>
+					</DropdownMenuItem>
+					<DropdownMenuItem onClick={() => router.push("/dashboard/profile")}>
+						<UserIcon className="mr-2 h-4 w-4" />
+						<span>Профиль</span>
+					</DropdownMenuItem>
+					<DropdownMenuItem
+						onSelect={(e) => {
+							e.preventDefault();
+							setTheme(theme === "dark" ? "light" : "dark");
+							if (navigator.vibrate) navigator.vibrate(5);
+						}}
+						className="flex items-center justify-between cursor-pointer"
+					>
+						<div className="flex items-center gap-2">
+							<ThemeToggleIcon
+								theme={theme ?? "system"}
+								className="mr-2 h-4 w-4 text-foreground/50"
+							/>
+							<span>{theme === "dark" ? "Темная" : "Светлая"} тема</span>
+						</div>
+						<div
+							className={cn(
+								"w-8 h-4 rounded-full bg-foreground/10 relative transition-colors",
+								theme === "dark" && "bg-primary/40"
+							)}
+						>
+							<div
+								className={cn(
+									"absolute top-1 left-1 w-2 h-2 rounded-full bg-foreground transition-all",
+									theme === "dark" && "translate-x-4 bg-primary"
+								)}
+							/>
+						</div>
+					</DropdownMenuItem>
+				</DropdownMenuGroup>
+				<DropdownMenuSeparator />
+				<SignOutButton className="w-full h-8 text-sm" />
+				<DropdownMenuLabel className="p-0 font-normal">
+					<div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
+						<div className="h-8 w-8 rounded-lg bg-white/10 flex items-center justify-center">
+							{avatarUrl ? (
+								<Image
+									src={avatarUrl}
+									width={32}
+									height={32}
+									alt=""
+									className="rounded-lg"
+								/>
+							) : (
+								name?.charAt(0)
+							)}
+						</div>
+						<div className="grid flex-1 text-left text-sm leading-tight">
+							<span className="truncate font-semibold">{name}</span>
+							<span className="truncate text-xs text-muted-foreground">
+								{user.email}
+							</span>
+						</div>
+					</div>
+				</DropdownMenuLabel>
+			</DropdownMenuContent>
+		</DropdownMenu>
 	);
 }
 

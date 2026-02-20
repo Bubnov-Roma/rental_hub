@@ -19,7 +19,7 @@ interface PhoneInputProps {
 	corners?: CornerRounding;
 	orientation?: InputGroupOrientation;
 	position?: InputPosition;
-	standalone?: boolean; // true = wrapper, false = only input
+	standalone?: boolean; //**  true = wrapper, false = only input */
 	onFocus?: () => void;
 	onBlur?: () => void;
 	required?: boolean;
@@ -69,7 +69,7 @@ export const PhoneInput = ({
 				"h-11 w-full min-w-0 px-4 py-2 text-base transition-all outline-none",
 				"disabled:opacity-20 disabled:cursor-not-allowed",
 				"md:text-sm",
-				corners ? getRoundingClasses(corners) : "rounded-xl",
+				corners ? getRoundingClasses(corners) : "rounded-md",
 				corners && getBorderClasses(corners),
 				corners ? "glass-input-neumorphic" : "glass-input",
 				error && "border-red-400/50",

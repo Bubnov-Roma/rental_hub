@@ -1,5 +1,6 @@
 "use client";
 
+import { RefreshCw } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 import {
@@ -33,11 +34,13 @@ export function ImageUploader({
 	);
 	const [confirmingBlob, setConfirmingBlob] = useState<Blob | null>(null);
 	const [targetType, setTargetType] = useState("image/webp");
+	const [uploadAttempts, setUploadAttempts] = useState(0);
 
 	// called from CropEditor
 	const handleCropDone = (blob: Blob, type: string) => {
 		setConfirmingBlob(blob);
 		setTargetType(type);
+		setUploadAttempts(0); // Reset attempts when new crop is done
 	};
 
 	// final save result
@@ -55,6 +58,19 @@ export function ImageUploader({
 		// reset all
 		setConfirmingBlob(null);
 		setImageToCrop(null);
+		setUploadAttempts(0);
+	};
+
+	// Force retry upload
+	const handleRetryUpload = () => {
+		setUploadAttempts((prev) => prev + 1);
+		handleFinalConfirm();
+	};
+
+	// Cancel and go back to crop
+	const handleBackToCrop = () => {
+		setConfirmingBlob(null);
+		// Image to crop is still available, so it will reopen the crop editor
 	};
 
 	return (
@@ -66,6 +82,7 @@ export function ImageUploader({
 				onClear={() => {
 					setPreview(null);
 					onFileSelect(null);
+					setUploadAttempts(0);
 				}}
 			/>
 
@@ -105,15 +122,13 @@ export function ImageUploader({
 						<AlertDialogCancel asChild>
 							<Button
 								variant="ghost"
-								onClick={() => {
-									setConfirmingBlob(null);
-									setImageToCrop(null);
-								}}
+								onClick={handleBackToCrop}
 								className="rounded-xl flex-1 uppercase text-[10px] font-bold hover:bg-muted-foreground/40"
 							>
-								Сбросить
+								Изменить
 							</Button>
 						</AlertDialogCancel>
+
 						<AlertDialogAction asChild>
 							<Button
 								onClick={handleFinalConfirm}
@@ -122,14 +137,24 @@ export function ImageUploader({
 								Сохранить
 							</Button>
 						</AlertDialogAction>
-						<Button
-							variant="ghost"
-							onClick={() => setConfirmingBlob(null)}
-							className="rounded-xl flex-1 uppercase text-[10px] font-bold hover:bg-muted-foreground/40"
-						>
-							Изменить
-						</Button>
+
+						{uploadAttempts > 0 && (
+							<Button
+								variant="outline"
+								onClick={handleRetryUpload}
+								className="rounded-xl flex-1 uppercase text-[10px] font-bold"
+							>
+								<RefreshCw className="w-3 h-3 mr-1" />
+								Повторить ({uploadAttempts})
+							</Button>
+						)}
 					</AlertDialogFooter>
+
+					{/* Hint about retry */}
+					<div className="text-[9px] text-muted-foreground text-center px-4 pb-2">
+						Если загрузка зависла, используйте кнопку "Повторить" для
+						принудительной повторной попытки
+					</div>
 				</AlertDialogContent>
 			</AlertDialog>
 		</div>

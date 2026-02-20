@@ -1,43 +1,51 @@
 "use client";
 
 import { Box } from "lucide-react";
-import { Progress, Skeleton } from "@/components/ui";
-import type { Equipment } from "@/core/domain/entities/Equipment";
+import { Skeleton } from "@/components/ui";
+import type { GroupedEquipment } from "@/core/domain/entities/Equipment";
 import { EquipmentCard } from "./EquipmentCard";
 
 interface EquipmentGridProps {
-	items: Equipment[];
+	items: GroupedEquipment[];
 	isLoading: boolean;
+}
+
+function CardSkeleton() {
+	return (
+		<div className="flex flex-col gap-2.5">
+			<Skeleton className="aspect-4/3 w-full rounded-xl bg-foreground/6" />
+			<div className="px-0.5 space-y-1.5">
+				<Skeleton className="h-3 w-5/6 rounded bg-foreground/6" />
+				<Skeleton className="h-3 w-3/5 rounded bg-foreground/6" />
+				<div className="flex items-center justify-between pt-1">
+					<Skeleton className="h-4 w-16 rounded-lg bg-foreground/6" />
+					<Skeleton className="h-8 w-24 rounded-xl bg-foreground/6" />
+				</div>
+			</div>
+		</div>
+	);
 }
 
 export function EquipmentGrid({ items, isLoading }: EquipmentGridProps) {
 	if (isLoading) {
 		return (
-			<div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
-				<div className="fixed top-16 left-0 w-full z-5">
-					<Progress className="relative h-1 rounded-none bg-primary/50" />
-				</div>
-				{[...Array(6)].map(() => {
-					const uniqueKey = crypto.randomUUID();
-					return (
-						<Skeleton
-							key={uniqueKey}
-							className="h-105 rounded-[2rem] bg-foreground/5 animate-pulse"
-						/>
-					);
-				})}
+			<div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-x-3 gap-y-6">
+				{Array.from({ length: 12 }).map((_, i) => (
+					// biome-ignore lint/suspicious/noArrayIndexKey: skeleton
+					<CardSkeleton key={i} />
+				))}
 			</div>
 		);
 	}
 
 	if (items.length === 0) {
 		return (
-			<div className="flex flex-col items-center justify-center py-20 text-center">
-				<div className="w-20 h-20 mb-4 bg-foreground/5 rounded-full flex items-center justify-center">
-					<Box size={40} className="text-muted-foreground opacity-20" />
+			<div className="flex flex-col items-center justify-center py-24 text-center">
+				<div className="w-16 h-16 mb-4 bg-foreground/5 rounded-full flex items-center justify-center">
+					<Box size={28} className="opacity-20" />
 				</div>
-				<h3 className="text-xl font-bold">Ничего не найдено</h3>
-				<p className="text-muted-foreground">
+				<h3 className="text-lg font-bold">Ничего не найдено</h3>
+				<p className="text-sm text-muted-foreground mt-1">
 					Попробуйте изменить фильтры или категорию
 				</p>
 			</div>
@@ -45,13 +53,9 @@ export function EquipmentGrid({ items, isLoading }: EquipmentGridProps) {
 	}
 
 	return (
-		<div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
+		<div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-x-3 gap-y-6">
 			{items.map((item) => (
-				<EquipmentCard
-					key={item.id}
-					item={item}
-					onBook={(id) => console.log("Book", id)}
-				/>
+				<EquipmentCard key={item.id} item={item} />
 			))}
 		</div>
 	);

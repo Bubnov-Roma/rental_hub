@@ -2,6 +2,7 @@
 
 import type { User } from "@supabase/supabase-js";
 import { ThemeProvider } from "next-themes";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/providers/auth-provider";
@@ -15,26 +16,29 @@ interface RootProviderProps {
 
 export function RootProvider({ children, initialUser }: RootProviderProps) {
 	return (
-		<AuthProvider initialUser={initialUser}>
-			<QueryProvider>
-				<ThemeProvider
-					attribute="class"
-					defaultTheme="system"
-					enableSystem
-					disableTransitionOnChange
-				>
-					<UnsavedChangesGuard />
-					<SidebarProvider>
-						{children}
-						<Toaster
-							position="bottom-left"
-							expand={false}
-							richColors
-							closeButton
-						/>
-					</SidebarProvider>
-				</ThemeProvider>
-			</QueryProvider>
-		</AuthProvider>
+		<NuqsAdapter>
+			<AuthProvider initialUser={initialUser}>
+				<QueryProvider>
+					<ThemeProvider
+						attribute="class"
+						defaultTheme="system"
+						enableSystem
+						disableTransitionOnChange
+					>
+						<UnsavedChangesGuard />
+						<SidebarProvider>
+							{children}
+							<Toaster
+								position="bottom-left"
+								expand={false}
+								richColors
+								closeButton
+							/>
+						</SidebarProvider>
+					</ThemeProvider>
+				</QueryProvider>
+				);
+			</AuthProvider>
+		</NuqsAdapter>
 	);
 }

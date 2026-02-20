@@ -34,21 +34,25 @@ export async function updateSession(request: NextRequest) {
 			error: userError,
 		} = await supabase.auth.getUser();
 
+		// Игнорируем сетевые ошибки в dev-режиме
 		if (userError?.message.includes("fetch")) {
 			return { supabaseResponse, user: null };
 		}
 		const url = request.nextUrl.clone();
-		const { pathname } = url;
+		const { pathname, searchParams } = url;
+
 		/* Paths */
 		const isAuthRoute = pathname.startsWith("/auth");
 		const isAdminRoute = pathname.startsWith("/admin");
 		const isProtectedRoute =
 			pathname.startsWith("/dashboard") || pathname.startsWith("/booking");
+
 		/* check network */
 		if (userError?.message.includes("fetch")) {
 			return { supabaseResponse, user: null };
 		}
 		/* Redirect unauthorized */
+		// 1. Если нет юзера и он лезет в защищенные маршруты -> на вход
 		if (!user && (isProtectedRoute || isAdminRoute)) {
 			url.pathname = "/auth";
 			url.searchParams.set("view", "contact");
@@ -68,11 +72,15 @@ export async function updateSession(request: NextRequest) {
 				return { supabaseResponse: NextResponse.redirect(url), user };
 			}
 		}
+
 		/*  Redirect authorized users from login pages */
+		// Редиректим авторизованных со страниц входа, ТОЛЬКО ЕСЛИ это не смена пароля
 		if (user && isAuthRoute) {
+			const isUpdatePassword = searchParams.get("view") === "update-password";
 			if (
 				!pathname.startsWith("/auth/callback") &&
-				!pathname.startsWith("/auth/confirm")
+				!pathname.startsWith("/auth/confirm") &&
+				!isUpdatePassword
 			) {
 				url.pathname = "/dashboard";
 				return { supabaseResponse: NextResponse.redirect(url), user };

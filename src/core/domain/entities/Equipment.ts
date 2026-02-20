@@ -1,7 +1,33 @@
-import type { SupabaseImage } from "@/hooks";
+export type EquipmentStatus =
+	| "available"
+	| "rented"
+	| "reserved"
+	| "maintenance"
+	| "broken";
 
-export type EquipmentStatus = "available" | "rented" | "reserved" | "broken";
 export type OwnershipType = "internal" | "sublease";
+
+export interface SupabaseImage {
+	id: string;
+	url: string;
+}
+
+export interface SupabaseLink {
+	images: SupabaseImage | null;
+	image_id?: string;
+}
+
+export type Filters = {
+	categorySlug?: string;
+	search?: string;
+};
+
+export interface Comment {
+	id: string;
+	text: string;
+	author: string;
+	created_at: string;
+}
 
 export interface Equipment {
 	readonly id: string;
@@ -10,32 +36,32 @@ export interface Equipment {
 	readonly category: string;
 	readonly subcategory: string | null;
 	readonly inventory_number: string | null;
-
 	// Prices
 	readonly price_per_day: number;
 	readonly price_4h: number;
 	readonly price_8h: number;
 	readonly deposit: number;
 	readonly replacement_value: number;
-
+	readonly is_available: boolean;
 	// Status and ownership
 	readonly status: EquipmentStatus;
-	readonly is_available: boolean;
 	readonly ownership_type: OwnershipType;
 	readonly partner_name: string | null;
 
 	// Additional info
 	readonly defects: string | null;
 	readonly kit: string | null;
+	readonly kit_description?: string | null;
 	readonly related_ids: string[];
-
+	readonly specifications: string | Record<string, unknown>;
+	readonly comments?: Comment[];
+	readonly slug: string;
 	// Media
 	imageUrl: string;
 	images: string[];
+	images_data?: SupabaseImage[];
 	rating: number;
 	reviewsCount: number;
-
-	readonly specifications: string | Record<string, unknown>;
 
 	readonly created_at: string;
 	readonly updated_at: string;
@@ -57,7 +83,6 @@ export interface EquipmentImage {
 
 /**
  * DTO for create/update (Admin Panel)
- * Adding new fields so that they can be saved via the form
  */
 export interface CreateEquipmentDTO {
 	readonly title: string;
@@ -78,8 +103,39 @@ export interface CreateEquipmentDTO {
 
 	readonly defects?: string;
 	readonly kit?: string;
+	readonly kit_description?: string;
 	readonly related_ids?: string[];
 
 	readonly specifications: Record<string, unknown>;
+	readonly comments?: Comment[];
 	readonly images?: File[];
+}
+
+export interface DbEquipment {
+	id: string;
+	title: string;
+	description: string | null;
+	category: string;
+	subcategory: string | null;
+	inventory_number: string | null;
+	price_per_day: number;
+	price_4h: number;
+	price_8h: number;
+	deposit: number;
+	replacement_value: number;
+	is_available: boolean;
+	status: EquipmentStatus;
+	ownership_type: string;
+	partner_name: string | null;
+	defects: string | null;
+	kit: string | null;
+	kit_description: string | null;
+	related_ids: string[] | null;
+	specifications: Record<string, unknown> | null;
+	comments: Comment[] | null;
+	equipment_image_links: SupabaseLink[];
+	images_data: SupabaseImage[];
+	slug: string;
+	created_at: string;
+	updated_at: string;
 }

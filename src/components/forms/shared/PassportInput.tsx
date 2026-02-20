@@ -54,7 +54,7 @@ export const PassportInput = ({
 				});
 			}}
 			className={cn(
-				"h-11 w-full min-w-0 rounded-xl px-4 py-2 text-base transition-all outline-none",
+				"h-11 w-full min-w-0 rounded-md px-4 py-2 text-base transition-all outline-none",
 				"glass-input",
 				"disabled:opacity-20 disabled:cursor-not-allowed",
 				"md:text-sm",

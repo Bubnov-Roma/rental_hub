@@ -1,4 +1,5 @@
-import { type ZodType, z } from "zod";
+// import { type ZodType } from "zod";
+import { z } from "zod";
 
 const dateRegex = /^\d{2}\.\d{2}\.\d{4}$/;
 const phoneRegex = /^\+7\(\d{3}\)\d{3}-\d{2}-\d{2}$/;
@@ -91,53 +92,53 @@ const passportSchema = z.object({
 	issuedBy: z.string().min(10, "Укажите кем выдан документ"),
 });
 
-const emergencyContactSchema = z.object({
-	name: z.string().min(2, "Укажите имя и статус"),
-	relation: z.string().optional(),
-	phone: phoneSchema,
-});
+// const emergencyContactSchema = z.object({
+// 	name: z.string().min(2, "Укажите имя и статус"),
+// 	relation: z.string().optional(),
+// 	phone: phoneSchema,
+// });
 
 export type SocialPlatform = z.infer<typeof socialMediaSchema>["platform"];
 
-const professionalSchema = z.object({
-	workplace: z.string().min(3, "Укажите место работы или 'фриланс'"),
-	position: z
-		.string()
-		.min(2, "Укажите вашу должность")
-		.optional()
-		.or(z.literal("")),
-	companyWebsite: z.url().optional().or(z.literal("")),
-	monthlyIncome: z.string().min(4, "Укажите доход в месяц"),
-	workPhone: phoneSchema.optional().or(z.literal("")),
-});
+// const professionalSchema = z.object({
+// 	workplace: z.string().min(3, "Укажите место работы или 'фриланс'"),
+// 	position: z
+// 		.string()
+// 		.min(2, "Укажите вашу должность")
+// 		.optional()
+// 		.or(z.literal("")),
+// 	companyWebsite: z.url().optional().or(z.literal("")),
+// 	monthlyIncome: z.string().min(4, "Укажите доход в месяц"),
+// 	workPhone: phoneSchema.optional().or(z.literal("")),
+// });
 
-const experienceSchema = z.object({
-	equipment: z.preprocess(
-		(val) => (val === undefined || val === null ? [] : val),
-		z
-			.array(
-				z.enum([
-					"nikon",
-					"canon",
-					"sony",
-					"panasonic",
-					"fujifilm",
-					"blackmagic",
-					"arri",
-					"red",
-					"gopro",
-					"insta",
-					"iphone",
-					"hasselblad",
-					"other",
-				])
-			)
-			.min(1, "Выберите вариант")
-	) as ZodType,
-	photographyExperience: z.enum(["hobby", "0-3years", "3+years"], {
-		error: "Выберите вариант",
-	}),
-});
+// const experienceSchema = z.object({
+// 	equipment: z.preprocess(
+// 		(val) => (val === undefined || val === null ? [] : val),
+// 		z
+// 			.array(
+// 				z.enum([
+// 					"nikon",
+// 					"canon",
+// 					"sony",
+// 					"panasonic",
+// 					"fujifilm",
+// 					"blackmagic",
+// 					"arri",
+// 					"red",
+// 					"gopro",
+// 					"insta",
+// 					"iphone",
+// 					"hasselblad",
+// 					"other",
+// 				])
+// 			)
+// 			.min(1, "Выберите вариант")
+// 	) as ZodType,
+// 	photographyExperience: z.enum(["hobby", "0-3years", "3+years"], {
+// 		error: "Выберите вариант",
+// 	}),
+// });
 
 const promoAndAgreementsSchema = z.object({
 	promoCode: z.string().optional(),
@@ -198,8 +199,6 @@ const addressesBlockSchema = z
 	});
 
 const additionalSchema = z.object({
-	work: professionalSchema,
-	experience: experienceSchema,
 	referralSource: z.enum(
 		["search_engine", "vk", "website", "friends", "photo_school", "other"],
 		{ error: "Выберите вариант" }
@@ -226,7 +225,6 @@ export type EquipmentSchemaType = z.infer<typeof equipmentSchema>;
 // --------------- Base Contacts for Individual ---------------
 const individualContactsSchema = z.object({
 	socials: z.array(socialMediaSchema).min(1, "Укажите хотя бы одну соцсеть"),
-	emergency: z.array(emergencyContactSchema).min(2, "Минимум 2 контакта"),
 });
 
 //   --------------- INDIVIDUAL CLIENT SCHEMA ---------------
@@ -238,9 +236,8 @@ export const individualClientSchema = z.object({
 		passport: passportSchema,
 		contacts: individualContactsSchema,
 		addresses: addressesBlockSchema,
+		additional: additionalSchema,
 	}),
-	additional: additionalSchema,
-	agreements: promoAndAgreementsSchema,
 });
 
 // --------------- INDIVIDUAL PARTNER SCHEMA ---------------
@@ -329,100 +326,3 @@ export type LegalClient = z.infer<typeof legalClientSchema>;
 export type IndividualPartner = z.infer<typeof individualPartnerSchema>;
 export type LegalPartner = z.infer<typeof legalPartnerSchema>;
 export type ClientFormValues = z.infer<typeof clientFormSchema>;
-
-// const identitySchema = z
-// 	.object({
-// 		personalData: personalDataSchema,
-// 		passport: passportSchema,
-// 	})
-// 	.superRefine((data, ctx) => {
-// 		const birthStr = data.personalData?.birth;
-// 		const issueStr = data.passport?.issueDate;
-
-// 		// Проверяем только если обе даты заполнены
-// 		if (birthStr?.length === 10 && issueStr?.length === 10) {
-// 			const birth = parseDate(birthStr);
-// 			const issue = parseDate(issueStr);
-
-// 			if (birth && issue && issue <= birth) {
-// 				ctx.addIssue({
-// 					code: "custom",
-// 					message: "Дата выдачи не может быть раньше даты рождения",
-// 					// Путь теперь четкий, так как мы внутри этого объекта
-// 					path: ["passport", "issueDate"],
-// 				});
-// 			}
-// 		}
-// 	});
-
-// const applicationDataSchema = z.object({
-// 	clientType: z.literal("individual"),
-// 	personalData: personalDataSchema,
-// 	passport: passportSchema,
-// 	contacts: individualContactsSchema,
-// 	addresses: addressesBlockSchema,
-// });
-// .superRefine(validatePassportDates);
-
-//   --------------- INDIVIDUAL CLIENT DASE SCHEMA ---------------
-
-// export const individualClientSchema = individualClientBaseSchema;
-
-// const parseDate = (dateStr: string | undefined): Date | null => {
-// 	if (!dateStr || dateStr.length < 10) return null;
-
-// 	const parts = dateStr.split(".");
-// 	if (
-// 		parts.length !== 3 ||
-// 		parts[0] === undefined ||
-// 		parts[1] === undefined ||
-// 		parts[2] === undefined
-// 	) {
-// 		return null;
-// 	} else {
-// 		const d = parseInt(parts[0], 10);
-// 		const m = parseInt(parts[1], 10);
-// 		const y = parseInt(parts[2], 10);
-
-// 		// Проверяем, что все части — числа
-// 		if (Number.isNaN(d) || Number.isNaN(m) || Number.isNaN(y)) return null;
-
-// 		const date = new Date(y, m - 1, d);
-
-// 		// Проверяем, что объект даты корректен (например, не 32.13.2024)
-// 		return Number.isNaN(date.getTime()) ? null : date;
-// 	}
-// };
-
-// type ApplicationDataBlock = {
-// 	personalData: { birth: string };
-// 	passport: { issueDate: string };
-// };
-
-// const validatePassportDates = (
-// 	data: ApplicationDataBlock,
-// 	ctx: z.RefinementCtx
-// ) => {
-// 	const birthStr = data.personalData?.birth;
-// 	const issueStr = data.passport?.issueDate;
-
-// 	if (birthStr?.length === 10 && issueStr?.length === 10) {
-// 		const birth = parseDate(birthStr);
-// 		const issue = parseDate(issueStr);
-
-// 		if (birth && issue && issue <= birth) {
-// 			ctx.addIssue({
-// 				code: "custom",
-// 				message: "Дата выдачи не может быть раньше даты рождения",
-// 				path: ["passport", "issueDate"],
-// 			});
-// 		}
-// 	}
-// };
-
-// const individualClientSchema = z.object({
-// 	clientType: z.literal("individual"),
-// 	applicationData: applicationDataSchema,
-// 	additional: additionalSchema,
-// 	agreements: promoAndAgreementsSchema,
-// });

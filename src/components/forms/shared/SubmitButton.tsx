@@ -18,7 +18,7 @@ export const SubmitButton = ({
 	return (
 		<div
 			className={cn(
-				"relative group p-0.5 h-fit inline-block rounded-full overflow-hidden shadow-md transition-all duration-300",
+				"relative group p-0.2 h-fit inline-block rounded-xl overflow-hidden shadow-md transition-all duration-300",
 				!isDisabled ? "active:scale-[0.98] shadow-md" : "opacity-90"
 			)}
 		>
@@ -33,14 +33,14 @@ export const SubmitButton = ({
 			<Button
 				disabled={isDisabled}
 				className={cn(
-					"relative rounded-2x w-full justify-center items-center transition-all duration-200 z-10 md:w-auto",
+					"relative rounded-xl w-full justify-center items-center transition-all duration-200 z-10 md:w-auto",
 					isDisabled
 						? "bg-muted text-foreground/50 cursor-not-allowed"
-						: "text-foreground"
+						: "text-white"
 				)}
 			>
 				{isSubmitting ? (
-					<RainbowSpinner />
+					<RainbowSpinner centered size={14} />
 				) : (
 					<div className="flex items-center gap-2">
 						<span className="hidden md:inline">Отправить</span>

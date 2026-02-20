@@ -26,7 +26,7 @@ const containerVariants: Variants = {
 	visible: {
 		transition: {
 			staggerChildren: 0.05,
-			staggerDirection: -1, // Вылетают снизу вверх
+			staggerDirection: -1,
 		},
 	},
 };
