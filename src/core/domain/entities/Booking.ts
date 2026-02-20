@@ -17,6 +17,7 @@ export interface Booking {
 	readonly totalAmount: number;
 	readonly status: Status;
 	readonly createdAt: Date;
+	readonly price_at_booking: number;
 	readonly user?: {
 		readonly name: string | null;
 		readonly email: string | null;

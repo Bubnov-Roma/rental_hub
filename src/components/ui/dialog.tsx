@@ -1,10 +1,10 @@
 "use client";
 
-import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { XIcon } from "lucide-react";
+import { Dialog as DialogPrimitive } from "radix-ui";
 import type * as React from "react";
-
-import { cn } from "@/utils";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 function Dialog({
 	...props
@@ -69,7 +69,7 @@ function DialogContent({
 				{showCloseButton && (
 					<DialogPrimitive.Close
 						data-slot="dialog-close"
-						className="ring-offset-background focus:ring-ring data-[state=open]:bg-accent data-[state=open]:text-muted-foreground absolute top-4 right-4 rounded-2xl opacity-30 transition-opacity hover:opacity-100 focus:ring-none focus:ring-offset-3 focus:outline-hidden disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4"
+						className="ring-offset-background focus:ring-ring data-[state=open]:bg-accent data-[state=open]:text-muted-foreground absolute top-4 right-4 rounded-xs opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4"
 					>
 						<XIcon />
 						<span className="sr-only">Close</span>
@@ -90,7 +90,14 @@ function DialogHeader({ className, ...props }: React.ComponentProps<"div">) {
 	);
 }
 
-function DialogFooter({ className, ...props }: React.ComponentProps<"div">) {
+function DialogFooter({
+	className,
+	showCloseButton = false,
+	children,
+	...props
+}: React.ComponentProps<"div"> & {
+	showCloseButton?: boolean;
+}) {
 	return (
 		<div
 			data-slot="dialog-footer"
@@ -99,7 +106,14 @@ function DialogFooter({ className, ...props }: React.ComponentProps<"div">) {
 				className
 			)}
 			{...props}
-		/>
+		>
+			{children}
+			{showCloseButton && (
+				<DialogPrimitive.Close asChild>
+					<Button variant="outline">Close</Button>
+				</DialogPrimitive.Close>
+			)}
+		</div>
 	);
 }
 

@@ -4,7 +4,7 @@ import { AnimatePresence, motion, type Variants } from "framer-motion";
 import { type LucideIcon, Plus, X } from "lucide-react";
 import { type ReactNode, useCallback, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/utils";
+import { cn } from "@/lib/utils";
 
 interface FabItem {
 	id: string;
@@ -26,7 +26,7 @@ const containerVariants: Variants = {
 	visible: {
 		transition: {
 			staggerChildren: 0.05,
-			staggerDirection: -1, // Вылетают снизу вверх
+			staggerDirection: -1,
 		},
 	},
 };

@@ -3,8 +3,8 @@
 import { type FieldPath, useFormContext, useWatch } from "react-hook-form";
 import { PatternFormat } from "react-number-format";
 import { FormFieldWrapper } from "@/components/forms/shared/FormFieldWrapper";
+import { cn } from "@/lib/utils";
 import type { ClientFormValues } from "@/schemas";
-import { cn } from "@/utils";
 
 interface PassportInputProps {
 	name: FieldPath<ClientFormValues>;
@@ -54,7 +54,7 @@ export const PassportInput = ({
 				});
 			}}
 			className={cn(
-				"h-11 w-full min-w-0 rounded-xl px-4 py-2 text-base transition-all outline-none",
+				"h-11 w-full min-w-0 rounded-md px-4 py-2 text-base transition-all outline-none",
 				"glass-input",
 				"disabled:opacity-20 disabled:cursor-not-allowed",
 				"md:text-sm",

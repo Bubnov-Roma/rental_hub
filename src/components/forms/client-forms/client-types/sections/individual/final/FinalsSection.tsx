@@ -13,7 +13,7 @@ export const FinalsSection = () => {
 
 	const referralSource = useWatch({
 		control,
-		name: "additional.referralSource",
+		name: "applicationData.additional.referralSource",
 	});
 
 	const selectedOption = REFERRAL_OPTIONS.find(
@@ -29,7 +29,7 @@ export const FinalsSection = () => {
 	return (
 		<SectionWrapper className="lg:grid-cols-1">
 			<FormRadioGroup
-				name="additional.referralSource"
+				name="applicationData.additional.referralSource"
 				label="Как вы о нас узнали?"
 				options={REFERRAL_OPTIONS}
 				required
@@ -41,18 +41,18 @@ export const FinalsSection = () => {
 					exit={{ opacity: 0 }}
 				>
 					<FormInput
-						name="additional.recommendation"
-						label={""}
-						placeholder={selectedOption.placeholder}
+						name="applicationData.additional.recommendation"
+						label={selectedOption.placeholder}
+						placeholder={""}
 						disabled={inputIsDisabled}
 					/>
 				</motion.div>
 			)}
-			<FormInput
+			{/* <FormInput
 				name="agreements.promoCode"
 				label="Промокод"
 				placeholder="введите промокод"
-			/>
+			/> */}
 		</SectionWrapper>
 	);
 };

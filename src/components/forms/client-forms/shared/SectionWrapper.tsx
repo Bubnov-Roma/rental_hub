@@ -1,5 +1,5 @@
 import { type HTMLMotionProps, motion } from "framer-motion";
-import { cn } from "@/utils";
+import { cn } from "@/lib/utils";
 
 interface FormSectionProps extends HTMLMotionProps<"div"> {
 	children: React.ReactNode;

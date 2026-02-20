@@ -4,8 +4,9 @@ import { useMemo } from "react";
 import { get, useFormContext, useWatch } from "react-hook-form";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui";
 import { getStepsForClientType } from "@/constants/form-steps.config";
+import { cn } from "@/lib/utils";
 import type { ClientFormValues } from "@/schemas";
-import { cn, isValueFilled } from "@/utils";
+import { isValueFilled } from "@/utils";
 
 interface StepperProps {
 	currentStep: number;

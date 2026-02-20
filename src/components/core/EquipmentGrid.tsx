@@ -1,51 +1,61 @@
-import { EquipmentCard } from "@/components/core/EquipmentCard";
-import type { Equipment } from "@/core/domain/entities/Equipment";
+"use client";
+
+import { Box } from "lucide-react";
+import { Skeleton } from "@/components/ui";
+import type { GroupedEquipment } from "@/core/domain/entities/Equipment";
+import { EquipmentCard } from "./EquipmentCard";
 
 interface EquipmentGridProps {
-	equipment: Equipment[];
-	onBook: (id: string) => void;
-	onViewDetails: (id: string) => void;
+	items: GroupedEquipment[];
+	isLoading: boolean;
 }
 
-export function EquipmentGrid({
-	equipment,
-	onBook,
-	onViewDetails,
-}: EquipmentGridProps) {
-	if (equipment.length === 0) {
-		return (
-			<div className="py-12 text-center">
-				<div className="mx-auto max-w-md">
-					<div className="mb-4 text-6xl">📷</div>
-					<h3 className="mb-2 text-xl font-semibold">
-						Оборудование не найдено
-					</h3>
-					<p className="text-gray-600">
-						Попробуйте изменить параметры поиска или выберите другую категорию
-					</p>
+function CardSkeleton() {
+	return (
+		<div className="flex flex-col gap-2.5">
+			<Skeleton className="aspect-4/3 w-full rounded-xl bg-foreground/6" />
+			<div className="px-0.5 space-y-1.5">
+				<Skeleton className="h-3 w-5/6 rounded bg-foreground/6" />
+				<Skeleton className="h-3 w-3/5 rounded bg-foreground/6" />
+				<div className="flex items-center justify-between pt-1">
+					<Skeleton className="h-4 w-16 rounded-lg bg-foreground/6" />
+					<Skeleton className="h-8 w-24 rounded-xl bg-foreground/6" />
 				</div>
+			</div>
+		</div>
+	);
+}
+
+export function EquipmentGrid({ items, isLoading }: EquipmentGridProps) {
+	if (isLoading) {
+		return (
+			<div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-x-3 gap-y-6">
+				{Array.from({ length: 12 }).map((_, i) => (
+					// biome-ignore lint/suspicious/noArrayIndexKey: skeleton
+					<CardSkeleton key={i} />
+				))}
+			</div>
+		);
+	}
+
+	if (items.length === 0) {
+		return (
+			<div className="flex flex-col items-center justify-center py-24 text-center">
+				<div className="w-16 h-16 mb-4 bg-foreground/5 rounded-full flex items-center justify-center">
+					<Box size={28} className="opacity-20" />
+				</div>
+				<h3 className="text-lg font-bold">Ничего не найдено</h3>
+				<p className="text-sm text-muted-foreground mt-1">
+					Попробуйте изменить фильтры или категорию
+				</p>
 			</div>
 		);
 	}
 
 	return (
-		<div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-			{equipment.map((item) => (
-				<EquipmentCard
-					key={item.id}
-					id={item.id}
-					title={item.title}
-					description={item.description}
-					pricePerDay={item.price_per_day}
-					imageUrl={item.imageUrl || "/placeholder-equipment.jpg"}
-					rating={item.rating || 4.5}
-					reviewsCount={item.reviewsCount || 12}
-					location="Москва"
-					category={item.category}
-					isAvailable={item.is_available}
-					onBook={onBook}
-					onViewDetails={onViewDetails}
-				/>
+		<div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-x-3 gap-y-6">
+			{items.map((item) => (
+				<EquipmentCard key={item.id} item={item} />
 			))}
 		</div>
 	);

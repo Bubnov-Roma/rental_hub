@@ -1,10 +1,10 @@
 "use client";
 
+import { FinalsSection } from "@/components/forms/client-forms/client-types/sections/individual/final/FinalsSection";
 import {
 	SectionColumn,
 	SectionWrapper,
 } from "@/components/forms/client-forms/shared";
-import { EmergencySection } from "./EmergencySection";
 import { SocialsSection } from "./SocialsSection";
 
 export const ContactsSection = () => {
@@ -13,8 +13,8 @@ export const ContactsSection = () => {
 			<SectionColumn title="Мессенджеры и соцсети" indicatorColor="bg-sky-400">
 				<SocialsSection />
 			</SectionColumn>
-			<SectionColumn title="Экстренная связь" indicatorColor="bg-rose-500">
-				<EmergencySection />
+			<SectionColumn title="Как вы о нас узнали" indicatorColor="bg-rose-500">
+				<FinalsSection />
 			</SectionColumn>
 		</SectionWrapper>
 	);

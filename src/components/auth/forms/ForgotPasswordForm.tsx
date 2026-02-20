@@ -1,9 +1,10 @@
 "use client";
 
-import { ArrowLeft, CheckCircle2, Loader2, Mail } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { CheckCircle2, Clock, Mail, UserPlus } from "lucide-react";
+import Link from "next/link";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { AuthCard } from "@/components/auth/AuthCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,97 +13,188 @@ import { getErrorMessage } from "@/utils";
 
 export function ForgotPasswordForm() {
 	const [email, setEmail] = useState("");
-	const [loading, setLoading] = useState(false);
+	const [isLoading, setIsLoading] = useState(false);
 	const [isSent, setIsSent] = useState(false);
-	const router = useRouter();
+	const [cooldown, setCooldown] = useState(0); // Таймер в секундах
+	const [userNotFound, setUserNotFound] = useState(false);
+
 	const supabase = createClient();
 
-	const handleSubmit = async (e: React.FormEvent) => {
-		e.preventDefault();
-		setLoading(true);
+	// Логика таймера
+	useEffect(() => {
+		let interval: NodeJS.Timeout;
+		if (cooldown > 0) {
+			interval = setInterval(() => {
+				setCooldown((prev) => prev - 1);
+			}, 1000);
+		}
+		return () => clearInterval(interval);
+	}, [cooldown]);
 
+	const sendResetLink = async () => {
+		setIsLoading(true);
 		try {
-			const { error } = await supabase.auth.signInWithOtp({
-				email: email,
-				options: {
-					emailRedirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
-				},
+			const { error } = await supabase.auth.resetPasswordForEmail(email, {
+				redirectTo: `${window.location.origin}/auth/callback?next=/auth?view=update-password`,
 			});
-
 			if (error) throw error;
 
 			setIsSent(true);
-			toast.success("Ссылка для входа отправлена на почту");
+			setCooldown(60); // Ставим таймер на 60 секунд
+			toast.success("Ссылка отправлена!");
 		} catch (error) {
-			toast.error(getErrorMessage(error) || "Ошибка при отправке ссылки");
+			toast.error(getErrorMessage(error) || "Ошибка отправки");
 		} finally {
-			setLoading(false);
+			setIsLoading(false);
 		}
 	};
 
-	if (isSent) {
+	const handleSubmit = async (e: React.FormEvent) => {
+		e.preventDefault();
+		setIsLoading(true);
+		setUserNotFound(false);
+
+		try {
+			// 1. Проверяем, есть ли такой пользователь (Если у вас есть публичная таблица profiles/users)
+			// Если таблицы нет, этот шаг можно пропустить, Supabase отправит "фейковый" успех.
+			// const { data: userCheck, error: checkError } = await supabase
+			// 	.from("profiles") // Замените на вашу таблицу с пользователями
+			// 	.select("id")
+			// 	.eq("email", email)
+			// 	.maybeSingle();
+
+			// Если таблица profiles закрыта RLS, checkError будет, игнорируем его и пробуем отправить
+			// if (!checkError && !userCheck) {
+			// 	setUserNotFound(true);
+			// 	toast.error("Пользователь с такой почтой не найден");
+			// 	setIsLoading(false);
+			// 	return;
+			// }
+
+			// 2. Если пользователь есть (или мы не смогли проверить), отправляем
+			await sendResetLink();
+		} catch (error) {
+			console.error(error);
+			// В случае ошибки проверки все равно пробуем отправить, fail safe
+			await sendResetLink();
+		}
+	};
+
+	// Состояние: Пользователь не найден
+	if (userNotFound) {
 		return (
-			<div className="space-y-6 text-center animate-in fade-in zoom-in-95 duration-500">
-				<div className="flex justify-center">
-					<div className="relative">
-						<div className="absolute inset-0 blur-xl bg-accent-glow/30 rounded-full" />
-						<CheckCircle2 size={64} className="relative text-accent-glow" />
+			<AuthCard
+				title="Аккаунт не найден"
+				description={`Мы не нашли пользователя с почтой ${email}`}
+				footerLink={{
+					text: "Ошиблись в написании?",
+					label: "Попробовать снова",
+					onClick: () => setUserNotFound(false),
+					href: "#",
+				}}
+			>
+				<div className="flex flex-col gap-4">
+					<div className="p-4 rounded-xl bg-destructive/10 border border-destructive/20 text-center">
+						<p className="text-sm text-destructive font-medium mb-2">
+							Хотите создать новый аккаунт?
+						</p>
+						<Button className="w-full" asChild>
+							<Link href="/auth?view=register">
+								<UserPlus className="w-4 h-4 mr-2" />
+								Зарегистрироваться
+							</Link>
+						</Button>
 					</div>
 				</div>
-				<div className="space-y-2">
-					<h3 className="text-xl font-bold text-foreground/70">
-						Проверьте почту
-					</h3>
-					<p className="text-sm text-foreground/50">
-						Мы отправили временную ссылку для входа на <br />
-						<span className="foreground-white">{email}</span>
+			</AuthCard>
+		);
+	}
+
+	// Состояние: Ссылка отправлена
+	if (isSent) {
+		return (
+			<AuthCard
+				title="Проверьте почту"
+				description={`Мы отправили ссылку для сброса на ${email}`}
+			>
+				<div className="flex flex-col items-center space-y-6 py-4">
+					<div className="relative">
+						<div className="absolute inset-0 blur-xl bg-primary/20 rounded-full" />
+						<CheckCircle2
+							size={64}
+							className="relative text-primary animate-pulse"
+						/>
+					</div>
+
+					<p className="text-center text-sm text-muted-foreground">
+						Перейдите по ссылке в письме для создания нового пароля.
 					</p>
+
+					<div className="w-full space-y-3">
+						<Button
+							variant="outline"
+							disabled={cooldown > 0 || isLoading}
+							onClick={sendResetLink}
+							className="w-full h-11 relative overflow-hidden"
+						>
+							{cooldown > 0 ? (
+								<>
+									<Clock className="w-4 h-4 mr-2 animate-pulse" />
+									Отправить повторно через {cooldown} сек
+								</>
+							) : (
+								"Отправить ссылку повторно"
+							)}
+						</Button>
+
+						<Button
+							variant="ghost"
+							onClick={() => setIsSent(false)}
+							className="w-full text-xs text-muted-foreground"
+						>
+							Ввести другой email
+						</Button>
+					</div>
 				</div>
-				<Button
-					onClick={() => router.push("/auth?view=contact")}
-					className="w-full h-12 rounded-2xl border"
-				>
-					Вернуться назад
-				</Button>
-			</div>
+			</AuthCard>
 		);
 	}
 
 	return (
-		<div className="space-y-6 animate-in slide-in-from-left-4 duration-500">
-			<form onSubmit={handleSubmit} className="space-y-4">
+		<AuthCard
+			title="Сброс пароля"
+			description="Введите email для получения ссылки"
+			footerLink={{
+				text: "Вспомнили пароль?",
+				label: "Войти",
+				href: "/auth?view=login",
+			}}
+			isLoading={isLoading}
+		>
+			<form onSubmit={handleSubmit} className="space-y-6">
 				<div className="space-y-2">
-					<Label className="text-sm font-medium text-foreground/70 ml-1">
-						Введите почту для получения ссылки
-					</Label>
+					<Label>Email</Label>
 					<div className="relative">
-						<Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-foreground/30 z-1" />
+						<Mail className="z-1 absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
 						<Input
 							type="email"
-							placeholder="example@mail.com"
-							className="glass-input w-full pl-12"
+							placeholder="name@example.com"
+							className="pl-10 h-11 bg-white/5"
 							value={email}
 							onChange={(e) => setEmail(e.target.value)}
 							required
 						/>
 					</div>
 				</div>
+
 				<Button
 					type="submit"
-					className="glow-button w-full h-14"
-					disabled={loading || !email}
+					disabled={isLoading}
+					className="w-full h-11 font-bold shadow-lg shadow-primary/20"
 				>
-					{loading ? <Loader2 className="animate-spin" /> : "Отправить ссылку"}
+					Отправить ссылку
 				</Button>
 			</form>
-
-			<Button
-				variant="glass"
-				onClick={() => router.push("/auth?view=contact")}
-				className="w-full h-14 flex items-center justify-center gap-2 text-sm text-foreground/50 hover:text-primary transition-colors"
-			>
-				<ArrowLeft size={16} /> Вернуться к входу
-			</Button>
-		</div>
+		</AuthCard>
 	);
 }

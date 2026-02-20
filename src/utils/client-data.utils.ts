@@ -224,33 +224,33 @@ export const getSocialMedia = (
 	}));
 };
 
-export const getEmergencyContacts = (
-	data: ClientFormValues | null
-): Array<{ name: string; phone: string; relation?: string }> | null => {
-	if (!data || !isAnyIndividual(data)) return null;
+// export const getEmergencyContacts = (
+// 	data: ClientFormValues | null
+// ): Array<{ name: string; phone: string; relation?: string }> | null => {
+// 	if (!data || !isAnyIndividual(data)) return null;
 
-	return data.applicationData.contacts.emergency.map((contact) => ({
-		name: contact.name,
-		phone: contact.phone,
-		relation: contact.relation ?? "",
-	}));
-};
+// 	return data.applicationData.contacts.emergency.map((contact) => ({
+// 		name: contact.name,
+// 		phone: contact.phone,
+// 		relation: contact.relation ?? "",
+// 	}));
+// };
 
-export const getWorkInfo = (
-	data: ClientFormValues | null
-): {
-	workplace: string;
-	position?: string;
-	monthlyIncome: string;
-} | null => {
-	if (!data || !isAnyIndividual(data)) return null;
+// export const getWorkInfo = (
+// 	data: ClientFormValues | null
+// ): {
+// 	workplace: string;
+// 	position?: string;
+// 	monthlyIncome: string;
+// } | null => {
+// 	if (!data || !isAnyIndividual(data)) return null;
 
-	return {
-		workplace: data.additional.work.workplace,
-		position: data.additional.work.position ?? "",
-		monthlyIncome: data.additional.work.monthlyIncome,
-	};
-};
+// 	return {
+// 		workplace: data.additional.work.workplace,
+// 		position: data.additional.work.position ?? "",
+// 		monthlyIncome: data.additional.work.monthlyIncome,
+// 	};
+// };
 
 export const isPartner = (data: ClientFormValues | null): boolean => {
 	if (!data) return false;
