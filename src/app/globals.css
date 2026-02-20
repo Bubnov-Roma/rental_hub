@@ -9,13 +9,15 @@
   --color-muted-foreground: var(--muted-foreground);
   --color-primary: var(--brand-color);
   --color-primary-foreground: var(--brand-contrast);
+  --color-destructive: var(--destructive);
+  --color-warning: var(--warning);
   --color-card: var(--bg-card);
   --color-border: var(--border-soft);
 
   --radius-2xl: 1.5rem;
   --radius-3xl: 2rem;
 
-  --shadow-glass: 0 20px 50px rgba(0, 0, 0, 0.3);
+  --shadow-glass: 0 20px 50px rgba(0, 0, 0, 0.1);
   --shadow-neumorph-inset: inset 6px 6px 12px rgba(0, 0, 0, 0.1), inset -6px -6px 12px rgba(255, 255, 255, 0.05);
 
   --shadow-brand-glow: 0 0 15px rgba(59, 130, 246, 0.4);
@@ -33,8 +35,11 @@
   /* Дефолтный бренд (Blue) */
   --brand-color: oklch(0.6 0.22 264);
   --brand-contrast: oklch(0.98 0 0);
-  --brand-glow: oklch(0.6 0.22 264 / 0.15);
+  --brand-glow: oklch(0.6 0.22 264);;
   --brand-bg-soft: oklch(0.6 0.22 264 / 0.04);
+  --destructive: oklch(76.702% 0.16011 76.492 / 0.684);
+  --warning: oklch(85.356% 0.16973 102.36 / 0.699)
+  
 
   /* Тени для светлой темы */
   --input-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
@@ -60,8 +65,8 @@
   --bg-card: oklch(21.013% 0.01423 272.613 / 0.9);
   --border-soft: oklch(1 0 0 / 0.5);
   --brand-bg-soft: oklch(0.75 0.15 250 / 0.08);
-  --input-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.5);
-  --input-border: oklch(1 0 0 / 0.1);
+  --input-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  --input-border: oklch(100% 0.00011 271.152 / 0.204);
   --input-bg-hover: oklch(93.403% 0.00011 271.152 / 0.232);
   --input-shadow-focus: 0 1px 4px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.5);
   --input-bg-focus: oklch(93.403% 0.00011 271.152 / 0.282);
@@ -137,8 +142,8 @@
   }
 
   .glass-card {
-    @apply backdrop-blur-2xl border border-white/10 shadow-glass relative overflow-hidden;
-    background: var(--bg-card);
+    @apply backdrop-blur-2xl border border-white/10 shadow-xs hover:shadow-md relative overflow-hidden transition-all duration-300;
+    background: var(--bg-foreground);
   }
 
   .section-squeeze {
@@ -151,8 +156,8 @@
   }
 
   .glass-input {
-    @apply bg-white/10 backdrop-blur-md px-4 py-3 text-foreground outline-none transition-all duration-200 ease-out border-0 focus:border-0 ring-0 focus:ring-0 focus-visible:ring-0 focus-visible:border-0;
-    box-shadow: var(--input-shadow);
+    @apply bg-white/15 backdrop-blur-md px-4 py-3 text-foreground outline-none transition-all duration-200 ease-out border border-muted-foreground/5 shadow-2xs;
+    /* box-shadow: var(--input-shadow); */
   }
 
   .glass-input::placeholder {
@@ -180,6 +185,11 @@
 
   .glass-input-neumorphic:focus {
     background: var(--bg-card);
+  }
+
+  [data-slot="calendar"] {
+    --rdp-accent-color: var(--brand-color);
+    --rdp-accent-background-color: oklch(from var(--brand-color) l c h / 0.15);
   }
 }
 
