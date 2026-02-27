@@ -4,55 +4,78 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useQueryState } from "nuqs";
-import { useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { submitClientApplicationAction } from "@/app/actions/client-form.action";
+import {
+	loadDraftAction,
+	saveDraftAction,
+} from "@/app/actions/save-draft-action";
 import { UniversalClientForm } from "@/components/forms/client-forms/client-types/UniversalClientForm";
 import { Card } from "@/components/ui/card";
 import { type ClientFormValues, clientFormSchema } from "@/schemas";
 import { useApplicationStore } from "@/store";
 
+/**
+ * Draft save strategy:
+ * - On mount: load from server (cross-device, all fields including passport)
+ * - On change (debounced 2s): autosave to server via saveDraftAction
+ * - On submit: full submit via submitClientApplicationAction
+ *
+ * Sensitive data (passport) stays on server — never in localStorage.
+ * Server row protected by RLS (user sees only their own row).
+ */
 export const ClientForm = () => {
-	const submitSuccess = useApplicationStore((state) => state.submitSuccess);
-	const formDraft = useApplicationStore((state) => state.formDraft);
-	const setFormDraft = useApplicationStore((state) => state.setFormDraft);
-	const clearFormDraft = useApplicationStore((state) => state.clearFormDraft);
+	const submitSuccess = useApplicationStore((s) => s.submitSuccess);
+	const clearFormDraft = useApplicationStore((s) => s.clearFormDraft);
 
-	// Шаг формы сохраняется в URL (?step=0) — переживает F5, не ломает Back
-	// nuqs синхронизирует его с Next.js router автоматически
 	const [step, setStep] = useQueryState("step", {
 		defaultValue: 0,
 		parse: (v) => parseInt(v, 10) || 0,
 		serialize: String,
-		shallow: true, // не тригерит серверный ре-рендер
+		shallow: true,
 	});
 
 	const methods = useForm<ClientFormValues>({
 		resolver: zodResolver(clientFormSchema),
 		mode: "onBlur",
-		defaultValues: {
-			// Восстанавливаем черновик из zustand persist, или используем дефолт
-			...(formDraft as ClientFormValues | undefined),
-			clientType: "individual", // всегда захардкожено
-		},
+		defaultValues: { clientType: "individual" },
 	});
 
-	const { handleSubmit, setError, watch } = methods;
+	const { handleSubmit, setError, watch, reset } = methods;
 
-	// Сохраняем черновик в zustand при каждом изменении формы (debounce не нужен —
-	// zustand persist пишет в localStorage синхронно, это быстро)
+	// Load server draft on mount
 	useEffect(() => {
-		const subscription = watch((values) => {
-			setFormDraft(values as Partial<ClientFormValues>);
+		loadDraftAction().then(({ data, status }) => {
+			if (data && status === "draft") {
+				reset({ ...data, clientType: "individual" } as ClientFormValues, {
+					keepDefaultValues: false,
+				});
+			}
 		});
-		return () => subscription.unsubscribe();
-	}, [watch, setFormDraft]);
+	}, [reset]);
+
+	// Autosave debounced 2s
+	const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+	const triggerAutosave = useCallback((values: Partial<ClientFormValues>) => {
+		if (saveTimer.current) clearTimeout(saveTimer.current);
+		saveTimer.current = setTimeout(() => {
+			saveDraftAction(values);
+		}, 2000);
+	}, []);
+
+	useEffect(() => {
+		const sub = watch((v) => triggerAutosave(v as Partial<ClientFormValues>));
+		return () => {
+			sub.unsubscribe();
+			if (saveTimer.current) clearTimeout(saveTimer.current);
+		};
+	}, [watch, triggerAutosave]);
 
 	const onSubmit = async (values: ClientFormValues) => {
 		try {
 			const result = await submitClientApplicationAction(values);
-
 			if (!result.success) {
 				if (result.errors) {
 					Object.entries(result.errors).forEach(([path, messages]) => {
@@ -64,9 +87,8 @@ export const ClientForm = () => {
 				toast.error(result.message || "Произошла ошибка");
 				return;
 			}
-
 			toast.success(result.message);
-			clearFormDraft(); // удаляем черновик после успешной отправки
+			clearFormDraft();
 			submitSuccess(values);
 		} catch {
 			toast.error("Критическая ошибка соединения");
@@ -88,7 +110,7 @@ export const ClientForm = () => {
 
 			<Link
 				href="/dashboard"
-				className="flex items-center gap-2 text-foreground/40 hover:text-foreground transition-colors w-fit"
+				className="flex items-center gap-2 text-foreground/40 hover:text-foreground transition-colors w-fit py-6"
 			>
 				<ArrowLeft size={16} />
 				<span className="text-sm">Вернуться в дашборд</span>
@@ -96,84 +118,3 @@ export const ClientForm = () => {
 		</div>
 	);
 };
-
-// "use client";
-
-// import { zodResolver } from "@hookform/resolvers/zod";
-// import { ArrowLeft } from "lucide-react";
-// import Link from "next/link";
-// import { FormProvider, useForm } from "react-hook-form";
-// import { toast } from "sonner";
-// import { submitClientApplicationAction } from "@/app/actions/client-form.action";
-// import { UniversalClientForm } from "@/components/forms/client-forms/client-types/UniversalClientForm";
-// import { Card } from "@/components/ui/card";
-// import { type ClientFormValues, clientFormSchema } from "@/schemas";
-// import { useApplicationStore } from "@/store";
-
-// export const ClientForm = () => {
-// 	const submitSuccess = useApplicationStore((state) => state.submitSuccess);
-
-// 	const methods = useForm<ClientFormValues>({
-// 		resolver: zodResolver(clientFormSchema),
-// 		mode: "onBlur",
-// 		defaultValues: {
-// 			// TODO: вернуть SelectTypeClient когда понадобится выбор типа (individual / legal / partner)
-// 			clientType: "individual",
-// 		},
-// 	});
-
-// 	const { handleSubmit, setError } = methods;
-
-// 	const onSubmit = async (values: ClientFormValues) => {
-// 		try {
-// 			const result = await submitClientApplicationAction(values);
-
-// 			if (!result.success) {
-// 				if (result.errors) {
-// 					Object.entries(result.errors).forEach(([path, messages]) => {
-// 						setError(path as keyof ClientFormValues, {
-// 							message: messages[0] ?? "",
-// 						});
-// 					});
-// 				}
-// 				toast.error(result.message || "Произошла ошибка");
-// 				return;
-// 			}
-// 			toast.success(result.message);
-// 			submitSuccess(values);
-// 		} catch {
-// 			toast.error("Критическая ошибка соединения");
-// 		}
-// 	};
-
-// 	return (
-// 		<div className="max-w-4xl mx-auto space-y-8">
-// 			<FormProvider {...methods}>
-// 				<form
-// 					onSubmit={handleSubmit(onSubmit)}
-// 					className="space-y-8 w-full py-6"
-// 				>
-// 					<Card>
-// 						{/* SelectTypeClient убран — clientType = "individual" по умолчанию */}
-// 						{/* TODO: вернуть шаг выбора типа клиента:
-// 						<SelectTypeClient
-// 							selectedType={clientType}
-// 							onSelect={(type) => setValue("clientType", type)}
-// 							showPartnerOption={false}
-// 						/>
-// 						*/}
-// 						<UniversalClientForm />
-// 					</Card>
-// 				</form>
-// 			</FormProvider>
-
-// 			<Link
-// 				href="/dashboard"
-// 				className="flex items-center gap-2 text-foreground/40 hover:text-foreground transition-colors w-fit"
-// 			>
-// 				<ArrowLeft size={16} />
-// 				<span className="text-sm">Вернуться в дашборд</span>
-// 			</Link>
-// 		</div>
-// 	);
-// };

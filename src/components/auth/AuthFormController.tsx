@@ -9,8 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { ForgotPasswordForm } from "./forms/ForgotPasswordForm";
 import { LoginForm } from "./forms/LoginForm";
 import { OtpForm } from "./forms/OtpForm";
-import { OtpLoginForm } from "./forms/OtpLoginForm";
-import { RegisterForm } from "./forms/RegisterForm";
+import { UniversalAuthForm } from "./forms/UniversalAuthForm";
 
 export function AuthFormController({ view }: { view: string }) {
 	const { user } = useAuth();
@@ -36,14 +35,12 @@ export function AuthFormController({ view }: { view: string }) {
 			>
 				{/* Вход с паролем (по умолчанию) */}
 				{view === "login" && <LoginForm />}
-				{/* Регистрация с паролем */}
-				{view === "register" && <RegisterForm />}
 				{/* Ввод почты для сброса пароля */}
 				{view === "forgot" && <ForgotPasswordForm />}
 				{/* Форма смены пароля (попадаем сюда по ссылке из почты) */}
 				{view === "update-password" && <UpdatePasswordForm />}
 				{/* Вход по коду (OTP) - ввод emailе */}
-				{(view === "contact" || view === "otp-login") && <OtpLoginForm />}
+				{(view === "otp-login" || view === "register") && <UniversalAuthForm />}
 				{/* Вход по коду: ввод цифр */}
 				{view === "otp" && <OtpForm />}
 				{/* Экран успеха (опционально) */}

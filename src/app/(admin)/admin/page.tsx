@@ -21,7 +21,7 @@ export default async function AdminDashboardPage() {
 		<div className="space-y-6">
 			{/* Header */}
 			<div>
-				<h1 className="text-3xl font-bold text-gray-900">
+				<h1 className="text-3xl font-bold text-foreground">
 					Панель администратора
 				</h1>
 				<p className="mt-2 text-gray-600">

@@ -73,7 +73,7 @@ export default function UsersTable({
 			<Card>
 				<CardContent className="p-4 flex flex-col md:flex-row gap-4">
 					<div className="flex-1 relative">
-						<Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+						<Search className="z-1 absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
 						<Input
 							placeholder="Поиск по имени или email..."
 							className="pl-10"

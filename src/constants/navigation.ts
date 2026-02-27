@@ -1,21 +1,39 @@
 import {
 	BarChart3,
-	Bell,
 	Calendar,
 	Calendar1,
 	Camera,
+	CircleHelp,
+	Heart,
 	Home,
 	LayoutDashboard,
-	LogIn,
+	type LucideIcon,
 	MessageSquare,
 	Package,
 	Settings,
-	UserIcon,
-	UserPlus,
+	SunMoon,
 	Users,
 } from "lucide-react";
 
-export const CLIENT_NAV = [
+// ─── Специальные маркеры для элементов с нестандартным поведением ─────────────
+// "theme"  → рендерить ThemeToggle вместо ссылки
+// "auth"   → рендерить динамически: LayoutDashboard/LogIn в зависимости от auth
+export type NavItemSpecial = "theme" | "auth";
+
+export type NavItem = {
+	title: string;
+	href: string;
+	icon: LucideIcon;
+	// icon: React.ElementType;
+	badge?: string | number;
+	special?: NavItemSpecial;
+};
+
+// ─── CLIENT NAV ───────────────────────────────────────────────────────────────
+// Используется как для авторизованных, так и для гостей.
+// Элемент с special="auth" рендерится динамически на клиенте.
+
+export const CLIENT_NAV: NavItem[] = [
 	{
 		title: "Главная",
 		href: "/",
@@ -27,36 +45,39 @@ export const CLIENT_NAV = [
 		icon: Camera,
 	},
 	{
+		title: "Календарь",
+		href: "/calendar",
+		icon: Calendar1,
+	},
+	{
+		title: "Избранное",
+		href: "/favorites",
+		icon: Heart,
+	},
+	{
 		title: "Дашборд",
 		href: "/dashboard",
 		icon: LayoutDashboard,
+		special: "auth",
 	},
 	{
-		title: "Бронирования",
-		href: "/dashboard/bookings",
-		icon: Package,
-		badge: "3",
-	},
-	{
-		title: "Профиль",
-		href: "/dashboard/profile",
-		icon: UserIcon,
-	},
-	{ title: "Календарь", href: "/dashboard/calendar", icon: Calendar1 },
-	{
-		title: "Уведомления",
-		href: "/dashboard/notifications",
-		icon: Bell,
-		badge: 3,
-	},
-	{
-		title: "Настройки",
-		href: "/dashboard/settings",
-		icon: Settings,
+		title: "Тема",
+		href: "#",
+		icon: SunMoon,
+		special: "theme", // → <ThemeToggle>
 	},
 ];
 
-export const ADMIN_NAV = [
+// Fallback для неавторизованного состояния элемента special="auth"
+export const GUEST_AUTH_ITEM: NavItem = {
+	title: "Как стать клиентом",
+	href: "/auth?view=register",
+	icon: CircleHelp,
+};
+
+// ─── ADMIN NAV ────────────────────────────────────────────────────────────────
+
+export const ADMIN_NAV: NavItem[] = [
 	{
 		title: "Админ-панель",
 		href: "/admin",
@@ -101,27 +122,5 @@ export const ADMIN_NAV = [
 		title: "Настройки",
 		href: "/admin/settings",
 		icon: Settings,
-	},
-];
-export const GUEST_NAV = [
-	{
-		title: "Главная",
-		href: "/",
-		icon: Home,
-	},
-	{
-		title: "Каталог",
-		href: "/equipment",
-		icon: Camera,
-	},
-	{
-		title: "Войти",
-		href: "/auth?view=login",
-		icon: LogIn,
-	},
-	{
-		title: "Регистрация",
-		href: "/auth?view=register",
-		icon: UserPlus,
 	},
 ];
