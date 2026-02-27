@@ -1,33 +1,37 @@
-import type { Status } from "@/core/domain/entities/Booking";
-import type { Equipment } from "@/core/domain/entities/Equipment";
+// ─── Derived from the Supabase schema ────────────────────────────────────────
 
-export interface BookingsEquipment {
+export type BookingStatus =
+	| "pending"
+	| "confirmed"
+	| "active"
+	| "completed"
+	| "cancelled";
+
+export interface BookingEquipment {
 	title: string;
 	category: string;
+	price_4h: number | null;
+	price_8h: number | null;
+	price_per_day: number;
 }
 
-export interface BookingItem {
+export interface BookingItemRow {
 	id: string;
-	equipment: BookingsEquipment;
 	price_at_booking: number;
-}
-export interface Booking {
-	equipment: Equipment;
 	deposit_at_booking: number;
-	price_at_booking: number;
-	readonly id: string;
-	readonly user_id: string; // В БД через подчеркивание
-	readonly start_date: string; // Supabase возвращает дату как строку IO
-	readonly end_date: string;
-	readonly total_amount: number;
-	readonly status: Status;
-	readonly created_at: string;
-	readonly insurance_included: boolean;
-	readonly total_replacement_value: number;
-	readonly booking_items?: {
-		price_at_booking: number;
-		deposit_at_booking: number;
-		replacement_value_at_booking: number;
-		equipment: Equipment;
-	}[];
+	replacement_value_at_booking: number;
+	equipment: BookingEquipment;
+}
+
+export interface BookingRow {
+	id: string;
+	user_id: string;
+	start_date: string;
+	end_date: string;
+	total_amount: number;
+	status: BookingStatus;
+	created_at: string;
+	total_replacement_value: number | null;
+	insurance_included: boolean | null;
+	booking_items: BookingItemRow[];
 }
