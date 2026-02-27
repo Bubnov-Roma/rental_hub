@@ -42,7 +42,6 @@ type SidebarContextProps = {
 
 const SidebarContext = React.createContext<SidebarContextProps | null>(null);
 
-// Helper function to set cookies safely
 function setCookie(
 	name: string,
 	value: string | boolean,
@@ -50,7 +49,7 @@ function setCookie(
 ) {
 	Cookies.set(name, String(value), {
 		path: options.path,
-		expires: options.maxAge ? options.maxAge / (60 * 60 * 24) : undefined, // maxAge is in seconds, expires is in days
+		expires: options.maxAge ? options.maxAge / (60 * 60 * 24) : undefined,
 	});
 }
 
@@ -59,7 +58,6 @@ function useSidebar() {
 	if (!context) {
 		throw new Error("useSidebar must be used within a SidebarProvider.");
 	}
-
 	return context;
 }
 
@@ -78,9 +76,6 @@ function SidebarProvider({
 }) {
 	const isMobile = useIsMobile();
 	const [openMobile, setOpenMobile] = React.useState(false);
-
-	// This is the internal state of the sidebar.
-	// We use openProp and setOpenProp for control from outside the component.
 	const [_open, _setOpen] = React.useState(defaultOpen);
 	const open = openProp ?? _open;
 	const setOpen = React.useCallback(
@@ -91,8 +86,6 @@ function SidebarProvider({
 			} else {
 				_setOpen(openState);
 			}
-
-			// This sets the cookie to keep the sidebar state.
 			setCookie(SIDEBAR_COOKIE_NAME, openState, {
 				path: "/",
 				maxAge: SIDEBAR_COOKIE_MAX_AGE,
@@ -101,12 +94,10 @@ function SidebarProvider({
 		[setOpenProp, open]
 	);
 
-	// Helper to toggle the sidebar.
 	const toggleSidebar = React.useCallback(() => {
 		return isMobile ? setOpenMobile((open) => !open) : setOpen((open) => !open);
 	}, [isMobile, setOpen]);
 
-	// Adds a keyboard shortcut to toggle the sidebar.
 	React.useEffect(() => {
 		const handleKeyDown = (event: KeyboardEvent) => {
 			if (
@@ -117,13 +108,10 @@ function SidebarProvider({
 				toggleSidebar();
 			}
 		};
-
 		window.addEventListener("keydown", handleKeyDown);
 		return () => window.removeEventListener("keydown", handleKeyDown);
 	}, [toggleSidebar]);
 
-	// We add a state so that we can do data-state="expanded" or "collapsed".
-	// This makes it easier to style the sidebar with Tailwind classes.
 	const state = open ? "expanded" : "collapsed";
 
 	const contextValue = React.useMemo<SidebarContextProps>(
@@ -152,7 +140,7 @@ function SidebarProvider({
 						} as React.CSSProperties
 					}
 					className={cn(
-						"group/sidebar-wrapper has-data-[variant=inset]:bg-sidebar flex min-h-svh w-full",
+						"group/sidebar-wrapper has-data-[variant=inset]:bg-sidebar flex min-h-svh w-full overflow-hidden",
 						className
 					)}
 					{...props}
@@ -227,7 +215,7 @@ function Sidebar({
 			data-side={side}
 			data-slot="sidebar"
 		>
-			{/* This is what handles the sidebar gap on desktop */}
+			{/* Gap element that controls layout shift */}
 			<div
 				data-slot="sidebar-gap"
 				className={cn(
@@ -242,11 +230,10 @@ function Sidebar({
 			<div
 				data-slot="sidebar-container"
 				className={cn(
-					"fixed inset-y-0 z-10 hidden h-vh w-(--sidebar-width) transition-[left,right,width] duration-200 ease-linear md:flex",
+					"fixed inset-y-0 z-10 hidden h-svh w-(--sidebar-width) transition-[left,right,width] duration-200 ease-linear md:flex",
 					side === "left"
 						? "left-0 group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)]"
 						: "right-0 group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)]",
-					// Adjust the padding for floating and inset variants.
 					variant === "floating" || variant === "inset"
 						? "p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4))+2px)]"
 						: "group-data-[collapsible=icon]:w-(--sidebar-width-icon) group-data-[side=left]:border-r group-data-[side=right]:border-l",
@@ -322,7 +309,7 @@ function SidebarInset({ className, ...props }: React.ComponentProps<"main">) {
 		<main
 			data-slot="sidebar-inset"
 			className={cn(
-				"bg-background relative flex w-full flex-1 flex-col",
+				"bg-background relative flex min-w-0 flex-1 flex-col overflow-hidden",
 				"md:peer-data-[variant=inset]:m-2 md:peer-data-[variant=inset]:ml-0 md:peer-data-[variant=inset]:rounded-xl md:peer-data-[variant=inset]:shadow-sm md:peer-data-[variant=inset]:peer-data-[state=collapsed]:ml-2",
 				className
 			)}
@@ -350,7 +337,10 @@ function SidebarHeader({ className, ...props }: React.ComponentProps<"div">) {
 		<div
 			data-slot="sidebar-header"
 			data-sidebar="header"
-			className={cn("flex flex-col gap-2 p-2", className)}
+			className={cn(
+				"flex flex-col gap-2 p-2 bg-transparent backdrop-blur-2xl",
+				className
+			)}
 			{...props}
 		/>
 	);
@@ -361,7 +351,10 @@ function SidebarFooter({ className, ...props }: React.ComponentProps<"div">) {
 		<div
 			data-slot="sidebar-footer"
 			data-sidebar="footer"
-			className={cn("flex flex-col gap-2 p-2", className)}
+			className={cn(
+				"flex flex-col gap-2 p-2 bg-transparent backdrop-blur-2xl",
+				className
+			)}
 			{...props}
 		/>
 	);
@@ -440,7 +433,6 @@ function SidebarGroupAction({
 			data-sidebar="group-action"
 			className={cn(
 				"text-sidebar-foreground ring-sidebar-ring hover:bg-sidebar-accent hover:text-sidebar-accent-foreground absolute top-3.5 right-3 flex aspect-square w-5 items-center justify-center rounded-md p-0 outline-hidden transition-transform focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0",
-				// Increases the hit area of the button on mobile.
 				"after:absolute after:-inset-2 md:after:hidden",
 				"group-data-[collapsible=icon]:hidden",
 				className
@@ -488,7 +480,6 @@ function SidebarMenuItem({ className, ...props }: React.ComponentProps<"li">) {
 
 const sidebarMenuButtonVariants = cva(
 	"peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm outline-hidden ring-sidebar-ring transition-[width,height,padding] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-data-[sidebar=menu-action]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:shrink-0",
-	// "group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! [&>svg]:size-4",
 	{
 		variants: {
 			variant: {
@@ -576,7 +567,6 @@ function SidebarMenuAction({
 			data-sidebar="menu-action"
 			className={cn(
 				"text-sidebar-foreground ring-sidebar-ring hover:bg-sidebar-accent hover:text-sidebar-accent-foreground peer-hover/menu-button:text-sidebar-accent-foreground absolute top-1.5 right-1 flex aspect-square w-5 items-center justify-center rounded-md p-0 outline-hidden transition-transform focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0",
-				// Increases the hit area of the button on mobile.
 				"after:absolute after:-inset-2 md:after:hidden",
 				"peer-data-[size=sm]/menu-button:top-1",
 				"peer-data-[size=default]/menu-button:top-1.5",
@@ -620,7 +610,6 @@ function SidebarMenuSkeleton({
 }: React.ComponentProps<"div"> & {
 	showIcon?: boolean;
 }) {
-	// Random width between 50 to 90%.
 	const width = React.useMemo(() => {
 		return `${Math.floor(Math.random() * 40) + 50}%`;
 	}, []);

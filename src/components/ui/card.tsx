@@ -7,7 +7,7 @@ function Card({ className, ...props }: React.ComponentProps<"div">) {
 		<div
 			data-slot="card"
 			className={cn(
-				"glass-card group relative flex flex-col overflow-hidden transition-all duration-200 rounded-xl",
+				"glass-card group relative flex flex-col overflow-hidden transition-all duration-200 rounded-2xl",
 				className
 			)}
 			{...props}
@@ -24,7 +24,7 @@ function Card({ className, ...props }: React.ComponentProps<"div">) {
 			<div className="absolute top-0 right-0 left-0 inset-0 bg-linear-to-bl from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none z-0" />
 			<div className="absolute top-0 left-0 right-0 h-px bg-linear-to-r from-transparent via-white/20 to-transparent pointer-events-none z-0" />
 			{/* 3. Контентная часть (z-10, чтобы быть выше шума) */}
-			<div className="relative z-10 flex flex-col h-full bg-muted-foreground/5 rounded-xl">
+			<div className="relative z-10 flex flex-col h-full bg-muted-foreground/5 rounded-2xl p-2">
 				{props.children}
 			</div>
 		</div>
