@@ -17,6 +17,8 @@ export type ClientVariants =
 	| "legal"
 	| "legal_partner";
 
+export type UserRole = "guest" | "user" | "admin" | "manager";
+
 export interface ClientApplication {
 	id: string;
 	user_id: string;
