@@ -9,7 +9,7 @@ interface AuthCardProps {
 	description?: string;
 	children: React.ReactNode;
 	footerLink?: {
-		text: string;
+		text?: string;
 		href: string;
 		label: string;
 		onClick?: () => void;
@@ -43,10 +43,10 @@ export function AuthCard({
 				)}
 			</div>
 
-			<div className="glass-card p-8 rounded-2xl shadow-2xl border border-white/5 bg-background/50 backdrop-blur-xl relative overflow-hidden">
+			<div className="relative overflow-hidden px-2">
 				{isLoading && (
 					<div className="absolute inset-0 z-50 flex items-center justify-center bg-background/60 backdrop-blur-sm">
-						<RainbowSpinner />
+						<RainbowSpinner size={50} />
 					</div>
 				)}
 				{children}
@@ -57,7 +57,7 @@ export function AuthCard({
 					{footerLink.text}{" "}
 					<Link
 						href={footerLink.href}
-						className="font-medium text-primary hover:underline underline-offset-4"
+						className="font-medium text-foreground hover:underline underline-offset-4"
 					>
 						{footerLink.label}
 					</Link>

@@ -267,7 +267,7 @@ export default function EquipmentTable() {
 			{/* Toolbar */}
 			<div className="flex items-center gap-2 flex-wrap">
 				<div className="relative flex-1 max-w-sm">
-					<Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+					<Search className="z-1 absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
 					<Input
 						placeholder="Поиск по названию или инв. номеру..."
 						className="pl-9 bg-muted-foreground/15 border-white/5"
@@ -343,15 +343,15 @@ export default function EquipmentTable() {
 					)}
 				</div>
 			</div>
-			<div className="w-full rounded-md border border-white/10 bg-muted-foreground/15 overflow-x-auto">
+			<div className="w-full rounded-md border border-white/10 overflow-x-auto">
 				<Table className="w-full">
 					<TableHeader
 						className={cn(
-							"bg-muted-foreground/40",
-							(isLoading || isPending) && "bg-primary/20 animate-pulse"
+							"bg-primary/70 ",
+							(isLoading || isPending) && "bg-foreground/20 animate-pulse"
 						)}
 					>
-						<TableRow className="hover:bg-transparent border-white/10">
+						<TableRow className="hover:bg-transparent font-black">
 							<TableHead className="w-10">
 								<Checkbox
 									checked={
@@ -364,7 +364,7 @@ export default function EquipmentTable() {
 									}}
 								/>
 							</TableHead>
-							<TableHead className="w-12" />
+							<TableHead className="w-12 text-amber-50" />
 							<TableHead className="min-w-45">Наименование</TableHead>
 							<TableHead className="min-w-27.5">Категория</TableHead>
 							<TableHead className="min-w-30">Подкатегория</TableHead>
@@ -556,9 +556,9 @@ export default function EquipmentTable() {
 						asChild
 						onClick={migrateCategoriesToIds}
 						className={cn(
-							"fixed bottom-8 right-8 z-50 h-14 w-14 rounded-full shadow-2xl shadow-primary/30",
+							"fixed bottom-8 right-8 z-50 h-14 w-14 rounded-full shadow-2xl shadow-primary/30 group",
 							"bg-primary hover:bg-primary/90 text-primary-foreground",
-							"transition-all duration-300 hover:scale-110 active:scale-95",
+							"transition-all duration-300 active:scale-95",
 							"flex items-center justify-center",
 							// Расширяемый FAB при выборе элементов
 							selectedIds.size > 0 && "w-auto px-5 gap-2 rounded-full"
@@ -567,7 +567,7 @@ export default function EquipmentTable() {
 						<Link href="/admin/equipment/new">
 							<Plus
 								className={cn(
-									"transition-transform duration-300",
+									"transition-transform duration-300 group-hover:scale-150",
 									selectedIds.size > 0 ? "h-4 w-4" : "h-6 w-6"
 								)}
 							/>

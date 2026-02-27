@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { useMemo } from "react";
 import { CategoryFilter } from "@/components/core/CategoryFilter";
 import { EquipmentGrid } from "@/components/core/EquipmentGrid";
 import {
@@ -12,46 +14,54 @@ import {
 } from "@/components/ui/breadcrumb";
 import { CATEGORIES } from "@/constants";
 import type { GroupedEquipment } from "@/core/domain/entities/Equipment";
-import { useEquipment } from "@/hooks/useEquipment";
+import { useEquipment } from "@/hooks";
 import { formatPlural } from "@/utils";
 
 interface PageProps {
+	// initialData — только для первого рендера (SSR prefetch).
+	// Больше не передаём resolvedParams — берём фильтры прямо из URL.
 	initialData: GroupedEquipment[];
-	resolvedParams: {
-		category?: string;
-		subcategory?: string;
-		search?: string;
-	};
 }
 
 const crumbLinkClass =
 	"text-muted-foreground hover:text-foreground transition-colors text-sm";
 
-export default function EquipmentClientPage({
-	initialData,
-	resolvedParams,
-}: PageProps) {
-	const categorySlug = resolvedParams.category || "all";
-	const subcategorySlug = resolvedParams.subcategory || "";
+export default function EquipmentClientPage({ initialData }: PageProps) {
+	// Единственный источник правды — URL search params.
+	// При смене фильтра CategoryFilter делает router.push → searchParams
+	// обновляются → здесь примитивы пересчитываются → useMemo ниже
+	// пересоздаёт объект только если реально изменилось значение.
+	const searchParams = useSearchParams();
 
-	const currentCategory =
-		CATEGORIES.find((c) => c.slug === categorySlug) || CATEGORIES[0];
+	const categorySlug = searchParams.get("category") || "all";
+	const subcategorySlug = searchParams.get("subcategory") || "";
+	const searchQuery = searchParams.get("search") || "";
 
-	const currentSubcategory =
-		subcategorySlug && currentCategory?.subcategories
-			? (
-					currentCategory.subcategories as Array<{ slug: string; name: string }>
-				).find((s) => s.slug === subcategorySlug)
-			: null;
+	const currentCategory = useMemo(
+		() => CATEGORIES.find((c) => c.slug === categorySlug) ?? CATEGORIES[0],
+		[categorySlug]
+	);
+
+	const currentSubcategory = useMemo(() => {
+		if (!subcategorySlug || !currentCategory?.subcategories) return null;
+		return (
+			(
+				currentCategory.subcategories as Array<{ slug: string; name: string }>
+			).find((s) => s.slug === subcategorySlug) ?? null
+		);
+	}, [subcategorySlug, currentCategory]);
+
+	const equipmentFilters = useMemo(
+		() => ({
+			categorySlug,
+			subcategorySlug: subcategorySlug || undefined,
+			search: searchQuery || undefined,
+		}),
+		[categorySlug, subcategorySlug, searchQuery]
+	);
 
 	const { data: items, isLoading } = useEquipment(
-		{
-			categorySlug,
-			...(subcategorySlug ? { subcategorySlug } : {}),
-			...(resolvedParams.search !== undefined
-				? { search: resolvedParams.search }
-				: {}),
-		},
+		equipmentFilters,
 		initialData
 	);
 
@@ -65,16 +75,12 @@ export default function EquipmentClientPage({
 		<div className="flex flex-col flex-1 min-w-0 p-6 md:p-10 space-y-8 overflow-hidden">
 			<Breadcrumb>
 				<BreadcrumbList>
-					{/* Главная */}
 					<BreadcrumbItem>
 						<Link href="/" className={crumbLinkClass}>
 							Главная
 						</Link>
 					</BreadcrumbItem>
-
 					<BreadcrumbSeparator />
-
-					{/* Каталог */}
 					<BreadcrumbItem>
 						{categorySlug === "all" ? (
 							<BreadcrumbPage>Каталог</BreadcrumbPage>
@@ -84,8 +90,6 @@ export default function EquipmentClientPage({
 							</Link>
 						)}
 					</BreadcrumbItem>
-
-					{/* Категория */}
 					{categorySlug !== "all" && (
 						<>
 							<BreadcrumbSeparator />
@@ -103,8 +107,6 @@ export default function EquipmentClientPage({
 							</BreadcrumbItem>
 						</>
 					)}
-
-					{/* Подкатегория */}
 					{currentSubcategory && (
 						<>
 							<BreadcrumbSeparator />
@@ -116,7 +118,6 @@ export default function EquipmentClientPage({
 				</BreadcrumbList>
 			</Breadcrumb>
 
-			{/* Заголовок */}
 			<div>
 				<h1 className="text-4xl font-black tracking-tight uppercase italic">
 					{pageTitle}

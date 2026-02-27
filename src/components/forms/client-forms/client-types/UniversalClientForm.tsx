@@ -1,17 +1,18 @@
 "use client";
+
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useMemo, useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
+import { MobileClientForm } from "@/components/dashboard/profile/forms/mobile/MobileClientForm";
 import {
 	FormConsentInfo,
 	FormNavigation,
 } from "@/components/forms/client-forms/shared";
 import { getStepsForClientType } from "@/constants/form-steps.config";
+import { useIsMobile } from "@/hooks";
 import type { ClientFormValues } from "@/schemas";
 
 interface UniversalClientFormProps {
-	// Шаг и его изменение управляются снаружи (ClientForm) через nuqs,
-	// что позволяет шагу жить в URL и переживать перезагрузку страницы.
 	currentStep: number;
 	onStepChange: (step: number) => void;
 }
@@ -23,6 +24,7 @@ export const UniversalClientForm = ({
 	const [visitedSteps, setVisitedSteps] = useState<Set<number>>(
 		new Set([currentStep])
 	);
+	const isMobile = useIsMobile();
 
 	const {
 		trigger,
@@ -31,14 +33,11 @@ export const UniversalClientForm = ({
 	} = useFormContext<ClientFormValues>();
 
 	const clientType = useWatch({ control, name: "clientType" });
-
 	const steps = useMemo(() => getStepsForClientType(clientType), [clientType]);
 
-	// Синхронизируем visitedSteps при восстановлении шага из URL
 	useEffect(() => {
 		setVisitedSteps((prev) => {
 			const next = new Set(prev);
-			// Отмечаем все шаги до текущего как посещённые (пользователь мог дойти до них раньше)
 			for (let i = 0; i <= currentStep; i++) next.add(i);
 			return next;
 		});
@@ -50,19 +49,29 @@ export const UniversalClientForm = ({
 		}
 	}, [clientType]);
 
+	// ── Mobile: accordion ──────────────────────────────────────────────────────
+	if (isMobile) {
+		return (
+			<div className="relative flex-1 flex flex-col">
+				<MobileClientForm isSubmitting={isSubmitting} isValid={isValid} />
+				<FormConsentInfo canSubmit={isValid} />
+			</div>
+		);
+	}
+
+	// ── Desktop: stepper (unchanged) ───────────────────────────────────────────
 	const handleStepClick = async (stepIndex: number) => {
 		if (stepIndex === currentStep) return;
 		setVisitedSteps((prev) => new Set(prev).add(currentStep));
-		const currentFields = steps[currentStep]?.fields;
-		await trigger(currentFields);
+		await trigger(steps[currentStep]?.fields);
 		onStepChange(stepIndex);
 		setVisitedSteps((prev) => new Set(prev).add(stepIndex));
 		window.scrollTo({ top: 0, behavior: "smooth" });
 	};
 
 	const next = async () => {
-		const isValidStep = await trigger(steps[currentStep]?.fields);
-		if (isValidStep) {
+		const ok = await trigger(steps[currentStep]?.fields);
+		if (ok) {
 			const nextIndex = currentStep + 1;
 			setVisitedSteps((prev) => new Set(prev).add(nextIndex));
 			onStepChange(nextIndex);
@@ -75,7 +84,6 @@ export const UniversalClientForm = ({
 	};
 
 	const ActiveComponent = steps[currentStep]?.component;
-	const canSubmit = isValid;
 
 	return (
 		<motion.div className="relative px-0 md:px-6 py-10 rounded-2xl flex-1 flex flex-col justify-between min-h-150">
@@ -100,11 +108,11 @@ export const UniversalClientForm = ({
 				currentStep={currentStep}
 				isLastStep={currentStep === steps.length - 1}
 				isSubmitting={isSubmitting}
-				canSubmit={canSubmit}
+				canSubmit={isValid}
 				onStepClick={handleStepClick}
 				visitedSteps={visitedSteps}
 			/>
-			<FormConsentInfo canSubmit={canSubmit} />
+			<FormConsentInfo canSubmit={isValid} />
 		</motion.div>
 	);
 };

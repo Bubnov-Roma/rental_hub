@@ -8,14 +8,14 @@ export default async function AuthPage({
 	searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
 	const params = await searchParams;
-	const view = (params.view as string) || "login";
+	const view = (params.view as string) || "otp-login";
 
 	return (
 		<div className="container flex min-h-screen w-full items-top md:items-center justify-center py-12">
 			<Suspense
 				fallback={
 					<div className="flex h-64 items-center justify-center">
-						<RainbowSpinner />
+						<RainbowSpinner size={50} />
 					</div>
 				}
 			>

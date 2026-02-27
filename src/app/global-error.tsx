@@ -14,7 +14,7 @@ export default function GlobalError({
 		<html lang="ru">
 			<body>
 				<GlobalErrorPage
-					title={`Упс!\n Что-то пошло не так`}
+					title={`Что-то пошло не так`}
 					message={error?.message || "Произошла системная ошибка"}
 					reset={reset}
 				/>

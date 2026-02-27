@@ -32,9 +32,6 @@ export function PriceSelector({
 	const priceMap = { h4: prices.h4, h8: prices.h8, day: prices.day };
 	const currentPrice = (priceMap[period] || 0).toLocaleString("ru");
 
-	// ─── Компактный мобильный режим ────────────────────────────────────────
-	// На мобилке: одна строка [активный тариф|цена] + кнопки переключателей рядом
-	// На десктопе: полный переключатель + цена под ним
 	return (
 		<>
 			{/* ── Десктоп версия (скрыта на sm) ── */}
@@ -54,7 +51,7 @@ export function PriceSelector({
 								"flex-1 rounded-md py-2 transition-all duration-150",
 								"text-[10px] font-bold uppercase tracking-wide leading-none",
 								period === opt.id
-									? "bg-background text-primary shadow-sm"
+									? "bg-background shadow-sm"
 									: "text-muted-foreground hover:text-foreground"
 							)}
 						>
@@ -68,13 +65,13 @@ export function PriceSelector({
 					<div className="flex items-baseline gap-0.5">
 						<span
 							className={cn(
-								"font-black text-primary leading-none",
+								"font-black text-foreground leading-none",
 								compact ? "text-2xl" : "text-2xl"
 							)}
 						>
 							{currentPrice}
 						</span>
-						<span className="text-[10px] text-muted-foreground ml-0.5">₽</span>
+						<span className="font-black text-foreground leading-none">₽</span>
 					</div>
 					{action && <div className="shrink-0 relative z-20">{action}</div>}
 				</div>
@@ -91,22 +88,29 @@ export function PriceSelector({
 					>
 						<SelectTrigger
 							className={cn(
-								"h-8 w-fit min-w-21.25 rounded-xl border-none bg-foreground/5 px-3 py-0 focus:ring-0",
-								"font-bold uppercase tracking-wider text-xs",
-								"[&>svg]:hidden"
+								"h-11 min-w-21.25 rounded-xl border-none bg-muted-foreground/15 px-3 py-0 focus:ring-0",
+								"font-bold uppercase tracking-wider text-xs"
 							)}
-							onClick={(e) => e.stopPropagation()} // Блокируем всплытие клика
+							onClick={(e) => e.stopPropagation()}
 						>
 							<SelectValue />
 						</SelectTrigger>
 
-						<SelectContent onClick={(e) => e.stopPropagation()}>
-							<SelectGroup>
+						<SelectContent
+							onClick={(e) => e.stopPropagation()}
+							sideOffset={5}
+							className={cn(
+								"w-[calc(100vw-1rem)] sm:w-(--radix-select-trigger-width)",
+								"max-w-44",
+								"min-w-(--radix-select-trigger-width)"
+							)}
+						>
+							<SelectGroup className="w-full">
 								{OPTIONS.map((opt) => (
 									<SelectItem
 										value={opt.id}
 										key={opt.id}
-										className="font-bold uppercase tracking-wide cursor-pointer"
+										className="font-bold text-md uppercase tracking-wide cursor-pointer space-y-4"
 									>
 										{opt.labelFull}
 									</SelectItem>
@@ -117,7 +121,7 @@ export function PriceSelector({
 
 					{/* Цена */}
 					<div className="ml-auto flex items-baseline gap-0.5 shrink-0 text-right">
-						<span className="font-black text-xl text-primary leading-none">
+						<span className="font-black text-xl text-foreground leading-none">
 							{currentPrice}
 						</span>
 						<span className="text-[10px] text-muted-foreground">₽</span>

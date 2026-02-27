@@ -6,10 +6,11 @@ import {
 } from "@fortawesome/free-regular-svg-icons";
 import { faHeart as faHeartSolid } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { ChevronDown, Package, ShieldCheck, Video, Zap } from "lucide-react";
+import { Info, Package, Video, X, Zap } from "lucide-react";
 import Image from "next/image";
+// import { useRouter } from "next/navigation";
 import type React from "react";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { Components } from "react-markdown";
 import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
@@ -17,29 +18,28 @@ import { AddToCartButton } from "@/components/core/AddToCartButton";
 import {
 	Badge,
 	Button,
-	Collapsible,
-	CollapsibleContent,
-	CollapsibleTrigger,
-	Dialog,
-	DialogContent,
-	DialogTitle,
-	DialogTrigger,
+	Card,
+	Carousel,
+	CarouselContent,
+	CarouselItem,
+	CarouselNext,
+	CarouselPrevious,
+	NavigationMenu,
+	NavigationMenuItem,
+	NavigationMenuLink,
+	NavigationMenuList,
 	Separator,
 	Tabs,
 	TabsList,
 	TabsTrigger,
 } from "@/components/ui";
 import type { GroupedEquipment } from "@/core/domain/entities/Equipment";
+import { useFavorite } from "@/hooks";
 import { cn } from "@/lib/utils";
 import { useCartStore } from "@/store/use-cart-store";
 
-// ── react-markdown: карта компонентов для единого стиля ──────────────────────
-//
-// Установка: npm i react-markdown
-// (remark-gfm опционально: npm i remark-gfm — добавляет таблицы, strikethrough)
-//
+// ─── Markdown components ──────────────────────────────────────────────────────
 const mdComponents: Components = {
-	// Заголовки
 	h1: ({ children }) => (
 		<h1 className="text-lg font-black uppercase italic mb-2 text-foreground mt-4 first:mt-0">
 			{children}
@@ -55,31 +55,23 @@ const mdComponents: Components = {
 			{children}
 		</h3>
 	),
-
-	// Параграф
 	p: ({ children }) => (
 		<p className="text-sm leading-relaxed text-foreground/80 mb-2 last:mb-0">
 			{children}
 		</p>
 	),
-
-	// Списки
 	ul: ({ children }) => (
 		<ul className="list-none space-y-1 mb-2">{children}</ul>
 	),
 	ol: ({ children }) => (
-		<ol className="list-none space-y-1 mb-2 counter-reset-[item]">
-			{children}
-		</ol>
+		<ol className="list-none space-y-1 mb-2">{children}</ol>
 	),
 	li: ({ children }) => (
 		<li className="flex items-start gap-2 text-sm text-foreground/80">
-			<span className="text-primary mt-1 shrink-0 select-none">•</span>
+			<span className="text-primary mt-1 shrink-0">•</span>
 			<span>{children}</span>
 		</li>
 	),
-
-	// Инлайн
 	strong: ({ children }) => (
 		<strong className="font-bold text-foreground">{children}</strong>
 	),
@@ -91,11 +83,7 @@ const mdComponents: Components = {
 			{children}
 		</code>
 	),
-
-	// Горизонтальная линия
 	hr: () => <hr className="border-white/10 my-3" />,
-
-	// Блок кода (если вдруг встретится)
 	pre: ({ children }) => (
 		<pre className="bg-white/5 rounded-xl p-3 overflow-x-auto text-xs mb-2">
 			{children}
@@ -103,80 +91,114 @@ const mdComponents: Components = {
 	),
 };
 
-// ── Collapsible секция с animated border-bottom trigger ─────────────────────
-function InfoSection({
-	icon,
-	title,
-	children,
-	defaultOpen = false,
-}: {
-	icon: React.ReactNode;
-	title: string;
-	children: React.ReactNode;
-	defaultOpen?: boolean;
-}) {
-	const [open, setOpen] = useState(defaultOpen);
-
-	return (
-		<Collapsible open={open} onOpenChange={setOpen} className="group/section">
-			<CollapsibleTrigger className="w-full flex items-center gap-2.5 py-3.5 text-left focus:outline-none">
-				<span
-					className={cn(
-						"flex items-center gap-2.5 flex-1 min-w-0",
-						"text-sm font-bold uppercase italic tracking-wide",
-						"border-b-2 pb-0.5 transition-all duration-300",
-						open
-							? "text-primary border-primary"
-							: "text-foreground/60 border-white/15 hover:text-foreground hover:border-white/30"
-					)}
-				>
-					<span
-						className={cn(
-							"shrink-0",
-							open ? "text-primary" : "text-foreground/40"
-						)}
-					>
-						{icon}
-					</span>
-					{title}
-				</span>
-				<ChevronDown
-					size={14}
-					className={cn(
-						"shrink-0 transition-transform duration-300 text-muted-foreground",
-						open && "rotate-180 text-primary"
-					)}
-				/>
-			</CollapsibleTrigger>
-			<CollapsibleContent className="overflow-hidden data-[state=open]:animate-collapsible-down data-[state=closed]:animate-collapsible-up">
-				<div className="pb-4 pt-1">{children}</div>
-			</CollapsibleContent>
-		</Collapsible>
-	);
-}
-
-// ── Обёртка-помощник для react-markdown ──────────────────────────────────────
 function MD({ children }: { children: string | null | undefined }) {
 	if (!children) return null;
 	return <ReactMarkdown components={mdComponents}>{children}</ReactMarkdown>;
 }
 
-// ── Основной компонент ────────────────────────────────────────────────────────
-export default function EquipmentDetailClient({
+// ─── Image placeholder when no photo loaded ───────────────────────────────────
+function ImagePlaceholder({ title }: { title: string }) {
+	return (
+		<div className="absolute inset-0 flex flex-col items-center justify-center bg-foreground/5 gap-3">
+			<div className="w-16 h-16 rounded-2xl bg-foreground/10 flex items-center justify-center">
+				<Package size={28} className="text-muted-foreground/30" />
+			</div>
+			<p className="text-sm font-bold text-muted-foreground/40 text-center px-4 line-clamp-2">
+				{title}
+			</p>
+		</div>
+	);
+}
+
+// ─── Lightbox ─────────────────────────────────────────────────────────────────
+function Lightbox({
+	src,
+	title,
+	onClose,
+}: {
+	src: string;
+	title: string;
+	onClose: () => void;
+}) {
+	useEffect(() => {
+		const onKey = (e: KeyboardEvent) => {
+			if (e.key === "Escape") onClose();
+		};
+		document.addEventListener("keydown", onKey);
+		return () => document.removeEventListener("keydown", onKey);
+	}, [onClose]);
+
+	return (
+		// biome-ignore lint/a11y/useKeyWithClickEvents: <fieldset>
+		<fieldset
+			className="fixed inset-0 z-100 flex items-center justify-center bg-background/90 backdrop-blur-sm"
+			onClick={onClose}
+		>
+			{/* Close button */}
+			<Button
+				variant="glass"
+				onClick={onClose}
+				className="absolute top-8 right-8 z-10 w-10 h-10 flex items-center justify-center rounded-full transition-colors"
+			>
+				<X size={18} className="text-foreground" />
+			</Button>
+
+			<button
+				type="button"
+				className="relative w-full h-full max-w-5xl max-h-[90vh] m-4"
+				onClick={(e) => e.stopPropagation()}
+			>
+				<Image src={src} fill className="object-contain" alt={title} />
+			</button>
+		</fieldset>
+	);
+}
+
+// ─── Info section tabs (NavigationMenu horizontal) ────────────────────────────
+const INFO_TABS = [
+	{ id: "description", label: "Описание", icon: Info },
+	{ id: "specs", label: "Характеристики", icon: Zap },
+	{ id: "kit", label: "Комплектация", icon: Package },
+	{ id: "reviews", label: "Обзоры", icon: Video },
+] as const;
+
+type InfoTabId = (typeof INFO_TABS)[number]["id"];
+
+// ─── Main component ────────────────────────────────────────────────────────────
+export default function EquipmentDetails({
 	equipment,
 }: {
 	equipment: GroupedEquipment;
 }) {
+	const [quantity, setQuantity] = useState(1);
 	const { items } = useCartStore();
-	const [selectedImg, setSelectedImg] = useState(equipment.imageUrl);
+
+	const itemInCart = items.find((i) => i.equipment.id === equipment.id);
+	const qtyInCart = itemInCart?.quantity || 0;
+	const maxCanAdd = equipment.available_count - qtyInCart;
+
+	useEffect(() => {
+		if (quantity > maxCanAdd && maxCanAdd > 0) {
+			setQuantity(maxCanAdd);
+		}
+	}, [maxCanAdd, quantity]);
+
+	// const router = useRouter();
 	const [activeRentTab, setActiveRentTab] = useState<"h4" | "h8" | "day">(
 		"day"
 	);
-	const [isFavorite, setIsFavorite] = useState(false);
+	const [activeInfoTab, setActiveInfoTab] = useState<InfoTabId>("description");
+	const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
+	const [imgErrors, setImgErrors] = useState<Set<number>>(new Set());
 	const imageRef = useRef<HTMLDivElement>(null);
 
-	const cartItem = items.find((i) => i.equipment.id === equipment.id);
-	const quantity = cartItem?.quantity || 0;
+	// ── REMOVED: swipe-to-cart (was conflicting with carousel swipe) ──────────
+	// The swipe gesture (left swipe → /checkout) is removed because it conflicts
+	// with the image carousel's own touch/swipe handling, causing unexpected
+	// redirects when users try to browse photos.
+
+	const { isFavorite, toggle: toggleFavorite } = useFavorite(equipment.id);
+
 	const images = equipment.images?.length
 		? equipment.images
 		: [equipment.imageUrl];
@@ -190,11 +212,6 @@ export default function EquipmentDetailClient({
 					: equipment.price_per_day;
 		return base * Math.max(quantity, 1);
 	}, [activeRentTab, equipment, quantity]);
-
-	const handleShare = () => {
-		navigator.clipboard.writeText(window.location.href);
-		toast.success("Ссылка скопирована");
-	};
 
 	const specEntries = useMemo(() => {
 		const s = equipment.specifications;
@@ -210,105 +227,237 @@ export default function EquipmentDetailClient({
 			? (equipment.specifications as Record<string, string>).description
 			: null;
 
-	const hasSpecs = specEntries.length > 0 || !!specDesc;
-	const hasDescription = !!equipment.description;
-	const hasKit = !!equipment.kit_description;
+	const handleShare = () => {
+		navigator.clipboard.writeText(window.location.href);
+		toast.success("Ссылка скопирована");
+	};
+
+	// Filter tabs to only show sections with content
+	const visibleTabs = INFO_TABS.filter((tab) => {
+		if (tab.id === "description") return !!equipment.description;
+		if (tab.id === "specs") return specEntries.length > 0 || !!specDesc;
+		if (tab.id === "kit") return !!equipment.kit_description;
+		if (tab.id === "reviews") return true;
+		return true;
+	});
 
 	return (
 		<>
-			<div className="container mx-auto px-4 md:px-6 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 pb-24 lg:pb-8">
-				{/* ━━ ЛЕВАЯ КОЛОНКА ━━ */}
-				<div className="lg:col-span-7 space-y-4">
-					{/* Главное фото */}
-					<Dialog>
-						<DialogTrigger asChild>
-							<div
-								ref={imageRef}
-								className="relative aspect-video rounded-3xl overflow-hidden cursor-zoom-in bg-foreground/5 group"
-							>
-								<Image
-									src={selectedImg}
-									fill
-									className="object-cover transition-transform duration-500 group-hover:scale-[1.04]"
-									alt={equipment.title}
-									priority
-								/>
-								<div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-									<span className="text-white text-xs font-bold uppercase tracking-widest bg-black/40 px-4 py-1.5 rounded-full">
-										Открыть
-									</span>
-								</div>
-							</div>
-						</DialogTrigger>
-						<DialogContent
-							showCloseButton={false}
-							className="max-w-[92vw] h-[90vh] p-0 border-none bg-transparent shadow-none outline-none"
-						>
-							<DialogTitle className="sr-only">
-								Просмотр: {equipment.title}
-							</DialogTitle>
-							<div className="relative w-full h-full">
-								<Image
-									src={selectedImg}
-									fill
-									className="object-contain rounded-2xl"
-									alt="Preview"
-								/>
-							</div>
-						</DialogContent>
-					</Dialog>
+			{lightboxSrc && (
+				<Lightbox
+					src={lightboxSrc}
+					title={equipment.title}
+					onClose={() => setLightboxSrc(null)}
+				/>
+			)}
 
-					{/* Миниатюры */}
+			{/*
+				IMPORTANT CHANGE: Removed onTouchStart/onTouchEnd from the outer
+				container div. The swipe-to-cart gesture was intercepting touch events
+				from the Carousel component, causing accidental navigation to /checkout
+				when users swiped through images.
+
+				The Carousel handles its own touch events internally — adding a competing
+				handler on the parent div caused race conditions on mobile.
+			*/}
+			<div className="container mx-auto px-4 md:px-6 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 pb-28 lg:pb-8">
+				{/* ━━ LEFT COLUMN ━━ */}
+				<div className="lg:col-span-7 space-y-4">
+					{/* ── Gallery carousel — NO touch handlers on parent ── */}
+					<Carousel className="w-full">
+						<CarouselContent>
+							{images.map((img, i) => (
+								<CarouselItem key={`${img}` + `${i}`}>
+									<Card
+										ref={i === 0 ? imageRef : undefined}
+										tabIndex={0}
+										className="relative aspect-video rounded-3xl overflow-hidden cursor-zoom-in bg-foreground/5 group"
+										onClick={() => !imgErrors.has(i) && setLightboxSrc(img)}
+										onKeyDown={(e) => {
+											if (e.key === "Enter" || e.key === " ") {
+												!imgErrors.has(i) && setLightboxSrc(img);
+											}
+										}}
+									>
+										{imgErrors.has(i) ? (
+											<ImagePlaceholder title={equipment.title} />
+										) : (
+											<Image
+												src={img}
+												fill
+												className="object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+												alt={equipment.title}
+												priority={i === 0}
+												onError={() =>
+													setImgErrors((prev) => new Set(prev).add(i))
+												}
+											/>
+										)}
+
+										{/* Mobile actions overlay */}
+										<div className="absolute top-3 right-3 flex gap-2 lg:hidden">
+											<button
+												type="button"
+												onClick={(e) => {
+													e.stopPropagation();
+												}}
+												className="w-8 h-8 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center"
+											>
+												<FontAwesomeIcon
+													icon={faShareFromSquare}
+													className="w-3 h-3 text-white"
+												/>
+											</button>
+											<button
+												type="button"
+												onClick={(e) => {
+													e.stopPropagation();
+													toggleFavorite(e);
+												}}
+												className={cn(
+													"w-8 h-8 rounded-full backdrop-blur-sm flex items-center justify-center transition-all",
+													isFavorite ? "bg-primary/80" : "bg-black/40"
+												)}
+											>
+												<FontAwesomeIcon
+													icon={isFavorite ? faHeartSolid : faHeartReg}
+													className="w-3 h-3 text-white"
+												/>
+											</button>
+										</div>
+
+										<div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+											<span className="text-white text-xs font-bold uppercase tracking-widest bg-black/40 px-4 py-1.5 rounded-full">
+												Открыть
+											</span>
+										</div>
+									</Card>
+								</CarouselItem>
+							))}
+						</CarouselContent>
+						{images.length > 1 && (
+							<>
+								<CarouselPrevious className="left-3 hidden sm:flex" />
+								<CarouselNext className="right-3 hidden sm:flex" />
+							</>
+						)}
+					</Carousel>
+
+					{/* Thumbnails — desktop only */}
 					{images.length > 1 && (
-						<div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+						<div className="hidden lg:flex gap-2 overflow-x-auto pb-1 no-scrollbar">
 							{images.map((img, i) => (
 								<button
-									type="button"
 									key={`${img}` + `${i}`}
-									onClick={() => setSelectedImg(img)}
+									type="button"
+									onClick={() => setLightboxSrc(img)}
 									className={cn(
-										"relative w-16 h-16 md:w-20 md:h-20 rounded-xl overflow-hidden shrink-0 border-2 transition-all duration-200",
-										selectedImg === img
-											? "border-primary scale-95"
-											: "border-transparent opacity-50 hover:opacity-80"
+										"relative w-16 h-16 shrink-0 rounded-xl overflow-hidden border-2 transition-all",
+										"border-transparent hover:border-primary/50"
 									)}
 								>
-									<Image
-										src={img}
-										fill
-										className="object-cover"
-										alt={`Фото ${i + 1}`}
-									/>
+									{imgErrors.has(i) ? (
+										<div className="w-full h-full bg-foreground/10 flex items-center justify-center">
+											<Package size={14} className="text-muted-foreground/30" />
+										</div>
+									) : (
+										<Image
+											src={img}
+											fill
+											className="object-cover"
+											alt=""
+											onError={() =>
+												setImgErrors((prev) => new Set(prev).add(i))
+											}
+										/>
+									)}
 								</button>
 							))}
 						</div>
 					)}
 
-					{/* Мобильная карточка с ценой */}
+					{/* ── Mobile price + title row ── */}
 					<div className="lg:hidden">
-						<MobilePriceCard
-							equipment={equipment}
-							quantity={quantity}
-							activeTab={activeRentTab}
-							onTabChange={setActiveRentTab}
-							price={currentPrice}
-							onShare={handleShare}
-							isFavorite={isFavorite}
-							onFavorite={() => setIsFavorite((v) => !v)}
-						/>
+						<div className="flex justify-between gap-3 items-end">
+							<h1 className="flex-1 text-2xl font-black uppercase italic leading-tight tracking-tighter">
+								{equipment.title}
+							</h1>
+							<div className="text-right shrink-0 ">
+								<p className="text-[10px] uppercase font-black opacity-40 mb-0.5">
+									{quantity > 1 ? `За ${quantity} шт.` : "Стоимость"}
+								</p>
+								<p className="text-2xl font-black italic tracking-tighter leading-none">
+									{currentPrice.toLocaleString("ru")} ₽
+								</p>
+							</div>
+						</div>
+
+						{/* Mobile rent tabs */}
+						<Tabs
+							value={activeRentTab}
+							onValueChange={(v) => setActiveRentTab(v as "h4" | "h8" | "day")}
+							className="mt-3"
+						>
+							<TabsList className="grid grid-cols-3 w-full h-9 bg-black/20 rounded-xl p-0.5 border border-white/5">
+								<TabsTrigger
+									value="h4"
+									className="rounded-lg font-bold uppercase text-[10px]"
+								>
+									4 часа
+								</TabsTrigger>
+								<TabsTrigger
+									value="h8"
+									className="rounded-lg font-bold uppercase text-[10px]"
+								>
+									8 часов
+								</TabsTrigger>
+								<TabsTrigger
+									value="day"
+									className="rounded-lg font-bold uppercase text-[10px]"
+								>
+									Сутки
+								</TabsTrigger>
+							</TabsList>
+						</Tabs>
 					</div>
 
-					{/* Collapsible-блоки с react-markdown */}
-					<div className="divide-y divide-white/5">
-						{hasDescription && (
-							<InfoSection icon={<span>📋</span>} title="Описание" defaultOpen>
-								<MD>{equipment.description}</MD>
-							</InfoSection>
-						)}
+					{/* ── Info NavigationMenu (horizontal tabs) ── */}
+					<div className="mt-2">
+						<NavigationMenu>
+							<NavigationMenuList className="gap-0 overflow-x-auto flex-nowrap no-scrollbar">
+								{visibleTabs.map(({ id, label, icon: Icon }) => (
+									<NavigationMenuItem key={id}>
+										<NavigationMenuLink asChild active={activeInfoTab === id}>
+											<button
+												type="button"
+												onClick={() => setActiveInfoTab(id)}
+												className={cn(
+													"flex items-center gap-1.5 px-3 py-2 text-sm font-bold whitespace-nowrap rounded-xl transition-all",
+													"border-b-2",
+													activeInfoTab === id
+														? "text-primary border-primary"
+														: "text-foreground/50 border-transparent hover:text-foreground hover:border-foreground/20"
+												)}
+											>
+												<Icon size={13} />
+												<span className="hidden sm:inline">{label}</span>
+												<span className="sm:hidden text-[11px]">
+													{label.slice(0, 4)}
+												</span>
+											</button>
+										</NavigationMenuLink>
+									</NavigationMenuItem>
+								))}
+							</NavigationMenuList>
+						</NavigationMenu>
 
-						{hasSpecs && (
-							<InfoSection icon={<Zap size={14} />} title="Характеристики">
-								{specEntries.length > 0 ? (
+						<div className="mt-4 min-h-20">
+							{activeInfoTab === "description" && (
+								<MD>{equipment.description}</MD>
+							)}
+
+							{activeInfoTab === "specs" &&
+								(specEntries.length > 0 ? (
 									<dl className="divide-y divide-white/5">
 										{specEntries.map(([key, val]) => (
 											<div key={key} className="flex gap-4 py-2">
@@ -321,34 +470,28 @@ export default function EquipmentDetailClient({
 									</dl>
 								) : (
 									<MD>{specDesc}</MD>
-								)}
-							</InfoSection>
-						)}
+								))}
 
-						{hasKit && (
-							<InfoSection icon={<Package size={14} />} title="Комплектация">
-								<MD>{equipment.kit_description}</MD>
-							</InfoSection>
-						)}
+							{activeInfoTab === "kit" && <MD>{equipment.kit_description}</MD>}
 
-						<InfoSection icon={<Video size={14} />} title="Обзоры">
-							<div className="py-8 text-center">
-								<Video
-									size={24}
-									className="text-muted-foreground/25 mx-auto mb-2"
-								/>
-								<p className="text-sm text-muted-foreground">
-									Видеообзоры появятся позже
-								</p>
-							</div>
-						</InfoSection>
+							{activeInfoTab === "reviews" && (
+								<div className="py-8 text-center">
+									<Video
+										size={24}
+										className="text-muted-foreground/25 mx-auto mb-2"
+									/>
+									<p className="text-sm text-muted-foreground">
+										Видеообзоры появятся позже
+									</p>
+								</div>
+							)}
+						</div>
 					</div>
 				</div>
 
-				{/* ━━ ПРАВАЯ КОЛОНКА (только desktop) ━━ */}
+				{/* ━━ RIGHT COLUMN — desktop sticky panel ━━ */}
 				<div className="hidden lg:block lg:col-span-5">
 					<div className="glass-card bg-muted-foreground/10 sticky top-24 space-y-5 p-5 md:p-6 rounded-3xl border border-white/10 backdrop-blur-3xl">
-						{/* Категория + действия */}
 						<div className="flex items-center justify-between">
 							<Badge
 								variant="outline"
@@ -356,12 +499,12 @@ export default function EquipmentDetailClient({
 							>
 								{equipment.category}
 							</Badge>
-							<div className="flex items-center gap-5">
+							<div className="flex items-center gap-2">
 								<Button
 									variant="glass"
 									onClick={handleShare}
 									aria-label="Поделиться"
-									className="w-9 h-9 rounded-full flex items-center justify-center transition-colors"
+									className="w-9 h-9 rounded-full flex items-center justify-center"
 								>
 									<FontAwesomeIcon
 										icon={faShareFromSquare}
@@ -370,9 +513,11 @@ export default function EquipmentDetailClient({
 								</Button>
 								<Button
 									variant="glass"
-									onClick={() => setIsFavorite((v) => !v)}
+									onClick={(e) =>
+										toggleFavorite(e as unknown as React.MouseEvent)
+									}
 									aria-label="В избранное"
-									className="w-9 h-9 rounded-full flex items-center justify-center transition-all"
+									className="w-9 h-9 rounded-full flex items-center justify-center"
 								>
 									<FontAwesomeIcon
 										icon={isFavorite ? faHeartSolid : faHeartReg}
@@ -388,7 +533,6 @@ export default function EquipmentDetailClient({
 
 						<Separator className="bg-foreground/10" />
 
-						{/* Тарифы */}
 						<div>
 							<p className="text-[10px] uppercase font-black tracking-[.2em] text-muted-foreground/50 mb-2">
 								Тариф аренды
@@ -422,46 +566,16 @@ export default function EquipmentDetailClient({
 							</Tabs>
 						</div>
 
-						{/* Цена */}
 						<div className="flex items-end justify-between">
 							<div>
 								<span className="text-[10px] uppercase font-black opacity-40 block mb-1">
 									{quantity > 1 ? `Итого за ${quantity} шт.` : "Стоимость"}
 								</span>
-								<div className="text-5xl font-black italic text-primary tracking-tighter leading-none">
-									{currentPrice.toLocaleString("ru")}₽
-								</div>
-							</div>
-							<div className="text-right">
-								<div className="text-[10px] uppercase font-bold opacity-40 mb-1">
-									Доступно
-								</div>
-								<div className="text-xl font-black italic">
-									{equipment.available_count}
-									<span className="text-[10px] not-italic opacity-60 ml-0.5">
-										шт.
-									</span>
+								<div className="text-5xl font-black italic text-foreground tracking-tighter leading-none">
+									{currentPrice.toLocaleString("ru")} ₽
 								</div>
 							</div>
 						</div>
-
-						{/* Залог */}
-						{!!equipment.deposit && (
-							<div className="flex items-center gap-2.5 p-3 rounded-xl bg-yellow-500/10 border border-yellow-500/20">
-								<ShieldCheck size={15} className="text-yellow-500 shrink-0" />
-								<div>
-									<p className="text-[10px] font-bold uppercase text-yellow-500/70">
-										Залог при получении
-									</p>
-									<p className="text-sm font-black text-yellow-400">
-										{(equipment.deposit * Math.max(quantity, 1)).toLocaleString(
-											"ru"
-										)}{" "}
-										₽
-									</p>
-								</div>
-							</div>
-						)}
 
 						<Separator className="bg-foreground/10" />
 
@@ -469,14 +583,14 @@ export default function EquipmentDetailClient({
 							item={equipment}
 							sourceRef={imageRef as React.RefObject<HTMLElement | null>}
 							size="lg"
+							variant="details"
 							className="w-full"
 						/>
 
-						{/* Вспомогательные цены */}
 						<div className="grid grid-cols-2 gap-2">
 							<div className="p-3 rounded-xl bg-background border border-white/5 text-center">
 								<p className="text-[10px] text-muted-foreground font-bold uppercase mb-0.5">
-									Цена 4ч
+									Аренда на 4 часа
 								</p>
 								<p className="text-sm font-black">
 									{equipment.price_4h?.toLocaleString("ru") ?? "—"} ₽
@@ -484,7 +598,7 @@ export default function EquipmentDetailClient({
 							</div>
 							<div className="p-3 rounded-xl bg-background border border-white/5 text-center">
 								<p className="text-[10px] text-muted-foreground font-bold uppercase mb-0.5">
-									Цена 8ч
+									Аренда на 8 часов
 								</p>
 								<p className="text-sm font-black">
 									{equipment.price_8h?.toLocaleString("ru") ?? "—"} ₽
@@ -495,133 +609,23 @@ export default function EquipmentDetailClient({
 				</div>
 			</div>
 
-			{/* ━━ МОБИЛЬНЫЙ FAB ━━ */}
-			<div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 px-4 py-3 bg-background/85 backdrop-blur-xl border-t border-white/10 safe-area-pb">
+			{/* ━━ MOBILE FAB — pinned above MobileNav ━━ */}
+			<div
+				className="lg:hidden fixed inset-x-0 z-70 px-4 py-3 bg-transparent"
+				style={{
+					bottom: "calc(5rem + env(safe-area-inset-bottom))",
+					isolation: "isolate",
+				}}
+			>
 				<AddToCartButton
 					item={equipment}
 					sourceRef={imageRef as React.RefObject<HTMLElement | null>}
 					size="lg"
+					variant="details"
 					className="w-full"
 				/>
 			</div>
 		</>
-	);
-}
-
-// ── Мобильная карточка с ценой ────────────────────────────────────────────────
-function MobilePriceCard({
-	equipment,
-	quantity,
-	activeTab,
-	onTabChange,
-	price,
-	onShare,
-	isFavorite,
-	onFavorite,
-}: {
-	equipment: GroupedEquipment;
-	quantity: number;
-	activeTab: "h4" | "h8" | "day";
-	onTabChange: (v: "h4" | "h8" | "day") => void;
-	price: number;
-	onShare: () => void;
-	isFavorite: boolean;
-	onFavorite: () => void;
-}) {
-	return (
-		<div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-3">
-			<div className="flex items-start justify-between gap-2">
-				<div className="flex-1 min-w-0">
-					<Badge
-						variant="outline"
-						className="text-[10px] font-black uppercase tracking-widest text-primary border-primary/30 bg-primary/10 mb-1.5"
-					>
-						{equipment.category}
-					</Badge>
-					<h1 className="text-xl font-black uppercase italic leading-tight tracking-tighter">
-						{equipment.title}
-					</h1>
-				</div>
-				<div className="flex gap-1 shrink-0 pt-5">
-					<button
-						type="button"
-						onClick={onShare}
-						className="w-8 h-8 rounded-full border border-white/10 flex items-center justify-center hover:bg-white/10 transition-colors"
-					>
-						<FontAwesomeIcon icon={faShareFromSquare} className="w-3 h-3" />
-					</button>
-					<button
-						type="button"
-						onClick={onFavorite}
-						className={cn(
-							"w-8 h-8 rounded-full border flex items-center justify-center transition-all",
-							isFavorite ? "border-primary/40 bg-primary/10" : "border-white/10"
-						)}
-					>
-						<FontAwesomeIcon
-							icon={isFavorite ? faHeartSolid : faHeartReg}
-							className={cn("w-3 h-3", isFavorite && "text-primary")}
-						/>
-					</button>
-				</div>
-			</div>
-
-			<Tabs
-				value={activeTab}
-				onValueChange={(v) => onTabChange(v as "h4" | "h8" | "day")}
-			>
-				<TabsList className="grid grid-cols-3 w-full h-9 bg-black/20 rounded-xl p-0.5 border border-white/5">
-					<TabsTrigger
-						value="h4"
-						className="rounded-lg font-bold uppercase text-[10px]"
-					>
-						4ч
-					</TabsTrigger>
-					<TabsTrigger
-						value="h8"
-						className="rounded-lg font-bold uppercase text-[10px]"
-					>
-						8ч
-					</TabsTrigger>
-					<TabsTrigger
-						value="day"
-						className="rounded-lg font-bold uppercase text-[10px]"
-					>
-						Сутки
-					</TabsTrigger>
-				</TabsList>
-			</Tabs>
-
-			<div className="flex items-end justify-between">
-				<div>
-					<p className="text-[10px] opacity-40 uppercase font-bold mb-0.5">
-						{quantity > 1 ? `За ${quantity} шт.` : "Стоимость"}
-					</p>
-					<p className="text-3xl font-black italic text-primary tracking-tighter leading-none">
-						{price.toLocaleString("ru")}₽
-					</p>
-				</div>
-				<div className="text-right">
-					<p className="text-[10px] opacity-40 uppercase font-bold">Доступно</p>
-					<p className="font-black italic text-lg">
-						{equipment.available_count}
-						<span className="text-[10px] opacity-60 not-italic ml-0.5">
-							шт.
-						</span>
-					</p>
-				</div>
-			</div>
-
-			{!!equipment.deposit && (
-				<div className="flex items-center gap-2 p-2.5 rounded-xl bg-yellow-500/10 border border-yellow-500/20">
-					<ShieldCheck size={13} className="text-yellow-500 shrink-0" />
-					<p className="text-[11px] font-bold text-yellow-500">
-						Залог при получении:{" "}
-						{(equipment.deposit * Math.max(quantity, 1)).toLocaleString("ru")} ₽
-					</p>
-				</div>
-			)}
-		</div>
 	);
 }
 
@@ -633,256 +637,208 @@ function MobilePriceCard({
 // } from "@fortawesome/free-regular-svg-icons";
 // import { faHeart as faHeartSolid } from "@fortawesome/free-solid-svg-icons";
 // import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-// import { ChevronDown, Package, ShieldCheck, Video, Zap } from "lucide-react";
+// import { Info, Package, Video, X, Zap } from "lucide-react";
 // import Image from "next/image";
+// import { useRouter } from "next/navigation";
 // import type React from "react";
-// import { useMemo, useRef, useState } from "react";
+// import { useEffect, useMemo, useRef, useState } from "react";
+// import type { Components } from "react-markdown";
+// import ReactMarkdown from "react-markdown";
 // import { toast } from "sonner";
 // import { AddToCartButton } from "@/components/core/AddToCartButton";
 // import {
 // 	Badge,
 // 	Button,
-// 	Collapsible,
-// 	CollapsibleContent,
-// 	CollapsibleTrigger,
-// 	Dialog,
-// 	DialogContent,
-// 	DialogTitle,
-// 	DialogTrigger,
+// 	Card,
+// 	Carousel,
+// 	CarouselContent,
+// 	CarouselItem,
+// 	CarouselNext,
+// 	CarouselPrevious,
+// 	NavigationMenu,
+// 	NavigationMenuItem,
+// 	NavigationMenuLink,
+// 	NavigationMenuList,
 // 	Separator,
 // 	Tabs,
 // 	TabsList,
 // 	TabsTrigger,
 // } from "@/components/ui";
 // import type { GroupedEquipment } from "@/core/domain/entities/Equipment";
+// import { useFavorite } from "@/hooks";
 // import { cn } from "@/lib/utils";
 // import { useCartStore } from "@/store/use-cart-store";
 
-// // ── Простой markdown-рендерер (без внешних зависимостей) ─────────────────────
-// // Если у вас установлен react-markdown — заменить на него.
-// function ContentRenderer({ content }: { content: string }) {
-// 	if (!content) return null;
+// // ─── Markdown components ──────────────────────────────────────────────────────
+// const mdComponents: Components = {
+// 	h1: ({ children }) => (
+// 		<h1 className="text-lg font-black uppercase italic mb-2 text-foreground mt-4 first:mt-0">
+// 			{children}
+// 		</h1>
+// 	),
+// 	h2: ({ children }) => (
+// 		<h2 className="text-base font-black uppercase italic mb-2 text-foreground mt-3 first:mt-0">
+// 			{children}
+// 		</h2>
+// 	),
+// 	h3: ({ children }) => (
+// 		<h3 className="text-sm font-black uppercase italic mb-1.5 text-foreground mt-3 first:mt-0">
+// 			{children}
+// 		</h3>
+// 	),
+// 	p: ({ children }) => (
+// 		<p className="text-sm leading-relaxed text-foreground/80 mb-2 last:mb-0">
+// 			{children}
+// 		</p>
+// 	),
+// 	ul: ({ children }) => (
+// 		<ul className="list-none space-y-1 mb-2">{children}</ul>
+// 	),
+// 	ol: ({ children }) => (
+// 		<ol className="list-none space-y-1 mb-2">{children}</ol>
+// 	),
+// 	li: ({ children }) => (
+// 		<li className="flex items-start gap-2 text-sm text-foreground/80">
+// 			<span className="text-primary mt-1 shrink-0">•</span>
+// 			<span>{children}</span>
+// 		</li>
+// 	),
+// 	strong: ({ children }) => (
+// 		<strong className="font-bold text-foreground">{children}</strong>
+// 	),
+// 	em: ({ children }) => (
+// 		<em className="italic text-foreground/70">{children}</em>
+// 	),
+// 	code: ({ children }) => (
+// 		<code className="text-xs bg-white/10 rounded px-1 py-0.5 font-mono">
+// 			{children}
+// 		</code>
+// 	),
+// 	hr: () => <hr className="border-white/10 my-3" />,
+// 	pre: ({ children }) => (
+// 		<pre className="bg-white/5 rounded-xl p-3 overflow-x-auto text-xs mb-2">
+// 			{children}
+// 		</pre>
+// 	),
+// };
 
-// 	const lines = content.split("\n");
-// 	const elements: React.ReactNode[] = [];
-// 	let i = 0;
-
-// 	while (i < lines.length) {
-// 		const line = lines[i];
-
-// 		// Заголовки
-// 		if (line?.startsWith("### ")) {
-// 			elements.push(
-// 				<h3
-// 					key={i}
-// 					className="text-sm font-black uppercase italic mb-1.5 text-foreground mt-3 first:mt-0"
-// 				>
-// 					{line?.slice(4)}
-// 				</h3>
-// 			);
-// 		} else if (line?.startsWith("## ")) {
-// 			elements.push(
-// 				<h2
-// 					key={i}
-// 					className="text-base font-black uppercase italic mb-2 text-foreground mt-3 first:mt-0"
-// 				>
-// 					{line?.slice(3)}
-// 				</h2>
-// 			);
-// 		} else if (line?.startsWith("# ")) {
-// 			elements.push(
-// 				<h1
-// 					key={i}
-// 					className="text-lg font-black uppercase italic mb-2 text-foreground mt-3 first:mt-0"
-// 				>
-// 					{line?.slice(2)}
-// 				</h1>
-// 			);
-// 		}
-// 		// Список (- item или * item)
-// 		else if (line?.[i] && /^[-*] /.test(line)) {
-// 			const listItems: string[] = [];
-// 			while (i < lines.length && /^[-*] /.test(lines[i])) {
-// 				listItems.push(lines[i].slice(2));
-// 				i++;
-// 			}
-// 			elements.push(
-// 				<ul key={`ul-${i}`} className="list-none space-y-1 mb-2">
-// 					{listItems.map((item, j) => (
-// 						<li
-// 							key={j}
-// 							className="flex items-start gap-2 text-sm text-foreground/80"
-// 						>
-// 							<span className="text-primary mt-1 shrink-0">•</span>
-// 							<span>{renderInline(item)}</span>
-// 						</li>
-// 					))}
-// 				</ul>
-// 			);
-// 			continue;
-// 		}
-// 		// Нумерованный список
-// 		else if (/^\d+\. /.test(line)) {
-// 			const listItems: string[] = [];
-// 			let n = 1;
-// 			while (i < lines.length && /^\d+\. /.test(lines[i])) {
-// 				listItems.push(lines[i].replace(/^\d+\. /, ""));
-// 				i++;
-// 				n++;
-// 			}
-// 			elements.push(
-// 				<ol key={`ol-${i}`} className="list-none space-y-1 mb-2">
-// 					{listItems.map((item, j) => (
-// 						<li
-// 							key={j}
-// 							className="flex items-start gap-2 text-sm text-foreground/80"
-// 						>
-// 							<span className="text-primary font-bold shrink-0 min-w-[1.2rem]">
-// 								{j + 1}.
-// 							</span>
-// 							<span>{renderInline(item)}</span>
-// 						</li>
-// 					))}
-// 				</ol>
-// 			);
-// 			continue;
-// 		}
-// 		// Горизонтальная линия
-// 		else if (/^---+$/.test(line.trim())) {
-// 			elements.push(<hr key={i} className="border-white/10 my-3" />);
-// 		}
-// 		// Пустая строка
-// 		else if (line.trim() === "") {
-// 			// пропускаем лишние пустые строки
-// 		}
-// 		// Обычный параграф
-// 		else {
-// 			elements.push(
-// 				<p
-// 					key={i}
-// 					className="text-sm leading-relaxed text-foreground/80 mb-1.5"
-// 				>
-// 					{renderInline(line)}
-// 				</p>
-// 			);
-// 		}
-
-// 		i++;
-// 	}
-
-// 	return <div className="space-y-0">{elements}</div>;
+// function MD({ children }: { children: string | null | undefined }) {
+// 	if (!children) return null;
+// 	return <ReactMarkdown components={mdComponents}>{children}</ReactMarkdown>;
 // }
 
-// /** Обрабатывает **bold**, *italic*, `code` в строке */
-// function renderInline(text: string): React.ReactNode {
-// 	const parts: React.ReactNode[] = [];
-// 	// Регексп для **bold**, *italic*, `code`
-// 	const regex = /(\*\*(.+?)\*\*|\*(.+?)\*|`(.+?)`)/g;
-// 	let last = 0;
-// 	let match: RegExpExecArray | null;
-
-// 	// biome-ignore lint/suspicious/noAssignInExpressions: needed for regex loop
-// 	while ((match = regex.exec(text)) !== null) {
-// 		if (match.index > last) {
-// 			parts.push(text.slice(last, match.index));
-// 		}
-// 		if (match[2]) {
-// 			parts.push(
-// 				<strong key={match.index} className="font-bold text-foreground">
-// 					{match[2]}
-// 				</strong>
-// 			);
-// 		} else if (match[3]) {
-// 			parts.push(
-// 				<em key={match.index} className="italic text-foreground/70">
-// 					{match[3]}
-// 				</em>
-// 			);
-// 		} else if (match[4]) {
-// 			parts.push(
-// 				<code
-// 					key={match.index}
-// 					className="text-xs bg-white/10 rounded px-1 py-0.5 font-mono"
-// 				>
-// 					{match[4]}
-// 				</code>
-// 			);
-// 		}
-// 		last = match.index + match[0].length;
-// 	}
-
-// 	if (last < text.length) parts.push(text.slice(last));
-// 	return parts.length > 1 ? parts : text;
-// }
-
-// // ── Collapsible секция с animated border-bottom trigger ─────────────────────
-// function InfoSection({
-// 	icon,
-// 	title,
-// 	children,
-// 	defaultOpen = false,
-// }: {
-// 	icon: React.ReactNode;
-// 	title: string;
-// 	children: React.ReactNode;
-// 	defaultOpen?: boolean;
-// }) {
-// 	const [open, setOpen] = useState(defaultOpen);
-
+// // ─── Image placeholder when no photo loaded ───────────────────────────────────
+// function ImagePlaceholder({ title }: { title: string }) {
 // 	return (
-// 		<Collapsible open={open} onOpenChange={setOpen} className="group/section">
-// 			<CollapsibleTrigger className="w-full flex items-center gap-2.5 py-3.5 text-left focus:outline-none">
-// 				<span
-// 					className={cn(
-// 						"flex items-center gap-2.5 flex-1 min-w-0",
-// 						"text-sm font-bold uppercase italic tracking-wide",
-// 						"border-b-2 pb-0.5 transition-all duration-300",
-// 						open
-// 							? "text-primary border-primary"
-// 							: "text-foreground/60 border-white/15 hover:text-foreground hover:border-white/30"
-// 					)}
-// 				>
-// 					<span
-// 						className={cn(
-// 							"shrink-0",
-// 							open ? "text-primary" : "text-foreground/40"
-// 						)}
-// 					>
-// 						{icon}
-// 					</span>
-// 					{title}
-// 				</span>
-// 				<ChevronDown
-// 					size={14}
-// 					className={cn(
-// 						"shrink-0 transition-transform duration-300 text-muted-foreground",
-// 						open && "rotate-180 text-primary"
-// 					)}
-// 				/>
-// 			</CollapsibleTrigger>
-// 			<CollapsibleContent className="overflow-hidden data-[state=open]:animate-collapsible-down data-[state=closed]:animate-collapsible-up">
-// 				<div className="pb-4 pt-1">{children}</div>
-// 			</CollapsibleContent>
-// 		</Collapsible>
+// 		<div className="absolute inset-0 flex flex-col items-center justify-center bg-foreground/5 gap-3">
+// 			<div className="w-16 h-16 rounded-2xl bg-foreground/10 flex items-center justify-center">
+// 				<Package size={28} className="text-muted-foreground/30" />
+// 			</div>
+// 			<p className="text-sm font-bold text-muted-foreground/40 text-center px-4 line-clamp-2">
+// 				{title}
+// 			</p>
+// 		</div>
 // 	);
 // }
 
-// // ── Основной компонент ────────────────────────────────────────────────────────
-// export default function EquipmentDetailClient({
+// // ─── Lightbox ─────────────────────────────────────────────────────────────────
+// function Lightbox({
+// 	src,
+// 	title,
+// 	onClose,
+// }: {
+// 	src: string;
+// 	title: string;
+// 	onClose: () => void;
+// }) {
+// 	useEffect(() => {
+// 		const onKey = (e: KeyboardEvent) => {
+// 			if (e.key === "Escape") onClose();
+// 		};
+// 		document.addEventListener("keydown", onKey);
+// 		return () => document.removeEventListener("keydown", onKey);
+// 	}, [onClose]);
+
+// 	return (
+// 		// biome-ignore lint/a11y/useKeyWithClickEvents: <fieldset>
+// 		<fieldset
+// 			className="fixed inset-0 z-100 flex items-center justify-center bg-background/90 backdrop-blur-sm"
+// 			onClick={onClose}
+// 		>
+// 			{/* Close button */}
+// 			<Button
+// 				variant="glass"
+// 				onClick={onClose}
+// 				className="absolute top-8 right-8 z-10 w-10 h-10 flex items-center justify-center rounded-full transition-colors"
+// 			>
+// 				<X size={18} className="text-foreground" />
+// 			</Button>
+
+// 			<button
+// 				type="button"
+// 				className="relative w-full h-full max-w-5xl max-h-[90vh] m-4"
+// 				onClick={(e) => e.stopPropagation()}
+// 			>
+// 				<Image src={src} fill className="object-contain" alt={title} />
+// 			</button>
+// 		</fieldset>
+// 	);
+// }
+
+// // ─── Info section tabs (NavigationMenu horizontal) ────────────────────────────
+// const INFO_TABS = [
+// 	{ id: "description", label: "Описание", icon: Info },
+// 	{ id: "specs", label: "Характеристики", icon: Zap },
+// 	{ id: "kit", label: "Комплектация", icon: Package },
+// 	{ id: "reviews", label: "Обзоры", icon: Video },
+// ] as const;
+
+// type InfoTabId = (typeof INFO_TABS)[number]["id"];
+
+// // ─── Main component ────────────────────────────────────────────────────────────
+// export default function EquipmentDetails({
 // 	equipment,
 // }: {
 // 	equipment: GroupedEquipment;
 // }) {
-// 	const { items } = useCartStore();
-// 	const [selectedImg, setSelectedImg] = useState(equipment.imageUrl);
+// 	const [quantity, setQuantity] = useState(1);
+// 	const { items } = useCartStore(); // Подписываемся на корзину
+
+// 	// 1. Считаем, сколько уже в корзине
+// 	const itemInCart = items.find((i) => i.equipment.id === equipment.id);
+// 	const qtyInCart = itemInCart?.quantity || 0;
+
+// 	// 2. Считаем, сколько ЕЩЕ можно добавить
+// 	const maxCanAdd = equipment.available_count - qtyInCart;
+
+// 	// 3. Если в корзине уже максимум, сбрасываем локальный счетчик в 0 или 1 (но кнопка будет заблокирована)
+// 	useEffect(() => {
+// 		if (quantity > maxCanAdd && maxCanAdd > 0) {
+// 			setQuantity(maxCanAdd);
+// 		}
+// 	}, [maxCanAdd, quantity]);
+
+// 	// Доступно для добавления (всего минус то, что уже в корзине)
+// 	// const availableToAdd = Math.max(0, stockLimit - currentInCart);
+// 	// const isMaxedOut = currentInCart >= stockLimit;
+
+// 	// const [quantity, setQuantity] = useState(1);
+// 	// const { items } = useCartStore();
+
+// 	const router = useRouter();
 // 	const [activeRentTab, setActiveRentTab] = useState<"h4" | "h8" | "day">(
 // 		"day"
 // 	);
-// 	const [isFavorite, setIsFavorite] = useState(false);
+// 	const [activeInfoTab, setActiveInfoTab] = useState<InfoTabId>("description");
+// 	const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
+// 	const [imgErrors, setImgErrors] = useState<Set<number>>(new Set());
 // 	const imageRef = useRef<HTMLDivElement>(null);
+// 	const swipeStartX = useRef<number | null>(null);
 
-// 	const cartItem = items.find((i) => i.equipment.id === equipment.id);
-// 	const quantity = cartItem?.quantity || 0;
+// 	const { isFavorite, toggle: toggleFavorite } = useFavorite(equipment.id);
+
+// 	// const cartItem = items.find((i) => i.equipment.id === equipment.id);
+// 	// const quantity = cartItem?.quantity || 0;
 // 	const images = equipment.images?.length
 // 		? equipment.images
 // 		: [equipment.imageUrl];
@@ -896,11 +852,6 @@ function MobilePriceCard({
 // 					: equipment.price_per_day;
 // 		return base * Math.max(quantity, 1);
 // 	}, [activeRentTab, equipment, quantity]);
-
-// 	const handleShare = () => {
-// 		navigator.clipboard.writeText(window.location.href);
-// 		toast.success("Ссылка скопирована");
-// 	};
 
 // 	const specEntries = useMemo(() => {
 // 		const s = equipment.specifications;
@@ -916,104 +867,256 @@ function MobilePriceCard({
 // 			? (equipment.specifications as Record<string, string>).description
 // 			: null;
 
-// 	const hasSpecs = specEntries.length > 0 || !!specDesc;
-// 	const hasDescription = !!equipment.description;
-// 	const hasKit = !!equipment.kit_description;
+// 	// ── Swipe right → cart ─────────────────────────────────────────────────────
+// 	const handleTouchStart = (e: React.TouchEvent) => {
+// 		// Проверяем, есть ли хотя бы одно касание
+// 		if (e.touches.length > 0 && e.touches[0]) {
+// 			swipeStartX.current = e.touches[0].clientX;
+// 		}
+// 	};
+
+// 	const handleTouchEnd = (e: React.TouchEvent) => {
+// 		if (swipeStartX.current === null) return;
+
+// 		// Проверяем наличие измененного касания
+// 		if (e.changedTouches.length > 0 && e.changedTouches[0]) {
+// 			const delta = swipeStartX.current - e.changedTouches[0].clientX;
+
+// 			if (delta > 80) {
+// 				router.push("/checkout");
+// 				toast("Переход в корзину", { icon: "🛒" });
+// 			}
+// 		}
+
+// 		swipeStartX.current = null;
+// 	};
+
+// 	const handleShare = () => {
+// 		navigator.clipboard.writeText(window.location.href);
+// 		toast.success("Ссылка скопирована");
+// 	};
+
+// 	// Filter tabs to only show sections with content
+// 	const visibleTabs = INFO_TABS.filter((tab) => {
+// 		if (tab.id === "description") return !!equipment.description;
+// 		if (tab.id === "specs") return specEntries.length > 0 || !!specDesc;
+// 		if (tab.id === "kit") return !!equipment.kit_description;
+// 		if (tab.id === "reviews") return true;
+// 		return true;
+// 	});
 
 // 	return (
 // 		<>
-// 			<div className="container mx-auto px-4 md:px-6 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 pb-24 lg:pb-8">
-// 				{/* ━━ ЛЕВАЯ КОЛОНКА ━━ */}
-// 				<div className="lg:col-span-7 space-y-4">
-// 					{/* Главное фото */}
-// 					<Dialog>
-// 						<DialogTrigger asChild>
-// 							<div
-// 								ref={imageRef}
-// 								className="relative aspect-video rounded-3xl overflow-hidden cursor-zoom-in bg-foreground/5 group"
-// 							>
-// 								<Image
-// 									src={selectedImg}
-// 									fill
-// 									className="object-cover transition-transform duration-500 group-hover:scale-[1.04]"
-// 									alt={equipment.title}
-// 									priority
-// 								/>
-// 								<div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-// 									<span className="text-white text-xs font-bold uppercase tracking-widest bg-black/40 px-4 py-1.5 rounded-full">
-// 										Открыть
-// 									</span>
-// 								</div>
-// 							</div>
-// 						</DialogTrigger>
-// 						<DialogContent
-// 							showCloseButton={false}
-// 							className="max-w-[92vw] h-[90vh] p-0 border-none bg-transparent shadow-none outline-none"
-// 						>
-// 							<DialogTitle className="sr-only">
-// 								Просмотр: {equipment.title}
-// 							</DialogTitle>
-// 							<div className="relative w-full h-full">
-// 								<Image
-// 									src={selectedImg}
-// 									fill
-// 									className="object-contain rounded-2xl"
-// 									alt="Preview"
-// 								/>
-// 							</div>
-// 						</DialogContent>
-// 					</Dialog>
+// 			{lightboxSrc && (
+// 				<Lightbox
+// 					src={lightboxSrc}
+// 					title={equipment.title}
+// 					onClose={() => setLightboxSrc(null)}
+// 				/>
+// 			)}
 
-// 					{/* Миниатюры */}
+// 			<div
+// 				className="container mx-auto px-4 md:px-6 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 pb-28 lg:pb-8"
+// 				onTouchStart={handleTouchStart}
+// 				onTouchEnd={handleTouchEnd}
+// 			>
+// 				{/* ━━ LEFT COLUMN ━━ */}
+// 				<div className="lg:col-span-7 space-y-4">
+// 					{/* ── Gallery carousel ── */}
+// 					<Carousel className="w-full">
+// 						<CarouselContent>
+// 							{images.map((img, i) => (
+// 								<CarouselItem key={`${img}` + `${i}`}>
+// 									<Card
+// 										ref={i === 0 ? imageRef : undefined}
+// 										tabIndex={0}
+// 										className="relative aspect-video rounded-3xl overflow-hidden cursor-zoom-in bg-foreground/5 group"
+// 										onClick={() => !imgErrors.has(i) && setLightboxSrc(img)}
+// 										onKeyDown={(e) => {
+// 											if (e.key === "Enter" || e.key === " ") {
+// 												!imgErrors.has(i) && setLightboxSrc(img);
+// 											}
+// 										}}
+// 									>
+// 										{imgErrors.has(i) ? (
+// 											<ImagePlaceholder title={equipment.title} />
+// 										) : (
+// 											<Image
+// 												src={img}
+// 												fill
+// 												className="object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+// 												alt={equipment.title}
+// 												priority={i === 0}
+// 												onError={() =>
+// 													setImgErrors((prev) => new Set(prev).add(i))
+// 												}
+// 											/>
+// 										)}
+
+// 										{/* Mobile actions overlay */}
+// 										<div className="absolute top-3 right-3 flex gap-2 lg:hidden">
+// 											<button
+// 												type="button"
+// 												onClick={(e) => {
+// 													e.stopPropagation();
+// 												}}
+// 												className="w-8 h-8 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center"
+// 											>
+// 												<FontAwesomeIcon
+// 													icon={faShareFromSquare}
+// 													className="w-3 h-3 text-white"
+// 												/>
+// 											</button>
+// 											<button
+// 												type="button"
+// 												onClick={(e) => {
+// 													e.stopPropagation();
+// 													toggleFavorite(e);
+// 												}}
+// 												className={cn(
+// 													"w-8 h-8 rounded-full backdrop-blur-sm flex items-center justify-center transition-all",
+// 													isFavorite ? "bg-primary/80" : "bg-black/40"
+// 												)}
+// 											>
+// 												<FontAwesomeIcon
+// 													icon={isFavorite ? faHeartSolid : faHeartReg}
+// 													className="w-3 h-3 text-white"
+// 												/>
+// 											</button>
+// 										</div>
+
+// 										<div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+// 											<span className="text-white text-xs font-bold uppercase tracking-widest bg-black/40 px-4 py-1.5 rounded-full">
+// 												Открыть
+// 											</span>
+// 										</div>
+// 									</Card>
+// 								</CarouselItem>
+// 							))}
+// 						</CarouselContent>
+// 						{images.length > 1 && (
+// 							<>
+// 								<CarouselPrevious className="left-3 hidden sm:flex" />
+// 								<CarouselNext className="right-3 hidden sm:flex" />
+// 							</>
+// 						)}
+// 					</Carousel>
+
+// 					{/* Thumbnails — desktop only */}
 // 					{images.length > 1 && (
-// 						<div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+// 						<div className="hidden lg:flex gap-2 overflow-x-auto pb-1 no-scrollbar">
 // 							{images.map((img, i) => (
 // 								<button
-// 									type="button"
 // 									key={`${img}` + `${i}`}
-// 									onClick={() => setSelectedImg(img)}
+// 									type="button"
+// 									onClick={() => setLightboxSrc(img)}
 // 									className={cn(
-// 										"relative w-16 h-16 md:w-20 md:h-20 rounded-xl overflow-hidden shrink-0 border-2 transition-all duration-200",
-// 										selectedImg === img
-// 											? "border-primary scale-95"
-// 											: "border-transparent opacity-50 hover:opacity-80"
+// 										"relative w-16 h-16 shrink-0 rounded-xl overflow-hidden border-2 transition-all",
+// 										"border-transparent hover:border-primary/50"
 // 									)}
 // 								>
-// 									<Image
-// 										src={img}
-// 										fill
-// 										className="object-cover"
-// 										alt={`Фото ${i + 1}`}
-// 									/>
+// 									{imgErrors.has(i) ? (
+// 										<div className="w-full h-full bg-foreground/10 flex items-center justify-center">
+// 											<Package size={14} className="text-muted-foreground/30" />
+// 										</div>
+// 									) : (
+// 										<Image
+// 											src={img}
+// 											fill
+// 											className="object-cover"
+// 											alt=""
+// 											onError={() =>
+// 												setImgErrors((prev) => new Set(prev).add(i))
+// 											}
+// 										/>
+// 									)}
 // 								</button>
 // 							))}
 // 						</div>
 // 					)}
 
-// 					{/* ── Мобильная секция с ценой (только < lg) ── */}
+// 					{/* ── Mobile price + title row ── */}
 // 					<div className="lg:hidden">
-// 						<MobilePriceCard
-// 							equipment={equipment}
-// 							quantity={quantity}
-// 							activeTab={activeRentTab}
-// 							onTabChange={setActiveRentTab}
-// 							price={currentPrice}
-// 							onShare={handleShare}
-// 							isFavorite={isFavorite}
-// 							onFavorite={() => setIsFavorite((v) => !v)}
-// 						/>
+// 						<div className="flex justify-between gap-3 items-end">
+// 							<h1 className="flex-1 text-2xl font-black uppercase italic leading-tight tracking-tighter">
+// 								{equipment.title}
+// 							</h1>
+// 							<div className="text-right shrink-0 ">
+// 								<p className="text-[10px] uppercase font-black opacity-40 mb-0.5">
+// 									{quantity > 1 ? `За ${quantity} шт.` : "Стоимость"}
+// 								</p>
+// 								<p className="text-2xl font-black italic tracking-tighter leading-none">
+// 									{currentPrice.toLocaleString("ru")} ₽
+// 								</p>
+// 							</div>
+// 						</div>
+
+// 						{/* Mobile rent tabs */}
+// 						<Tabs
+// 							value={activeRentTab}
+// 							onValueChange={(v) => setActiveRentTab(v as "h4" | "h8" | "day")}
+// 							className="mt-3"
+// 						>
+// 							<TabsList className="grid grid-cols-3 w-full h-9 bg-black/20 rounded-xl p-0.5 border border-white/5">
+// 								<TabsTrigger
+// 									value="h4"
+// 									className="rounded-lg font-bold uppercase text-[10px]"
+// 								>
+// 									4 часа
+// 								</TabsTrigger>
+// 								<TabsTrigger
+// 									value="h8"
+// 									className="rounded-lg font-bold uppercase text-[10px]"
+// 								>
+// 									8 часов
+// 								</TabsTrigger>
+// 								<TabsTrigger
+// 									value="day"
+// 									className="rounded-lg font-bold uppercase text-[10px]"
+// 								>
+// 									Сутки
+// 								</TabsTrigger>
+// 							</TabsList>
+// 						</Tabs>
 // 					</div>
 
-// 					{/* Collapsible информационные блоки */}
-// 					<div className="divide-y divide-white/5">
-// 						{hasDescription && (
-// 							<InfoSection icon={<span>📋</span>} title="Описание" defaultOpen>
-// 								<ContentRenderer content={equipment.description ?? ""} />
-// 							</InfoSection>
-// 						)}
-// 						{hasSpecs && (
-// 							<InfoSection icon={<Zap size={14} />} title="Характеристики">
-// 								{specEntries.length > 0 ? (
+// 					{/* ── Info NavigationMenu (horizontal tabs) ── */}
+// 					<div className="mt-2">
+// 						<NavigationMenu>
+// 							<NavigationMenuList className="gap-0 overflow-x-auto flex-nowrap no-scrollbar">
+// 								{visibleTabs.map(({ id, label, icon: Icon }) => (
+// 									<NavigationMenuItem key={id}>
+// 										<NavigationMenuLink asChild active={activeInfoTab === id}>
+// 											<button
+// 												type="button"
+// 												onClick={() => setActiveInfoTab(id)}
+// 												className={cn(
+// 													"flex items-center gap-1.5 px-3 py-2 text-sm font-bold whitespace-nowrap rounded-xl transition-all",
+// 													"border-b-2",
+// 													activeInfoTab === id
+// 														? "text-primary border-primary"
+// 														: "text-foreground/50 border-transparent hover:text-foreground hover:border-foreground/20"
+// 												)}
+// 											>
+// 												<Icon size={13} />
+// 												<span className="hidden sm:inline">{label}</span>
+// 												<span className="sm:hidden text-[11px]">
+// 													{label.slice(0, 4)}
+// 												</span>
+// 											</button>
+// 										</NavigationMenuLink>
+// 									</NavigationMenuItem>
+// 								))}
+// 							</NavigationMenuList>
+// 						</NavigationMenu>
+
+// 						<div className="mt-4 min-h-20">
+// 							{activeInfoTab === "description" && (
+// 								<MD>{equipment.description}</MD>
+// 							)}
+
+// 							{activeInfoTab === "specs" &&
+// 								(specEntries.length > 0 ? (
 // 									<dl className="divide-y divide-white/5">
 // 										{specEntries.map(([key, val]) => (
 // 											<div key={key} className="flex gap-4 py-2">
@@ -1025,33 +1128,29 @@ function MobilePriceCard({
 // 										))}
 // 									</dl>
 // 								) : (
-// 									specDesc && <ContentRenderer content={specDesc} />
-// 								)}
-// 							</InfoSection>
-// 						)}
-// 						{hasKit && (
-// 							<InfoSection icon={<Package size={14} />} title="Комплектация">
-// 								<ContentRenderer content={equipment.kit_description ?? ""} />
-// 							</InfoSection>
-// 						)}
-// 						<InfoSection icon={<Video size={14} />} title="Обзоры">
-// 							<div className="py-8 text-center">
-// 								<Video
-// 									size={24}
-// 									className="text-muted-foreground/25 mx-auto mb-2"
-// 								/>
-// 								<p className="text-sm text-muted-foreground">
-// 									Видеообзоры появятся позже
-// 								</p>
-// 							</div>
-// 						</InfoSection>
+// 									<MD>{specDesc}</MD>
+// 								))}
+
+// 							{activeInfoTab === "kit" && <MD>{equipment.kit_description}</MD>}
+
+// 							{activeInfoTab === "reviews" && (
+// 								<div className="py-8 text-center">
+// 									<Video
+// 										size={24}
+// 										className="text-muted-foreground/25 mx-auto mb-2"
+// 									/>
+// 									<p className="text-sm text-muted-foreground">
+// 										Видеообзоры появятся позже
+// 									</p>
+// 								</div>
+// 							)}
+// 						</div>
 // 					</div>
 // 				</div>
 
-// 				{/* ━━ ПРАВАЯ КОЛОНКА (только desktop) ━━ */}
+// 				{/* ━━ RIGHT COLUMN — desktop sticky panel ━━ */}
 // 				<div className="hidden lg:block lg:col-span-5">
-// 					<div className="glass-card bg-muted-foreground/10 sticky top-24 space-y-5 p-5 md:p-6 rounded-3xl border border-white/10  backdrop-blur-3xl">
-// 						{/* Категория + действия */}
+// 					<div className="glass-card bg-muted-foreground/10 sticky top-24 space-y-5 p-5 md:p-6 rounded-3xl border border-white/10 backdrop-blur-3xl">
 // 						<div className="flex items-center justify-between">
 // 							<Badge
 // 								variant="outline"
@@ -1059,12 +1158,12 @@ function MobilePriceCard({
 // 							>
 // 								{equipment.category}
 // 							</Badge>
-// 							<div className="flex items-center gap-5">
+// 							<div className="flex items-center gap-2">
 // 								<Button
 // 									variant="glass"
 // 									onClick={handleShare}
 // 									aria-label="Поделиться"
-// 									className="w-9 h-9 rounded-full flex items-center justify-center transition-colors"
+// 									className="w-9 h-9 rounded-full flex items-center justify-center"
 // 								>
 // 									<FontAwesomeIcon
 // 										icon={faShareFromSquare}
@@ -1073,11 +1172,11 @@ function MobilePriceCard({
 // 								</Button>
 // 								<Button
 // 									variant="glass"
-// 									onClick={() => setIsFavorite((v) => !v)}
+// 									onClick={(e) =>
+// 										toggleFavorite(e as unknown as React.MouseEvent)
+// 									}
 // 									aria-label="В избранное"
-// 									className={cn(
-// 										"w-9 h-9 rounded-full flex items-center justify-center transition-all"
-// 									)}
+// 									className="w-9 h-9 rounded-full flex items-center justify-center"
 // 								>
 // 									<FontAwesomeIcon
 // 										icon={isFavorite ? faHeartSolid : faHeartReg}
@@ -1093,7 +1192,6 @@ function MobilePriceCard({
 
 // 						<Separator className="bg-foreground/10" />
 
-// 						{/* Тарифы */}
 // 						<div>
 // 							<p className="text-[10px] uppercase font-black tracking-[.2em] text-muted-foreground/50 mb-2">
 // 								Тариф аренды
@@ -1127,69 +1225,40 @@ function MobilePriceCard({
 // 							</Tabs>
 // 						</div>
 
-// 						{/* Цена */}
 // 						<div className="flex items-end justify-between">
 // 							<div>
 // 								<span className="text-[10px] uppercase font-black opacity-40 block mb-1">
 // 									{quantity > 1 ? `Итого за ${quantity} шт.` : "Стоимость"}
 // 								</span>
-// 								<div className="text-5xl font-black italic text-primary tracking-tighter leading-none">
-// 									{currentPrice.toLocaleString("ru")}₽
-// 								</div>
-// 							</div>
-// 							<div className="text-right">
-// 								<div className="text-[10px] uppercase font-bold opacity-40 mb-1">
-// 									Доступно
-// 								</div>
-// 								<div className="text-xl font-black italic">
-// 									{equipment.available_count}
-// 									<span className="text-[10px] not-italic opacity-60 ml-0.5">
-// 										шт.
-// 									</span>
+// 								<div className="text-5xl font-black italic text-foreground tracking-tighter leading-none">
+// 									{currentPrice.toLocaleString("ru")} ₽
 // 								</div>
 // 							</div>
 // 						</div>
 
-// 						{/* Залог */}
-// 						{!!equipment.deposit && (
-// 							<div className="flex items-center gap-2.5 p-3 rounded-xl bg-yellow-500/10 border border-yellow-500/20">
-// 								<ShieldCheck size={15} className="text-yellow-500 shrink-0" />
-// 								<div>
-// 									<p className="text-[10px] font-bold uppercase text-yellow-500/70">
-// 										Залог при получении
-// 									</p>
-// 									<p className="text-sm font-black text-yellow-400">
-// 										{(equipment.deposit * Math.max(quantity, 1)).toLocaleString(
-// 											"ru"
-// 										)}{" "}
-// 										₽
-// 									</p>
-// 								</div>
-// 							</div>
-// 						)}
-
 // 						<Separator className="bg-foreground/10" />
 
+// 						{/* Ozon-style split button on desktop details */}
 // 						<AddToCartButton
 // 							item={equipment}
 // 							sourceRef={imageRef as React.RefObject<HTMLElement | null>}
 // 							size="lg"
+// 							variant="details"
 // 							className="w-full"
 // 						/>
 
-// 						{/* Цены тарифов */}
-// 						<div className="grid grid-cols-2 gap-2 g-black/20">
+// 						<div className="grid grid-cols-2 gap-2">
 // 							<div className="p-3 rounded-xl bg-background border border-white/5 text-center">
 // 								<p className="text-[10px] text-muted-foreground font-bold uppercase mb-0.5">
-// 									Цена 4ч
+// 									Аренда на 4 часа
 // 								</p>
 // 								<p className="text-sm font-black">
 // 									{equipment.price_4h?.toLocaleString("ru") ?? "—"} ₽
 // 								</p>
 // 							</div>
-// 							<div className="p-3 rounded-xl b border bg-background  border-white/5 text-center">
+// 							<div className="p-3 rounded-xl bg-background border border-white/5 text-center">
 // 								<p className="text-[10px] text-muted-foreground font-bold uppercase mb-0.5">
-// 									Цена 8ч
+// 									Аренда на 8 часов
 // 								</p>
 // 								<p className="text-sm font-black">
 // 									{equipment.price_8h?.toLocaleString("ru") ?? "—"} ₽
@@ -1200,136 +1269,22 @@ function MobilePriceCard({
 // 				</div>
 // 			</div>
 
-// 			{/* ━━ МОБИЛЬНЫЙ FAB ━━ */}
-// 			<div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 px-4 py-3 bg-background/85 backdrop-blur-xl border-t border-white/10 safe-area-pb">
+// 			{/* ━━ MOBILE FAB — pinned above MobileNav ━━ */}
+// 			<div
+// 				className="lg:hidden fixed inset-x-0 z-70 px-4 py-3 bg-transparent"
+// 				style={{
+// 					bottom: "calc(5rem + env(safe-area-inset-bottom))",
+// 					isolation: "isolate",
+// 				}}
+// 			>
 // 				<AddToCartButton
 // 					item={equipment}
 // 					sourceRef={imageRef as React.RefObject<HTMLElement | null>}
 // 					size="lg"
+// 					variant="details"
 // 					className="w-full"
 // 				/>
 // 			</div>
 // 		</>
-// 	);
-// }
-
-// // ── Мобильная карточка с ценой ────────────────────────────────────────────────
-// function MobilePriceCard({
-// 	equipment,
-// 	quantity,
-// 	activeTab,
-// 	onTabChange,
-// 	price,
-// 	onShare,
-// 	isFavorite,
-// 	onFavorite,
-// }: {
-// 	equipment: GroupedEquipment;
-// 	quantity: number;
-// 	activeTab: "h4" | "h8" | "day";
-// 	onTabChange: (v: "h4" | "h8" | "day") => void;
-// 	price: number;
-// 	onShare: () => void;
-// 	isFavorite: boolean;
-// 	onFavorite: () => void;
-// }) {
-// 	return (
-// 		<div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-3">
-// 			{/* Название + действия */}
-// 			<div className="flex items-start justify-between gap-2">
-// 				<div className="flex-1 min-w-0">
-// 					<Badge
-// 						variant="outline"
-// 						className="text-[10px] font-black uppercase tracking-widest text-primary border-primary/30 bg-primary/10 mb-1.5"
-// 					>
-// 						{equipment.category}
-// 					</Badge>
-// 					<h1 className="text-xl font-black uppercase italic leading-tight tracking-tighter">
-// 						{equipment.title}
-// 					</h1>
-// 				</div>
-// 				<div className="flex gap-1 shrink-0 pt-5">
-// 					<button
-// 						type="button"
-// 						onClick={onShare}
-// 						className="w-8 h-8 rounded-full border border-white/10 flex items-center justify-center hover:bg-white/10 transition-colors"
-// 					>
-// 						<FontAwesomeIcon icon={faShareFromSquare} className="w-3 h-3" />
-// 					</button>
-// 					<button
-// 						type="button"
-// 						onClick={onFavorite}
-// 						className={cn(
-// 							"w-8 h-8 rounded-full border flex items-center justify-center transition-all",
-// 							isFavorite ? "border-primary/40 bg-primary/10" : "border-white/10"
-// 						)}
-// 					>
-// 						<FontAwesomeIcon
-// 							icon={isFavorite ? faHeartSolid : faHeartReg}
-// 							className={cn("w-3 h-3", isFavorite && "text-primary")}
-// 						/>
-// 					</button>
-// 				</div>
-// 			</div>
-
-// 			{/* Тарифы */}
-// 			<Tabs
-// 				value={activeTab}
-// 				onValueChange={(v) => onTabChange(v as "h4" | "h8" | "day")}
-// 			>
-// 				<TabsList className="grid grid-cols-3 w-full h-9 bg-black/20 rounded-xl p-0.5 border border-white/5">
-// 					<TabsTrigger
-// 						value="h4"
-// 						className="rounded-lg font-bold uppercase text-[10px]"
-// 					>
-// 						4ч
-// 					</TabsTrigger>
-// 					<TabsTrigger
-// 						value="h8"
-// 						className="rounded-lg font-bold uppercase text-[10px]"
-// 					>
-// 						8ч
-// 					</TabsTrigger>
-// 					<TabsTrigger
-// 						value="day"
-// 						className="rounded-lg font-bold uppercase text-[10px]"
-// 					>
-// 						Сутки
-// 					</TabsTrigger>
-// 				</TabsList>
-// 			</Tabs>
-
-// 			{/* Цена + доступность */}
-// 			<div className="flex items-end justify-between">
-// 				<div>
-// 					<p className="text-[10px] opacity-40 uppercase font-bold mb-0.5">
-// 						{quantity > 1 ? `За ${quantity} шт.` : "Стоимость"}
-// 					</p>
-// 					<p className="text-3xl font-black italic text-primary tracking-tighter leading-none">
-// 						{price.toLocaleString("ru")}₽
-// 					</p>
-// 				</div>
-// 				<div className="text-right">
-// 					<p className="text-[10px] opacity-40 uppercase font-bold">Доступно</p>
-// 					<p className="font-black italic text-lg">
-// 						{equipment.available_count}
-// 						<span className="text-[10px] opacity-60 not-italic ml-0.5">
-// 							шт.
-// 						</span>
-// 					</p>
-// 				</div>
-// 			</div>
-
-// 			{/* Залог */}
-// 			{!!equipment.deposit && (
-// 				<div className="flex items-center gap-2 p-2.5 rounded-xl bg-yellow-500/10 border border-yellow-500/20">
-// 					<ShieldCheck size={13} className="text-yellow-500 shrink-0" />
-// 					<p className="text-[11px] font-bold text-yellow-500">
-// 						Залог при получении:{" "}
-// 						{(equipment.deposit * Math.max(quantity, 1)).toLocaleString("ru")} ₽
-// 					</p>
-// 				</div>
-// 			)}
-// 		</div>
 // 	);
 // }
