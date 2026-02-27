@@ -8,7 +8,6 @@ interface ApplicationState {
 	status: ApplicationStatus;
 	applicationData: ClientFormValues | null;
 
-	// Черновик формы — сохраняется в localStorage при каждом изменении
 	formDraft: Partial<ClientFormValues> | null;
 
 	setInitialState: (
@@ -74,7 +73,6 @@ export const useApplicationStore = create<ApplicationState>()(
 		{
 			name: "linza-application-store",
 			storage: createJSONStorage(() => localStorage),
-			// Персистируем только черновик формы — статус всегда берём с сервера
 			partialize: (state) => ({
 				formDraft: state.formDraft,
 			}),
