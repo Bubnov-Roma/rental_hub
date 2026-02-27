@@ -46,6 +46,7 @@ export async function updateSession(request: NextRequest) {
 		const isAdminRoute = pathname.startsWith("/admin");
 		const isProtectedRoute =
 			pathname.startsWith("/dashboard") || pathname.startsWith("/booking");
+		// /favorites страница показывает UnauthenticatedFavorites для незалогиненных
 
 		/* check network */
 		if (userError?.message.includes("fetch")) {
