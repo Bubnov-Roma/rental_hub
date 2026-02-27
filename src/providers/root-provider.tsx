@@ -29,7 +29,7 @@ export function RootProvider({ children, initialUser }: RootProviderProps) {
 						<SidebarProvider>
 							{children}
 							<Toaster
-								position="bottom-left"
+								position="top-center"
 								expand={false}
 								richColors
 								closeButton
@@ -37,7 +37,6 @@ export function RootProvider({ children, initialUser }: RootProviderProps) {
 						</SidebarProvider>
 					</ThemeProvider>
 				</QueryProvider>
-				);
 			</AuthProvider>
 		</NuqsAdapter>
 	);
