@@ -8,10 +8,17 @@ function Input({ className, type, ...props }: React.ComponentProps<"input">) {
 			type={type}
 			data-slot="input"
 			className={cn(
-				"file:text-foreground placeholder:text-muted-foreground selection:bg-primary h-11 selection:text-primary-foreground w-full min-w-0 rounded-md px-3 py-1 text-base outline-none file:inline-flex file:h-7  file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
-				// "dark:bg-input/30 border-input h-9 border bg-transparent transition-[color,box-shadow] file:border-0",
-				// "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]",
-				"aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
+				// Layout & typography
+				"w-full min-w-0 h-12 rounded-xl px-3 py-1",
+				"text-base md:text-sm placeholder:text-muted-foreground",
+				"selection:bg-primary selection:text-primary-foreground",
+				// File input reset
+				"file:text-foreground file:inline-flex file:h-7 file:bg-transparent file:text-sm file:font-medium file:border-0",
+				// Disabled state
+				"disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50",
+				// Validation state
+				"aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40",
+				// Base glass style — hover/focus handled in globals.css via CSS vars
 				"glass-input",
 				className
 			)}

@@ -38,7 +38,7 @@ function AlertDialogOverlay({
 				animate={{ opacity: 1, backdropFilter: "blur(10px)" }}
 				exit={{ opacity: 0, backdropFilter: "blur(0px)" }}
 				transition={{ duration: 0.1, ease: "easeOut" }}
-				className="fixed inset-0 z-70 bg-muted-foreground/10"
+				className="fixed inset-0 z-71 bg-muted-foreground/10"
 			>
 				<div className="absolute inset-0 bg-noise opacity-[0.03]" />
 			</motion.div>
@@ -54,7 +54,7 @@ function AlertDialogContent({
 	return (
 		<AlertDialogPortal>
 			<AlertDialogOverlay />
-			<div className="fixed inset-0 z-70 pointer-events-none flex items-center justify-center">
+			<div className="fixed inset-0 z-71 pointer-events-none flex items-center justify-center">
 				<motion.div
 					initial={{ opacity: 0, scale: 0.95, y: 8 }}
 					animate={{ opacity: 1, scale: 1, y: 0 }}
