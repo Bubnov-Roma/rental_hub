@@ -2,8 +2,10 @@
 
 import { faMinus, faPlus } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { ShoppingCart } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useRef, useState } from "react";
+import { toast } from "sonner";
 import type { GroupedEquipment } from "@/core/domain/entities/Equipment";
 import { cn } from "@/lib/utils";
 import { useCartStore } from "@/store/use-cart-store";
@@ -11,15 +13,18 @@ import { useCartStore } from "@/store/use-cart-store";
 interface AddToCartButtonProps {
 	item: GroupedEquipment;
 	className?: string;
-	/** ref на контейнер изображения — источник анимации полёта */
 	sourceRef?: React.RefObject<HTMLElement | null>;
 	size?: "sm" | "md" | "lg";
+	/**
+	 * "catalog" — no center link/counter; compact +/- sides after add (default)
+	 * "details" — Ozon-style split: qty left | "в корзину →" right
+	 * "icon"    — single icon button for SearchPanel
+	 */
+	variant?: "catalog" | "details" | "icon";
 }
 
-/**
- * Запускает анимацию «товар летит в корзину».
- * Корзина в хедере должна иметь атрибут data-cart-icon="true"
- */
+// ─── Cart fly animation ────────────────────────────────────────────────────────
+
 function flyToCart(sourceEl: HTMLElement | null, imageUrl?: string) {
 	if (!sourceEl || typeof document === "undefined") return;
 	const cartEl = document.querySelector<HTMLElement>("[data-cart-icon]");
@@ -52,7 +57,6 @@ function flyToCart(sourceEl: HTMLElement | null, imageUrl?: string) {
 	const tx = cartRect.left + cartRect.width / 2 - SIZE / 2;
 	const ty = cartRect.top + cartRect.height / 2 - SIZE / 2;
 
-	// Двойной rAF чтобы браузер успел нарисовать начальный кадр
 	requestAnimationFrame(() =>
 		requestAnimationFrame(() => {
 			ghost.style.transition =
@@ -64,7 +68,6 @@ function flyToCart(sourceEl: HTMLElement | null, imageUrl?: string) {
 		})
 	);
 
-	// Bounce корзины после прилёта
 	setTimeout(() => {
 		cartEl.animate(
 			[
@@ -81,17 +84,40 @@ function flyToCart(sourceEl: HTMLElement | null, imageUrl?: string) {
 	setTimeout(() => ghost.remove(), 1100);
 }
 
+// ─── Toast ────────────────────────────────────────────────────────────────────
+
+function showCartToast(title: string) {
+	toast.success(`«${title}» в корзине`, {
+		action: {
+			label: "Перейти →",
+			onClick: () => {
+				window.location.href = "/checkout";
+			},
+		},
+		duration: 3500,
+	});
+}
+
+// ─── Component ────────────────────────────────────────────────────────────────
+
 export function AddToCartButton({
 	item,
 	className,
 	sourceRef,
 	size = "sm",
+	variant = "catalog",
 }: AddToCartButtonProps) {
 	const { items, addItem, removeOne } = useCartStore();
 	const cartItem = items.find((i) => i.equipment.id === item.id);
 	const quantity = cartItem?.quantity || 0;
 	const btnRef = useRef<HTMLButtonElement>(null);
 	const [pulse, setPulse] = useState(false);
+
+	const s = {
+		sm: { h: "h-10", side: "w-8", text: "text-sm", min: "min-w-[100px]" },
+		md: { h: "h-12", side: "w-10", text: "text-base", min: "min-w-[120px]" },
+		lg: { h: "h-14", side: "w-12", text: "text-lg", min: "min-w-[170px]" },
+	}[size];
 
 	const handleAdd = useCallback(
 		(e: React.MouseEvent) => {
@@ -102,6 +128,7 @@ export function AddToCartButton({
 			flyToCart(src, item.imageUrl);
 			setPulse(true);
 			setTimeout(() => setPulse(false), 600);
+			showCartToast(item.title);
 		},
 		[addItem, item, sourceRef]
 	);
@@ -115,12 +142,118 @@ export function AddToCartButton({
 		[removeOne, item.id]
 	);
 
-	const s = {
-		sm: { wrap: "h-10 min-w-[100px]", side: "w-8", text: "text-sm" },
-		md: { wrap: "h-12 min-w-[120px]", side: "w-10", text: "text-base" },
-		lg: { wrap: "h-14 min-w-[170px]", side: "w-12", text: "text-lg" },
-	}[size];
+	// ── Icon variant (SearchPanel) ─────────────────────────────────────────────
+	if (variant === "icon") {
+		const inCart = quantity > 0;
+		return (
+			<button
+				ref={btnRef}
+				type="button"
+				onClick={inCart ? handleRemove : handleAdd}
+				title={inCart ? "Убрать из корзины" : "В корзину"}
+				className={cn(
+					"flex items-center justify-center rounded-xl transition-all",
+					"w-9 h-9",
+					inCart
+						? "bg-primary text-primary-foreground shadow-sm shadow-primary/20"
+						: "bg-foreground/5 text-muted-foreground hover:bg-primary/10 hover:text-primary",
+					className
+				)}
+			>
+				<ShoppingCart size={14} />
+			</button>
+		);
+	}
 
+	// ── Details variant (Ozon-style split) ────────────────────────────────────
+	if (variant === "details") {
+		if (quantity === 0) {
+			return (
+				<button
+					ref={btnRef}
+					type="button"
+					onClick={handleAdd}
+					className={cn(
+						"relative flex items-center justify-center gap-2 rounded-2xl px-5",
+						"bg-primary text-primary-foreground font-bold",
+						"shadow-md shadow-primary/20 hover:shadow-primary/40",
+						"hover:scale-[1.02] active:scale-95 transition-all duration-200",
+						pulse && "scale-95 opacity-70",
+						s.h,
+						s.text,
+						s.min,
+						className
+					)}
+				>
+					<ShoppingCart size={18} />
+					Добавить в корзину
+				</button>
+			);
+		}
+
+		return (
+			<div className={cn("flex items-center gap-2", className)}>
+				{/* Qty stepper */}
+				<div
+					className={cn(
+						"flex items-center rounded-2xl overflow-hidden border border-foreground/20 backdrop-blur-md",
+						s.h
+					)}
+				>
+					<button
+						type="button"
+						onClick={handleRemove}
+						className={cn(
+							"flex items-center justify-center hover:bg-primary/20 active:scale-90 transition-colors",
+							s.side,
+							s.h
+						)}
+					>
+						<FontAwesomeIcon icon={faMinus} size="xs" />
+					</button>
+					<span
+						className={cn(
+							"flex items-center justify-center font-black px-3",
+							s.h,
+							s.text
+						)}
+					>
+						{quantity}
+					</span>
+					<button
+						ref={btnRef}
+						type="button"
+						onClick={handleAdd}
+						disabled={quantity >= (item.available_count || 99)}
+						className={cn(
+							"flex items-center justify-center hover:bg-primary/20 active:scale-90 transition-colors",
+							"disabled:opacity-30 disabled:cursor-not-allowed",
+							s.side,
+							s.h
+						)}
+					>
+						<FontAwesomeIcon icon={faPlus} size="xs" />
+					</button>
+				</div>
+
+				{/* Go to cart */}
+				<Link
+					href="/checkout"
+					className={cn(
+						"flex-1 flex items-center justify-center gap-2 rounded-2xl font-bold border border-yellow-500 backdrop-blur-md",
+						"text-yellow-500 bg-primary/10 ",
+						"hover:text-white hover:bg-primary-foreground",
+						s.h,
+						s.text
+					)}
+				>
+					<ShoppingCart size={16} className="text-primary" />В корзину
+				</Link>
+			</div>
+		);
+	}
+
+	// ── Catalog variant (default) — no center link ─────────────────────────────
 	if (quantity === 0) {
 		return (
 			<button
@@ -133,7 +266,8 @@ export function AddToCartButton({
 					"shadow-md shadow-primary/20 hover:shadow-primary/40",
 					"hover:scale-[1.04] active:scale-95 transition-all duration-200",
 					pulse && "scale-95 opacity-70",
-					s.wrap,
+					s.h,
+					s.min,
 					s.text,
 					className
 				)}
@@ -143,51 +277,45 @@ export function AddToCartButton({
 		);
 	}
 
+	// In cart — compact +/- without the center link
 	return (
 		<div
 			className={cn(
-				"flex items-center rounded-xl overflow-hidden",
-				"border border-primary/30 bg-background/10",
+				"flex items-center rounded-xl overflow-hidden border border-foreground/30",
 				"animate-in fade-in zoom-in-95 duration-200",
-				s.wrap,
+				s.h,
+				s.min,
 				className
 			)}
 		>
-			{/* − */}
 			<button
 				type="button"
 				onClick={handleRemove}
 				className={cn(
-					"flex items-center justify-center shrink-0 h-full",
-					"hover:bg-primary/20 active:scale-90 transition-colors",
+					"flex items-center justify-center shrink-0 h-full hover:bg-primary/20 active:scale-90 transition-colors",
 					s.side
 				)}
 			>
 				<FontAwesomeIcon icon={faMinus} size="xs" />
 			</button>
 
-			{/* Количество + ссылка в корзину */}
-			<Link
-				href="/checkout"
-				onClick={(e) => e.stopPropagation()}
-				className="flex flex-col items-center justify-center flex-1 h-full hover:bg-primary/15 transition-colors group/c px-1"
+			{/* Just a number — no link in catalog mode */}
+			<span
+				className={cn(
+					"flex items-center justify-center flex-1 font-black leading-none",
+					s.text
+				)}
 			>
-				<span className={cn("font-black leading-none text-primary", s.text)}>
-					{quantity}
-				</span>
-				<span className="text-[6px] font-bold uppercase tracking-wide opacity-50 group-hover/c:opacity-90 transition-opacity leading-none mt-0.5">
-					в корзине
-				</span>
-			</Link>
+				{quantity}
+			</span>
 
-			{/* + */}
 			<button
 				ref={btnRef}
 				type="button"
 				onClick={handleAdd}
 				disabled={quantity >= (item.available_count || 99)}
 				className={cn(
-					"flex items-center justify-center shrink-0 h-full text-primary",
+					"flex items-center justify-center shrink-0 h-full",
 					"hover:bg-primary/20 active:scale-90 transition-colors",
 					"disabled:opacity-30 disabled:cursor-not-allowed",
 					s.side

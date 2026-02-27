@@ -71,7 +71,7 @@ export interface GroupedEquipment extends Equipment {
 	total_count: number;
 	available_count: number;
 	images_data: SupabaseImage[];
-	readonly all_unit_ids: string[];
+	all_unit_ids: string[];
 }
 
 export interface EquipmentImage {

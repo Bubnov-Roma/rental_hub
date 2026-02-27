@@ -1,14 +1,12 @@
 "use client";
 
 import { Lock, Mail } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button, Input, Label } from "@/components/ui";
 import { createClient } from "@/lib/supabase/client";
-import { getURL } from "@/utils";
 import { AuthCard } from "../AuthCard";
 
 export function LoginForm() {
@@ -18,7 +16,7 @@ export function LoginForm() {
 	const router = useRouter();
 	const supabase = createClient();
 
-	const handlePasswordLogin = async (e: React.FormEvent) => {
+	const handlePasswordLogin = async (e: React.SubmitEvent) => {
 		e.preventDefault();
 		setIsLoading(true);
 
@@ -42,14 +40,6 @@ export function LoginForm() {
 		}
 	};
 
-	const handleGoogleLogin = async () => {
-		setIsLoading(true);
-		await supabase.auth.signInWithOAuth({
-			provider: "google",
-			options: { redirectTo: `${getURL()}auth/callback` },
-		});
-	};
-
 	return (
 		<AuthCard
 			title="С возвращением"
@@ -70,7 +60,7 @@ export function LoginForm() {
 							<Input
 								type="email"
 								placeholder="name@example.com"
-								className="pl-10 h-11 bg-white/5"
+								className="pl-10"
 								value={email}
 								onChange={(e) => setEmail(e.target.value)}
 								required
@@ -82,7 +72,7 @@ export function LoginForm() {
 							<Label>Пароль</Label>
 							<Link
 								href="/auth?view=forgot"
-								className="text-xs text-primary hover:underline"
+								className="text-xs text-foreground hover:underline"
 							>
 								Забыли пароль?
 							</Link>
@@ -107,32 +97,6 @@ export function LoginForm() {
 						Войти
 					</Button>
 				</form>
-
-				<div className="relative">
-					<div className="absolute inset-0 flex items-center">
-						<span className="w-full border-t border-muted-foreground/5" />
-					</div>
-					<div className="relative flex justify-center text-xs uppercase">
-						<span className="bg-muted-foreground/6 rounded-xl px-2 text-muted-foreground backdrop-blur-2xl">
-							Или
-						</span>
-					</div>
-				</div>
-
-				<Button
-					variant="social"
-					className="w-full h-11 gap-2"
-					onClick={handleGoogleLogin}
-					type="button"
-				>
-					<Image
-						src="https://www.svgrepo.com/show/475656/google-color.svg"
-						width={18}
-						height={18}
-						alt="Google"
-					/>
-					Google
-				</Button>
 
 				<Button
 					variant="ghost"

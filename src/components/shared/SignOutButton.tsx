@@ -60,15 +60,12 @@ export function SignOutButton({
 					variant="ghost"
 					disabled={isPending}
 					className={cn(
-						"gap-4 transition-all active:scale-95 flex justify-start hover:bg-red-500/30 text-foreground hover:text-foreground",
+						"hover:bg-red-600/80 hover:text-white transition-colors duration-100 justify-start",
 						className
 					)}
 				>
-					<LogOut
-						size={18}
-						className={cn(isPending && "animate-spin", "text-muted-foreground")}
-					/>
-					{showText && (isPending ? "Выход..." : "Выйти")}
+					<LogOut size={18} className={cn(isPending && "animate-spin")} />
+					{showText && <span>{isPending ? "Выход..." : "Выйти"}</span>}
 				</Button>
 			</AlertDialogTrigger>
 

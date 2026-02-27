@@ -3,6 +3,7 @@ import NextTopLoader from "nextjs-toploader";
 import { AppSidebar } from "@/components/layouts/AppSidebar";
 import { Footer } from "@/components/layouts/Footer";
 import { Header } from "@/components/layouts/Header";
+import { MobileNavBar } from "@/components/layouts/MobileNavBar";
 import { SidebarInset } from "@/components/ui/sidebar";
 import { createClient } from "@/lib/supabase/server";
 import { ApplicationInitializer } from "@/providers/application-initializer";
@@ -15,17 +16,30 @@ export default async function RootLayout({
 	children: React.ReactNode;
 }) {
 	const supabase = await createClient();
+
+	// Один запрос getUser на весь layout — результат передаётся в AppSidebar через props.
+	// AppSidebar больше НЕ делает собственный getUser/getProfile.
 	const {
 		data: { user },
 	} = await supabase.auth.getUser();
 
-	const { data: initialApp } = user
-		? await supabase
-				.from("client_applications")
-				.select("*")
-				.eq("user_id", user.id)
-				.maybeSingle()
-		: { data: null };
+	// Параллельно: profile + initialApp (не последовательно!)
+	const [profileResult, appResult] = await Promise.all([
+		user
+			? supabase.from("profiles").select("role").eq("id", user.id).single()
+			: Promise.resolve({ data: null }),
+		user
+			? supabase
+					.from("client_applications")
+					.select("*")
+					.eq("user_id", user.id)
+					.maybeSingle()
+			: Promise.resolve({ data: null }),
+	]);
+
+	const role = profileResult.data?.role ?? null;
+	const isAdmin = role === "admin" || role === "manager";
+	const initialApp = appResult.data;
 
 	return (
 		<html lang="ru" suppressHydrationWarning>
@@ -35,20 +49,23 @@ export default async function RootLayout({
 				<RootProvider initialUser={user}>
 					{user ? (
 						<ApplicationInitializer userId={user.id} initialData={initialApp}>
-							<AppSidebar />
+							{/* Props пробрасываем — AppSidebar не делает свой getUser */}
+							<AppSidebar isAdmin={isAdmin} isLoggedIn={!!user} />
 							<SidebarInset className="flex flex-col min-h-screen">
 								<Header />
 								<main className="flex-1">{children}</main>
 								<Footer />
+								<MobileNavBar />
 							</SidebarInset>
 						</ApplicationInitializer>
 					) : (
 						<>
-							<AppSidebar />
+							<AppSidebar isAdmin={false} isLoggedIn={!!user} />
 							<SidebarInset className="flex flex-col min-h-screen">
 								<Header />
 								<main className="flex-1">{children}</main>
 								<Footer />
+								<MobileNavBar />
 							</SidebarInset>
 						</>
 					)}

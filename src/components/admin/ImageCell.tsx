@@ -4,7 +4,7 @@ import { Plus, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 import { toast } from "sonner";
-import { ImageUploader } from "@/components/admin/ImageUploader";
+import { ImageUploader } from "@/components/shared";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,

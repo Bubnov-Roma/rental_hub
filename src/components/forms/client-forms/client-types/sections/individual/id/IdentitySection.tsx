@@ -1,5 +1,8 @@
 "use client";
 
+import { AnimatePresence, motion } from "framer-motion";
+import { ChevronDown } from "lucide-react";
+import { useState } from "react";
 import { FioInput } from "@/components/forms/client-forms/client-types/sections/individual/id/FioInput";
 import {
 	SectionColumn,
@@ -10,11 +13,105 @@ import { DateInput } from "@/components/forms/shared/DateInput";
 import { FormTextarea } from "@/components/forms/shared/FormTextarea";
 import { PassportInput } from "@/components/forms/shared/PassportInput";
 import { PhoneInput } from "@/components/forms/shared/PhoneInput";
+import { cn } from "@/lib/utils";
+
+// ─── Mobile accordion column ───────────────────────────────────────────────────
+// On mobile (<md), each SectionColumn becomes an accordion panel.
+// On desktop it renders as normal SectionColumn side-by-side.
+
+interface AccordionColumnProps {
+	title: string;
+	indicatorColor: string;
+	children: React.ReactNode;
+	isLast?: boolean;
+	headerRight?: React.ReactNode;
+	defaultOpen?: boolean;
+}
+
+function AccordionColumn({
+	title,
+	indicatorColor,
+	children,
+	isLast,
+	headerRight,
+	defaultOpen = false,
+}: AccordionColumnProps) {
+	const [open, setOpen] = useState(defaultOpen);
+
+	return (
+		<>
+			{/* Mobile accordion */}
+			<div className="md:hidden rounded-2xl border border-foreground/5 overflow-hidden">
+				<button
+					type="button"
+					onClick={() => setOpen((p) => !p)}
+					className="w-full flex items-center gap-3 px-4 py-3.5 text-left"
+				>
+					<div
+						className={cn("w-1.5 h-5 rounded-full shrink-0", indicatorColor)}
+					/>
+					<span className="text-xs font-bold uppercase tracking-[0.18em] text-foreground/70 flex-1">
+						{title}
+					</span>
+					{headerRight && (
+						<button
+							type="button"
+							onClick={(e) => {
+								e.stopPropagation();
+							}}
+						>
+							{headerRight}
+						</button>
+					)}
+					<ChevronDown
+						size={15}
+						className={cn(
+							"text-muted-foreground transition-transform duration-200 shrink-0",
+							open && "rotate-180"
+						)}
+					/>
+				</button>
+
+				<AnimatePresence initial={false}>
+					{open && (
+						<motion.div
+							initial={{ height: 0, opacity: 0 }}
+							animate={{ height: "auto", opacity: 1 }}
+							exit={{ height: 0, opacity: 0 }}
+							transition={{ type: "spring", stiffness: 380, damping: 36 }}
+							className="overflow-hidden"
+						>
+							<div className="px-4 pb-5 pt-1 space-y-4">{children}</div>
+						</motion.div>
+					)}
+				</AnimatePresence>
+			</div>
+
+			{/* Desktop original SectionColumn */}
+			<div className="hidden md:block">
+				<SectionColumn
+					title={title}
+					indicatorColor={indicatorColor}
+					isLast={!!isLast}
+					headerRight={headerRight}
+				>
+					{children}
+				</SectionColumn>
+			</div>
+		</>
+	);
+}
+
+// ─── IdentitySection ───────────────────────────────────────────────────────────
 
 export const IdentitySection = () => {
 	return (
 		<SectionWrapper className="lg:grid-cols-2">
-			<SectionColumn title="Личные данные" indicatorColor="bg-blue-500">
+			<AccordionColumn
+				title="Личные данные"
+				indicatorColor="bg-blue-500"
+				defaultOpen={true}
+			>
 				<FioInput
 					required
 					name="applicationData.personalData.name"
@@ -32,18 +129,16 @@ export const IdentitySection = () => {
 						label="Телефон"
 					/>
 				</div>
-
 				<FormInput
 					required
 					name="applicationData.personalData.email"
 					label="Email"
 					type="email"
-					placeholder="example@mail.com"
+					placeholder="name@example.com"
 				/>
-			</SectionColumn>
+			</AccordionColumn>
 
-			{/* Правая колонка: Паспорт */}
-			<SectionColumn
+			<AccordionColumn
 				title="Паспортные данные"
 				indicatorColor="bg-cyan-400"
 				isLast
@@ -77,7 +172,7 @@ export const IdentitySection = () => {
 						{ id: "married", label: "Женат / Замужем", color: "#f472b6" },
 					]}
 				/>
-			</SectionColumn>
+			</AccordionColumn>
 		</SectionWrapper>
 	);
 };

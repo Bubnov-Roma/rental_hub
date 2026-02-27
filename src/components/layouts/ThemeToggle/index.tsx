@@ -1,0 +1,174 @@
+"use client";
+
+import { Check, Monitor, Moon, Sun, SunMoon } from "lucide-react";
+import { useTheme } from "next-themes";
+import { useEffect, useState } from "react";
+import { cn } from "@/lib/utils";
+
+// ─── Shared icon (hydration-safe) ────────────────────────────────────────────
+
+function ThemeIcon({ className }: { className?: string }) {
+	const { resolvedTheme } = useTheme();
+	const [mounted, setMounted] = useState(false);
+	useEffect(() => setMounted(true), []);
+
+	if (!mounted) return <SunMoon className={className} />;
+	return resolvedTheme === "dark" ? (
+		<Moon className={className} />
+	) : (
+		<Sun className={className} />
+	);
+}
+
+// ─── Variant: "card" — три кнопки (используется в ProfileDetails) ─────────────
+
+export function ThemeCard() {
+	const { theme, setTheme } = useTheme();
+	const themes = [
+		{ id: "light", label: "Светлая", icon: Sun },
+		{ id: "dark", label: "Тёмная", icon: Moon },
+		{ id: "system", label: "Системная", icon: Monitor },
+	] as const;
+
+	return (
+		<div className="grid grid-cols-3 gap-2">
+			{themes.map(({ id, label, icon: Icon }) => {
+				const active = theme === id;
+				return (
+					<button
+						key={id}
+						type="button"
+						onClick={() => setTheme(id)}
+						className={cn(
+							"flex flex-col items-center gap-2 p-3 sm:p-4 rounded-2xl border transition-all duration-200",
+							active
+								? "border-primary/30 bg-primary/5 text-primary"
+								: "border-foreground/5 hover:border-foreground/10 text-muted-foreground hover:text-foreground"
+						)}
+					>
+						<Icon size={18} />
+						<span className="text-[11px] font-semibold">{label}</span>
+						{active && <Check size={10} />}
+					</button>
+				);
+			})}
+		</div>
+	);
+}
+
+// ─── Variant: "toggle" — переключатель с ползунком (для dropdown/меню) ────────
+
+export function ThemeToggle({
+	className,
+	showLabel = true,
+	iconSize = 18,
+}: {
+	className?: string;
+	showLabel?: boolean;
+	iconSize?: number;
+}) {
+	const { setTheme, resolvedTheme } = useTheme();
+	const [mounted, setMounted] = useState(false);
+	useEffect(() => setMounted(true), []);
+
+	const isDark = resolvedTheme === "dark";
+
+	const handleToggle = (e: React.MouseEvent) => {
+		e.preventDefault();
+		e.stopPropagation();
+		setTheme(isDark ? "light" : "dark");
+		if (typeof navigator !== "undefined" && navigator.vibrate)
+			navigator.vibrate(5);
+	};
+
+	return (
+		<button
+			type="button"
+			onClick={handleToggle}
+			className={cn(
+				"flex items-center gap-3 transition-colors rounded-xl",
+				className
+			)}
+		>
+			<ThemeIcon
+				className={cn(
+					"text-muted-foreground shrink-0",
+					`w-${iconSize / 4} h-${iconSize / 4}`
+				)}
+			/>
+			{showLabel && (
+				<span className="text-sm font-medium flex-1 text-left">
+					{!mounted ? "Тема" : isDark ? "Тёмная тема" : "Светлая тема"}
+				</span>
+			)}
+			{/* Toggle pill */}
+			<div
+				className={cn(
+					"w-8 h-4 rounded-full relative transition-colors shrink-0",
+					mounted && isDark ? "bg-primary/40" : "bg-foreground/10"
+				)}
+			>
+				<div
+					className={cn(
+						"absolute top-1 left-1 w-2 h-2 rounded-full bg-foreground transition-all",
+						mounted && isDark && "translate-x-4 bg-primary"
+					)}
+				/>
+			</div>
+		</button>
+	);
+}
+
+// ─── Variant: "icon-button" — только иконка (для nav bars) ───────────────────
+
+export function ThemeIconButton({
+	size = 22,
+	className,
+}: {
+	size?: number;
+	className?: string;
+}) {
+	const { resolvedTheme, setTheme } = useTheme();
+	const [mounted, setMounted] = useState(false);
+	useEffect(() => setMounted(true), []);
+
+	const toggleTheme = () => {
+		setTheme(resolvedTheme === "dark" ? "light" : "dark");
+		if (typeof navigator !== "undefined" && navigator.vibrate) {
+			navigator.vibrate(5);
+		}
+	};
+
+	return (
+		// biome-ignore lint/a11y/useSemanticElements: <for SidebarMenuButton>
+		<span
+			tabIndex={0}
+			role="button"
+			onKeyDown={(e) => {
+				if (e.key === "Enter" || e.key === " ") {
+					e.preventDefault();
+					toggleTheme();
+				}
+			}}
+			onClick={(e) => {
+				e.preventDefault();
+				e.stopPropagation();
+				setTheme(resolvedTheme === "dark" ? "light" : "dark");
+				if (navigator.vibrate) navigator.vibrate(5);
+			}}
+			className={cn(
+				"flex items-center justify-center transition-colors cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-md",
+				className
+			)}
+			aria-label="Переключить тему"
+		>
+			{!mounted ? (
+				<SunMoon size={size} className="text-muted-foreground" />
+			) : resolvedTheme === "dark" ? (
+				<Moon size={size} className="text-muted-foreground" />
+			) : (
+				<Sun size={size} className="text-muted-foreground" />
+			)}
+		</span>
+	);
+}
