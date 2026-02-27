@@ -6,9 +6,11 @@ import {
 	type ReactNode,
 	useCallback,
 	useEffect,
+	useRef,
 	useState,
 } from "react";
 import { toast } from "sonner";
+import { invalidateFavoritesCache } from "@/hooks";
 import { createClient } from "@/lib/supabase/client";
 import { getErrorMessage } from "@/utils";
 
@@ -40,6 +42,9 @@ export const AuthContext = createContext<AuthContextType | undefined>(
 	undefined
 );
 
+// Синглтон на уровне модуля — один объект на всё время жизни страницы.
+const supabase = createClient();
+
 export function AuthProvider({
 	children,
 	initialUser,
@@ -47,95 +52,111 @@ export function AuthProvider({
 	children: ReactNode;
 	initialUser: User | null;
 }) {
+	// Инициализируем user из SSR-данных — не ждём getSession на клиенте.
 	const [user, setUser] = useState<User | null>(initialUser);
 	const [profile, setProfile] = useState<Profile | null>(null);
-	const [isLoading, setIsLoading] = useState(true);
-	const supabase = createClient();
+	// Если initialUser уже есть — profile ещё грузится (isLoading=true).
+	// Если нет — уже готово (isLoading=false).
+	const [isLoading, setIsLoading] = useState(!!initialUser);
 
-	const fetchProfile = useCallback(
-		async (userId: string) => {
-			if (!userId) return;
+	// Защита от двойного запуска в React Strict Mode (dev).
+	// useRef не вызывает re-render при изменении.
+	const fetchingRef = useRef(false);
 
-			if (typeof window !== "undefined" && !window.navigator.onLine) {
-				console.warn("Offline: skipping profile fetch");
-				return;
-			}
+	const fetchProfile = useCallback(async (userId: string) => {
+		// Дедупликация: если уже идёт запрос — не запускаем второй.
+		if (fetchingRef.current) return;
+		if (!userId) return;
 
-			try {
-				const { data, error } = await supabase
-					.from("profiles")
-					.select("*")
-					.eq("id", userId)
-					.single();
+		if (typeof window !== "undefined" && !window.navigator.onLine) {
+			console.warn("Offline: skipping profile fetch");
+			setIsLoading(false);
+			return;
+		}
 
-				if (error) {
-					if (error.code === "PGRST116") {
-						setProfile(null);
-					} else {
-						throw error;
-					}
-				}
-				setProfile(data as Profile);
-			} catch (err) {
-				const errMsg = getErrorMessage(err);
-				if (errMsg.includes("Failed to fetch") || !window.navigator.onLine) {
-					console.error("Network error, keeping current profile state");
-					toast.error("Проблемы с интернетом, проверьте соединение");
-				} else {
+		fetchingRef.current = true;
+		try {
+			const { data, error } = await supabase
+				.from("profiles")
+				.select("*")
+				.eq("id", userId)
+				.single();
+
+			if (error) {
+				if (error.code === "PGRST116") {
 					setProfile(null);
+				} else {
+					throw error;
 				}
-			} finally {
-				setIsLoading(false);
+			} else {
+				setProfile(data as Profile);
 			}
-		},
-		[supabase]
-	);
+		} catch (err) {
+			const errMsg = getErrorMessage(err);
+			if (errMsg.includes("Failed to fetch") || !window.navigator.onLine) {
+				toast.error("Проблемы с интернетом, проверьте соединение");
+			} else {
+				setProfile(null);
+			}
+		} finally {
+			fetchingRef.current = false;
+			setIsLoading(false);
+		}
+	}, []); // нет deps — supabase и fetchingRef стабильны
 
 	const refreshProfile = useCallback(async () => {
-		if (user) await fetchProfile(user.id);
+		if (user) {
+			fetchingRef.current = false; // сбрасываем guard для ручного обновления
+			await fetchProfile(user.id);
+		}
 	}, [user, fetchProfile]);
 
+	// biome-ignore lint/correctness/useExhaustiveDependencies: <ONLY FOR MOUTHING>
 	useEffect(() => {
 		let mounted = true;
-		const initAuth = async () => {
-			const {
-				data: { session },
-			} = await supabase.auth.getSession();
-			if (!mounted) return;
 
-			const currentUser = session?.user ?? null;
-			setUser(currentUser);
+		// Если initialUser уже есть из SSR — НЕ вызываем getSession повторно,
+		// просто грузим profile. Это убирает лишний round-trip к Supabase.
+		if (initialUser) {
+			fetchProfile(initialUser.id);
+		} else {
+			// Гость: нужно подписаться на auth state, но getSession не нужен —
+			// initialUser уже null (передан из layout SSR).
+			setIsLoading(false);
+		}
 
-			if (currentUser) {
-				await fetchProfile(currentUser.id);
-			} else {
-				setIsLoading(false);
-			}
-		};
-
-		initAuth();
-
+		// Подписка на изменения auth state (логин/логаут/обновление токена).
 		const {
 			data: { subscription },
 		} = supabase.auth.onAuthStateChange(async (event, session) => {
 			if (!mounted) return;
 
 			const newUser = session?.user ?? null;
-			setUser(newUser);
 
-			if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
-				if (newUser) await fetchProfile(newUser.id);
+			if (event === "SIGNED_IN") {
+				setUser(newUser);
+				if (newUser) {
+					fetchingRef.current = false;
+					await fetchProfile(newUser.id);
+				}
+			} else if (event === "TOKEN_REFRESHED") {
+				// Токен обновился — user не менялся, profile не нужно перезагружать.
+				setUser(newUser);
 			} else if (event === "SIGNED_OUT") {
+				setUser(null);
 				setProfile(null);
 				setIsLoading(false);
+				invalidateFavoritesCache();
 			}
+			// INITIAL_SESSION игнорируем — initialUser уже пришёл из SSR.
 		});
 
 		return () => {
 			mounted = false;
 			subscription.unsubscribe();
 		};
-	}, [fetchProfile, supabase]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
 
 	return (
 		<AuthContext.Provider value={{ user, profile, isLoading, refreshProfile }}>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { useApplicationStore } from "@/store/useApplicationStore";
+import { useApplicationStore } from "@/store/use-application-store";
 import type { ClientApplication } from "@/types";
 
 export function ApplicationInitializer({
@@ -16,11 +16,14 @@ export function ApplicationInitializer({
 	const { setInitialState, subscribe } = useApplicationStore();
 	const isInitialized = useRef(false);
 
+	const initialDataRef = useRef(initialData);
+
+	// biome-ignore lint/correctness/useExhaustiveDependencies: <initialize user>
 	useEffect(() => {
 		if (!isInitialized.current) {
 			setInitialState(
-				initialData?.status || "no_application",
-				initialData?.application_data || null
+				initialDataRef.current?.status || "no_application",
+				initialDataRef.current?.application_data || null
 			);
 			isInitialized.current = true;
 		}
@@ -29,7 +32,7 @@ export function ApplicationInitializer({
 			return () => unsubscribe();
 		}
 		return undefined;
-	}, [userId, initialData, setInitialState, subscribe]);
+	}, [userId]);
 
 	return <>{children}</>;
 }
