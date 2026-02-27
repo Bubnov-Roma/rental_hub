@@ -1,2 +1,2 @@
 export * from "./unsavedChangesStore";
-export * from "./useApplicationStore";
+export * from "./use-application-store";
