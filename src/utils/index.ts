@@ -3,6 +3,7 @@ export * from "./client-data.utils";
 export * from "./error-handler";
 export * from "./get-hash";
 export * from "./get-url";
+export * from "./group-equipment";
 export * from "./input-group.utils";
 export * from "./is-value-filled";
 export * from "./pluralize";
