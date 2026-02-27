@@ -8,7 +8,7 @@
   background: conic-gradient(
     from 0deg,
     transparent 10%, 
-    #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000
+    #fbff00, #f4ff1e, #fffb2c, #c1ff3b, #e7ff48, #ddff62, #e9ff89
   );
 
   /* Маска создает кольцо. Делаем края мягкими через радиальный градиент с blur */
