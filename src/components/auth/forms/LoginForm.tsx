@@ -1,23 +1,43 @@
 "use client";
 
-import { Lock, Mail } from "lucide-react";
+import { Eye, EyeOff, Lock, Mail } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Button, Input, Label } from "@/components/ui";
+import { ValidatedInput } from "@/components/forms";
+import { Button } from "@/components/ui";
 import { createClient } from "@/lib/supabase/client";
+import { loginSchema } from "@/schemas";
 import { AuthCard } from "../AuthCard";
 
 export function LoginForm() {
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
+	const [showPassword, setShowPassword] = useState(false);
+	const [errors, setErrors] = useState<{ email?: string; password?: string }>(
+		{}
+	);
 	const [isLoading, setIsLoading] = useState(false);
+
 	const router = useRouter();
 	const supabase = createClient();
 
 	const handlePasswordLogin = async (e: React.SubmitEvent) => {
 		e.preventDefault();
+
+		const result = loginSchema.safeParse({ email, password });
+
+		if (!result.success) {
+			const formattedErrors: Record<string, string> = {};
+			result.error.issues.forEach((issue) => {
+				formattedErrors[issue.path[0] as string] = issue.message;
+			});
+			setErrors(formattedErrors);
+			return;
+		}
+
+		setErrors({});
 		setIsLoading(true);
 
 		try {
@@ -51,61 +71,66 @@ export function LoginForm() {
 			}}
 			isLoading={isLoading}
 		>
-			<div className="space-y-6">
-				<form onSubmit={handlePasswordLogin} className="space-y-4">
-					<div className="space-y-2">
-						<Label>Email</Label>
-						<div className="relative">
-							<Mail className="z-1 absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-							<Input
-								type="email"
-								placeholder="name@example.com"
-								className="pl-10"
-								value={email}
-								onChange={(e) => setEmail(e.target.value)}
-								required
-							/>
-						</div>
-					</div>
-					<div className="space-y-2">
-						<div className="flex items-center justify-between">
-							<Label>Пароль</Label>
-							<Link
-								href="/auth?view=forgot"
-								className="text-xs text-foreground hover:underline"
-							>
-								Забыли пароль?
-							</Link>
-						</div>
-						<div className="relative">
-							<Lock className="z-1 absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-							<Input
-								type="password"
-								placeholder="••••••••"
-								className="pl-10 h-11 bg-white/5"
-								value={password}
-								onChange={(e) => setPassword(e.target.value)}
-								required
-							/>
-						</div>
-					</div>
+			<form onSubmit={handlePasswordLogin} className="space-y-3" noValidate>
+				<ValidatedInput
+					label="Email"
+					type="email"
+					placeholder="mail@example.com"
+					value={email}
+					onChange={(e) => {
+						setEmail(e.target.value);
+						if (errors.email) setErrors((prev) => ({ ...prev, email: "" }));
+					}}
+					error={errors.email ?? ""}
+					icon={<Mail className="h-4 w-4" />}
+					required
+				/>
 
-					<Button
-						type="submit"
-						className="w-full h-11 font-bold shadow-lg shadow-primary/20"
+				<div className="relative">
+					<ValidatedInput
+						label="Пароль"
+						type={showPassword ? "text" : "password"}
+						placeholder="••••••••"
+						value={password}
+						onChange={(e) => {
+							setPassword(e.target.value);
+							if (errors.password)
+								setErrors((prev) => ({ ...prev, password: "" }));
+						}}
+						error={errors.password ?? ""}
+						icon={<Lock className="h-4 w-4" />}
+						required
+						suffix={
+							<button
+								type="button"
+								onClick={() => setShowPassword(!showPassword)}
+								className="text-muted-foreground hover:text-foreground transition-colors p-1"
+								tabIndex={-1}
+							>
+								{showPassword ? (
+									<EyeOff className="h-4 w-4" />
+								) : (
+									<Eye className="h-4 w-4" />
+								)}
+							</button>
+						}
+					/>
+					<Link
+						href="/auth?view=forgot"
+						className="absolute right-0 -top-0.5 pb-1 text-xs text-muted-foreground hover:text-foreground hover:underline transition-colors"
 					>
-						Войти
-					</Button>
-				</form>
+						Забыли пароль?
+					</Link>
+				</div>
 
 				<Button
-					variant="ghost"
-					className="w-full text-xs text-muted-foreground hover:text-foreground"
-					onClick={() => router.push("/auth?view=otp-login")}
+					type="submit"
+					className="w-full h-12 font-bold text-base shadow-xl shadow-primary/20 hover:scale-[1.02] transition-transform"
+					disabled={isLoading}
 				>
-					Войти по коду (без пароля)
+					{isLoading ? "Вход..." : "Войти"}
 				</Button>
-			</div>
+			</form>
 		</AuthCard>
 	);
 }

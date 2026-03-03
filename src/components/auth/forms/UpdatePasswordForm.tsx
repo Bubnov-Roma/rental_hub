@@ -1,31 +1,48 @@
 "use client";
 
-import { Lock } from "lucide-react";
+import { Eye, EyeOff, Lock } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import { AuthCard } from "@/components/auth/AuthCard";
+import { ValidatedInput } from "@/components/forms";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { createClient } from "@/lib/supabase/client";
+import { updatePasswordSchema } from "@/schemas";
 import { getErrorMessage } from "@/utils";
 
 export function UpdatePasswordForm() {
 	const [password, setPassword] = useState("");
+	const [showPassword, setShowPassword] = useState(false);
 	const [confirmPassword, setConfirmPassword] = useState("");
+	const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+	const [errors, setErrors] = useState<{
+		password?: string;
+		confirmPassword?: string;
+	}>({});
 	const [isLoading, setIsLoading] = useState(false);
+
 	const router = useRouter();
 	const supabase = createClient();
 
 	const handleUpdatePassword = async (e: React.SubmitEvent) => {
 		e.preventDefault();
 
-		if (password !== confirmPassword) {
-			toast.error("Пароли не совпадают");
+		const result = updatePasswordSchema.safeParse({
+			password,
+			confirmPassword,
+		});
+
+		if (!result.success) {
+			const formattedErrors: Record<string, string> = {};
+			result.error.issues.forEach((issue) => {
+				formattedErrors[issue.path[0] as string] = issue.message;
+			});
+			setErrors(formattedErrors);
 			return;
 		}
 
+		setErrors({});
 		setIsLoading(true);
 
 		try {
@@ -35,7 +52,7 @@ export function UpdatePasswordForm() {
 
 			if (error) throw error;
 
-			// Редирект на Success View вместо Dashboard
+			toast.success("Пароль успешно обновлен");
 			router.push("/auth?view=success&redirect=/dashboard");
 		} catch (error) {
 			toast.error(getErrorMessage(error) || "Ошибка обновления пароля");
@@ -50,44 +67,70 @@ export function UpdatePasswordForm() {
 			description="Придумайте сложный пароль"
 			isLoading={isLoading}
 		>
-			<form onSubmit={handleUpdatePassword} className="space-y-4">
-				<div className="space-y-2">
-					<Label>Новый пароль</Label>
-					<div className="relative">
-						<Lock className="z-1 absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-						<Input
-							type="password"
-							placeholder="••••••••"
-							className="pl-10 h-11 bg-white/5"
-							value={password}
-							onChange={(e) => setPassword(e.target.value)}
-							required
-							minLength={6}
-						/>
-					</div>
-				</div>
-				<div className="space-y-2">
-					<Label>Повторите пароль</Label>
-					<div className="relative">
-						<Lock className="z-1 absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-						<Input
-							type="password"
-							placeholder="••••••••"
-							className="pl-10 h-11 bg-white/5"
-							value={confirmPassword}
-							onChange={(e) => setConfirmPassword(e.target.value)}
-							required
-							minLength={6}
-						/>
-					</div>
-				</div>
+			<form onSubmit={handleUpdatePassword} className="space-y-4" noValidate>
+				<ValidatedInput
+					label="Новый пароль"
+					type={showPassword ? "text" : "password"}
+					placeholder="••••••••"
+					value={password}
+					onChange={(e) => {
+						setPassword(e.target.value);
+						if (errors.password)
+							setErrors((prev) => ({ ...prev, password: "" }));
+					}}
+					error={errors.password ?? ""}
+					icon={<Lock className="h-4 w-4" />}
+					required
+					suffix={
+						<button
+							type="button"
+							onClick={() => setShowPassword(!showPassword)}
+							className="text-muted-foreground hover:text-foreground transition-colors p-1"
+						>
+							{showPassword ? (
+								<EyeOff className="h-4 w-4" />
+							) : (
+								<Eye className="h-4 w-4" />
+							)}
+						</button>
+					}
+				/>
+
+				<ValidatedInput
+					label="Повторите пароль"
+					type={showConfirmPassword ? "text" : "password"}
+					placeholder="••••••••"
+					value={confirmPassword}
+					onChange={(e) => {
+						setConfirmPassword(e.target.value);
+						// Очищаем ошибку при вводе
+						if (errors.confirmPassword)
+							setErrors((prev) => ({ ...prev, confirmPassword: "" }));
+					}}
+					error={errors.confirmPassword ?? ""}
+					icon={<Lock className="h-4 w-4" />}
+					required
+					suffix={
+						<button
+							type="button"
+							onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+							className="text-muted-foreground hover:text-foreground transition-colors p-1"
+						>
+							{showConfirmPassword ? (
+								<EyeOff className="h-4 w-4" />
+							) : (
+								<Eye className="h-4 w-4" />
+							)}
+						</button>
+					}
+				/>
 
 				<Button
 					type="submit"
 					disabled={isLoading}
-					className="w-full h-11 font-bold shadow-lg shadow-primary/20"
+					className="w-full h-12 font-bold shadow-lg shadow-primary/20 hover:scale-[1.01] transition-transform"
 				>
-					Обновить пароль
+					{isLoading ? "Обновление..." : "Обновить пароль"}
 				</Button>
 			</form>
 		</AuthCard>
