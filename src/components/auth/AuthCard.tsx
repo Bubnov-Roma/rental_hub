@@ -30,9 +30,9 @@ export function AuthCard({
 				<div className="flex items-center justify-center">
 					<Link
 						href="/"
-						className="text-2xl font-black tracking-tighter text-primary hover:opacity-80 transition-opacity pb-4"
+						className="text-2xl font-black tracking-tighter hover:opacity-80 transition-opacity pb-4 duration-500"
 					>
-						<Logo size={40} />
+						<Logo size={30} className="text-primary shadow-primary/30" />
 					</Link>
 				</div>
 				<h1 className="text-3xl font-bold tracking-tight text-foreground">
@@ -43,7 +43,7 @@ export function AuthCard({
 				)}
 			</div>
 
-			<div className="relative overflow-hidden px-2">
+			<div className="relative p-2">
 				{isLoading && (
 					<div className="absolute inset-0 z-50 flex items-center justify-center bg-background/60 backdrop-blur-sm">
 						<RainbowSpinner size={50} />
