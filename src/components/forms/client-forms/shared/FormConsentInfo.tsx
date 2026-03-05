@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 
 export const FormConsentInfo = ({ canSubmit }: { canSubmit: boolean }) => {
 	return (
-		<div className="absolute bottom-0 left-0 flex flex-col justify-center items-center w-full px-4 py-2">
+		<div className="flex flex-col justify-center items-center w-full px-4 py-2 mt-4">
 			<motion.p
 				initial={{ opacity: 0, y: -10 }}
 				animate={{ opacity: 1, y: 0 }}

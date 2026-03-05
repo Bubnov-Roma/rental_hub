@@ -7,5 +7,5 @@ export * from "./navigation";
 export * from "./plurals";
 export * from "./referral";
 export * from "./relations";
-export * from "./socials";
+export * from "./support";
 export * from "./verification-config";

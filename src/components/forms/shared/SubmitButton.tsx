@@ -1,4 +1,3 @@
-import { motion } from "framer-motion";
 import { SendHorizontal } from "lucide-react";
 import { RainbowSpinner } from "@/components/shared";
 import { Button } from "@/components/ui";
@@ -16,38 +15,26 @@ export const SubmitButton = ({
 	const isDisabled = isSubmitting || disabled;
 
 	return (
-		<div
+		<Button
+			disabled={isDisabled}
 			className={cn(
-				"relative group p-0.2 h-fit inline-block rounded-xl overflow-hidden shadow-md transition-all duration-300",
-				!isDisabled ? "active:scale-[0.98] shadow-md" : "opacity-90"
+				"relative rounded-xl justify-center items-center transition-all duration-200 z-10 md:w-auto",
+				isDisabled && "bg-muted text-foreground/50 cursor-not-allowed"
 			)}
 		>
-			{isSubmitting && (
-				<motion.div
-					animate={{ rotate: 360 }}
-					transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
-					className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[150%] aspect-square bg-[conic-gradient(from_0deg,#3b82f6,#22d3ee,#3b82f6,#f472b6,#3b82f6)] opacity-90"
-					style={{ willChange: "transform" }}
-				/>
-			)}
-			<Button
-				disabled={isDisabled}
-				className={cn(
-					"relative rounded-xl w-full justify-center items-center transition-all duration-200 z-10 md:w-auto",
-					isDisabled
-						? "bg-muted text-foreground/50 cursor-not-allowed"
-						: "text-white"
-				)}
-			>
+			<div className="flex items-center gap-2">
 				{isSubmitting ? (
-					<RainbowSpinner centered size={14} />
+					<>
+						<span>Отправляем</span>
+						<RainbowSpinner size={16} />
+					</>
 				) : (
-					<div className="flex items-center gap-2">
-						<span className="hidden md:inline">Отправить</span>
-						<SendHorizontal className="w-5 h-5 md:hidden" />
-					</div>
+					<>
+						<span>Отправить</span>
+						<SendHorizontal className="w-5 h-5" />
+					</>
 				)}
-			</Button>
-		</div>
+			</div>
+		</Button>
 	);
 };

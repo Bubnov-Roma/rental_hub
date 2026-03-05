@@ -1,14 +1,24 @@
-// import { type ZodType } from "zod";
 import { z } from "zod";
 
 const dateRegex = /^\d{2}\.\d{2}\.\d{4}$/;
 const phoneRegex = /^\+7\(\d{3}\)\d{3}-\d{2}-\d{2}$/;
-const nicknameRegex = /^@[a-zA-Z0-9._]{1,32}$/;
-const tgRegex = /^(https?:\/\/t\.me\/|@)[a-zA-Z0-9_]{1,32}$/;
-const vkRegex = /^(https?:\/\/vk\.com\/[a-zA-Z0-9_.]+|@[a-zA-Z0-9_.]+)$/;
-const waRegex = /^(https?:\/\/wa\.me\/|7|8)\d{10}$/;
 
 export const emailSchema = z.email("Введите корректный email").toLowerCase();
+
+export const loginSchema = z.object({
+	email: z.email("Введите корректный email").toLowerCase(),
+	password: z.string().min(1, "Введите пароль"),
+});
+
+export const updatePasswordSchema = z
+	.object({
+		password: z.string().min(8, "Пароль должен быть не менее 8 символов"),
+		confirmPassword: z.string().min(1, "Повторите пароль"),
+	})
+	.refine((data) => data.password === data.confirmPassword, {
+		message: "Пароли не совпадают",
+		path: ["confirmPassword"],
+	});
 
 const dateSchema = z
 	.string()
@@ -19,24 +29,18 @@ const dateSchema = z
 			const [day, month, year] = val.split(".").map(Number);
 			if (!year || !month || !day) return false;
 			const birthDate = new Date(year, month - 1, day);
-
 			const today = new Date();
-
 			let age = today.getFullYear() - birthDate.getFullYear();
 			const monthDiff = today.getMonth() - birthDate.getMonth();
-
 			if (
 				monthDiff < 0 ||
 				(monthDiff === 0 && today.getDate() < birthDate.getDate())
 			) {
 				age--;
 			}
-
 			return age >= 16 && age <= 100;
 		},
-		{
-			message: "Введите корректную дату",
-		}
+		{ message: "Введите корректную дату" }
 	);
 
 const phoneSchema = z
@@ -45,40 +49,21 @@ const phoneSchema = z
 	.transform((val) => val.replace(/\s/g, ""))
 	.pipe(z.string().regex(phoneRegex, "Укажите полный номер"));
 
-export const socialMediaSchema = z.discriminatedUnion("platform", [
-	z.object({
-		platform: z.literal("Telegram"),
-		url: z.string().regex(tgRegex, "Введите ссылку t.me/... или @username"),
-	}),
-	z.object({
-		platform: z.literal("VK"),
-		url: z.string().regex(vkRegex, "Введите ссылку vk.com/... или @username"),
-	}),
-	z.object({
-		platform: z.literal("Whatsapp"),
-		url: z.string().regex(waRegex, "Введите номер (7...) или ссылку wa.me/..."),
-	}),
-	z.object({
-		platform: z.enum(["Instagram", "Max", "Facebook"]),
-		url: z.string().refine(
-			(val) => {
-				const isUrl = z.url().safeParse(val).success;
-				const isNickname = nicknameRegex.test(val);
-				return isUrl || isNickname;
-			},
-			{
-				message: "Укажите корректную ссылку или @nickname",
-			}
+export const socialMediaObjectSchema = z.object({
+	url: z
+		.string()
+		.min(2, "Минимум 2 символа")
+		.refine(
+			(val) =>
+				z.string().url().safeParse(val).success ||
+				/^@[a-zA-Z0-9._]{1,32}$/.test(val),
+			{ message: "Введите корректную ссылку или @username" }
 		),
-	}),
-]);
+});
 
 const personalDataSchema = z.object({
 	name: z.string().min(6, "Введите полное ФИО"),
 	birth: dateSchema,
-	maritalStatus: z.enum(["single", "married"], {
-		error: "Выберите вариант",
-	}),
 	email: emailSchema,
 	phone: phoneSchema,
 });
@@ -91,54 +76,6 @@ const passportSchema = z.object({
 	issueDate: dateSchema,
 	issuedBy: z.string().min(10, "Укажите кем выдан документ"),
 });
-
-// const emergencyContactSchema = z.object({
-// 	name: z.string().min(2, "Укажите имя и статус"),
-// 	relation: z.string().optional(),
-// 	phone: phoneSchema,
-// });
-
-export type SocialPlatform = z.infer<typeof socialMediaSchema>["platform"];
-
-// const professionalSchema = z.object({
-// 	workplace: z.string().min(3, "Укажите место работы или 'фриланс'"),
-// 	position: z
-// 		.string()
-// 		.min(2, "Укажите вашу должность")
-// 		.optional()
-// 		.or(z.literal("")),
-// 	companyWebsite: z.url().optional().or(z.literal("")),
-// 	monthlyIncome: z.string().min(4, "Укажите доход в месяц"),
-// 	workPhone: phoneSchema.optional().or(z.literal("")),
-// });
-
-// const experienceSchema = z.object({
-// 	equipment: z.preprocess(
-// 		(val) => (val === undefined || val === null ? [] : val),
-// 		z
-// 			.array(
-// 				z.enum([
-// 					"nikon",
-// 					"canon",
-// 					"sony",
-// 					"panasonic",
-// 					"fujifilm",
-// 					"blackmagic",
-// 					"arri",
-// 					"red",
-// 					"gopro",
-// 					"insta",
-// 					"iphone",
-// 					"hasselblad",
-// 					"other",
-// 				])
-// 			)
-// 			.min(1, "Выберите вариант")
-// 	) as ZodType,
-// 	photographyExperience: z.enum(["hobby", "0-3years", "3+years"], {
-// 		error: "Выберите вариант",
-// 	}),
-// });
 
 const promoAndAgreementsSchema = z.object({
 	promoCode: z.string().optional(),
@@ -177,7 +114,6 @@ const addressesBlockSchema = z
 				"country",
 				"address",
 			];
-
 			requiredFields.forEach((field) => {
 				if (!actual[field] || actual[field]?.trim() === "") {
 					ctx.addIssue({
@@ -187,7 +123,6 @@ const addressesBlockSchema = z
 					});
 				}
 			});
-
 			if (actual.index && actual.index.length !== 6) {
 				ctx.addIssue({
 					code: "custom",
@@ -217,18 +152,18 @@ export const equipmentSchema = z.object({
 	defects: z.string().min(1, "Дефекты (или пробел)"),
 	photo: z.url("Загрузите фото"),
 	category: z.string().min(1, "Категория"),
-	dailyRate: z.number().min(0, "Ориеентировочная стоимость в сутки").optional(),
+	dailyRate: z.number().min(0, "Ориентировочная стоимость в сутки").optional(),
 });
-
 export type EquipmentSchemaType = z.infer<typeof equipmentSchema>;
 
-// --------------- Base Contacts for Individual ---------------
-const individualContactsSchema = z.object({
-	socials: z.array(socialMediaSchema).min(1, "Укажите хотя бы одну соцсеть"),
+export const individualContactsSchema = z.object({
+	socials: z
+		.array(socialMediaObjectSchema)
+		.min(1, "Укажите хотя бы одну соцсеть")
+		.max(5, "Максимум 5 ссылок"),
 });
 
-//   --------------- INDIVIDUAL CLIENT SCHEMA ---------------
-
+// ── INDIVIDUAL CLIENT ─────────────────────────────────────────────────────────
 export const individualClientSchema = z.object({
 	clientType: z.literal("individual"),
 	applicationData: z.object({
@@ -238,9 +173,10 @@ export const individualClientSchema = z.object({
 		addresses: addressesBlockSchema,
 		additional: additionalSchema,
 	}),
+	agreements: promoAndAgreementsSchema.optional(),
 });
 
-// --------------- INDIVIDUAL PARTNER SCHEMA ---------------
+// ── INDIVIDUAL PARTNER — placeholder, not in main union ───────────────────────
 export const individualPartnerSchema = individualClientSchema.extend({
 	clientType: z.literal("individual_partner"),
 	isPartner: z.literal(true),
@@ -252,11 +188,9 @@ export const individualPartnerSchema = individualClientSchema.extend({
 	}),
 });
 
-//        --------------- LEGAL CLIENT SCHEMA ---------------
-
+// ── LEGAL CLIENT ──────────────────────────────────────────────────────────────
 export const legalClientSchema = z.object({
 	clientType: z.literal("legal"),
-	// Company
 	company: z.object({
 		companyName: z.string().min(2, "Наименование организации"),
 		companyType: z.enum(["ip", "ooo", "nko", "ao"]),
@@ -264,8 +198,6 @@ export const legalClientSchema = z.object({
 		companyEmail: emailSchema,
 		companyWebsite: z.url().optional().or(z.literal("")),
 	}),
-
-	// Leader
 	director: z.object({
 		name: z.string().min(1, "ФИО руководителя"),
 		nameGenitive: z.string().min(5, "ФИО в родительном падеже"),
@@ -274,22 +206,14 @@ export const legalClientSchema = z.object({
 		basedOn: z.enum(["charter", "power_of_attorney", "custom"]),
 		customBasedOn: z.string().optional(),
 	}),
-
-	// Details
 	details: z.object({
 		inn: z.string().regex(/^\d{10}$|^\d{12}$/, "ИНН: 10 или 12 цифр"),
 		ogrn: z.string().min(13, "ОГРН/ОГРНИП"),
 		kpp: z.string().min(9, "КПП"),
 		okpo: z.string().optional(),
 	}),
-
-	// Addresses
 	address: addressesBlockSchema,
-
-	// Bank
 	bankDetails: bankDetailsSchema,
-
-	// Contact person
 	contactPerson: z.object({
 		personalData: personalDataSchema,
 		passport: passportSchema,
@@ -301,7 +225,8 @@ export const legalClientSchema = z.object({
 	}),
 	agreements: promoAndAgreementsSchema,
 });
-//   --------------- LEGAL PARTNER SCHEMA ---------------
+
+// ── LEGAL PARTNER — placeholder, not in main union ────────────────────────────
 export const legalPartnerSchema = legalClientSchema.extend({
 	clientType: z.literal("legal_partner"),
 	isPartner: z.literal(true),
@@ -313,13 +238,11 @@ export const legalPartnerSchema = legalClientSchema.extend({
 	}),
 });
 
-// --------------- GENERAL CLIENT SCHEMA ---------------
-export const clientFormSchema = z.discriminatedUnion("clientType", [
-	individualClientSchema,
-	legalClientSchema,
-	individualPartnerSchema,
-	legalPartnerSchema,
-]);
+// ── Active union: individual only (legal added back when LegalClientForm is built) ─
+export const clientFormSchema = individualClientSchema;
+
+export type SocialsList = z.infer<typeof individualContactsSchema>["socials"];
+export type SocialItem = SocialsList[number];
 
 export type IndividualClient = z.infer<typeof individualClientSchema>;
 export type LegalClient = z.infer<typeof legalClientSchema>;

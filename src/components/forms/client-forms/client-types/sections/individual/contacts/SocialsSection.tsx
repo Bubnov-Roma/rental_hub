@@ -1,266 +1,260 @@
 "use client";
 
-import { Check, Edit3, Plus, Trash2 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
-import {
-	type FieldErrors,
-	useFieldArray,
-	useFormContext,
-} from "react-hook-form";
+import { Check, Edit3, Globe, Plus, Trash2, X } from "lucide-react";
+import { useRef, useState } from "react";
+import { useFieldArray, useFormContext } from "react-hook-form";
 import { toast } from "sonner";
-import { FormRadioGroup } from "@/components/forms/shared";
 import { ValidatedInput } from "@/components/forms/shared/ValidatedInput";
 import { Button } from "@/components/ui/button";
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuSeparator,
-	DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { MAX_LINKS_PER_PLATFORM, SOCIAL_OPTIONS } from "@/constants";
-import {
-	type ClientFormValues,
-	type IndividualClient,
-	type SocialPlatform,
-	socialMediaSchema,
-} from "@/schemas";
+import { cn } from "@/lib/utils";
+import { type IndividualClient, socialMediaObjectSchema } from "@/schemas";
 
-type SocialsFormValues = ClientFormValues & {
-	temp_platform_selector: string;
-};
+function getSocialMeta(url: string): { label: string; color: string } {
+	const lower = url.toLowerCase();
+	if (lower.includes("t.me") || (lower.startsWith("@") && lower.length < 20))
+		return {
+			label: "Telegram",
+			color: "bg-sky-500/15 text-sky-400 border-sky-500/20",
+		};
+	if (lower.includes("vk.com") || lower.includes("vk."))
+		return {
+			label: "VK",
+			color: "bg-blue-500/15 text-blue-400 border-blue-500/20",
+		};
+	if (lower.includes("wa.me") || lower.includes("whatsapp"))
+		return {
+			label: "WhatsApp",
+			color: "bg-emerald-500/15 text-emerald-400 border-emerald-500/20",
+		};
+	if (lower.includes("instagram") || lower.includes("instagr.am"))
+		return {
+			label: "Instagram",
+			color: "bg-pink-500/15 text-pink-400 border-pink-500/20",
+		};
+	if (lower.includes("facebook") || lower.includes("fb.com"))
+		return {
+			label: "Facebook",
+			color: "bg-indigo-500/15 text-indigo-400 border-indigo-500/20",
+		};
+	if (lower.includes("youtube") || lower.includes("youtu.be"))
+		return {
+			label: "YouTube",
+			color: "bg-red-500/15 text-red-400 border-red-500/20",
+		};
+	return {
+		label: "Ссылка",
+		color: "bg-foreground/5 text-foreground/60 border-foreground/10",
+	};
+}
 
 export const SocialsSection = () => {
 	const {
 		control,
-		setValue,
 		formState: { errors },
-	} = useFormContext<SocialsFormValues>();
+	} = useFormContext<IndividualClient>();
 
 	const { fields, append, remove, update } = useFieldArray({
 		control,
 		name: "applicationData.contacts.socials",
 	});
 
-	const [selectedPlatform, setSelectedPlatform] = useState<SocialPlatform | "">(
-		""
-	);
 	const [inputValue, setInputValue] = useState("");
 	const [localError, setLocalError] = useState<string | null>(null);
 	const [editingIndex, setEditingIndex] = useState<number | null>(null);
-
-	const containerRef = useRef<HTMLDivElement>(null);
 	const inputRef = useRef<HTMLInputElement>(null);
 
-	const indErrors = errors as FieldErrors<IndividualClient>;
-	const socialsError = indErrors.applicationData?.contacts?.socials;
-	const arrayErrorMessage =
-		typeof socialsError?.message === "string" ? socialsError.message : "";
-
-	useEffect(() => {
-		if (selectedPlatform && inputRef.current) {
-			inputRef.current.focus();
-		}
-	}, [selectedPlatform]);
-
-	const mappedOptions = useMemo(
-		() =>
-			SOCIAL_OPTIONS.map((opt) => ({
-				...opt,
-				badgeCount: fields.filter((f) => f.platform === opt.id).length,
-			})),
-		[fields]
-	);
-
-	const activeOption = useMemo(
-		() => SOCIAL_OPTIONS.find((opt) => opt.id === selectedPlatform),
-		[selectedPlatform]
-	);
-
-	const validateCurrentInput = (platform: string, value: string) => {
-		const trimmedValue = value.trim();
-		if (!trimmedValue) {
+	const validate = (val: string): boolean => {
+		if (!val) {
 			setLocalError(null);
-			return;
+			return false;
 		}
-
-		const result = socialMediaSchema.safeParse({ platform, url: trimmedValue });
-
+		const result = socialMediaObjectSchema.safeParse({ url: val });
 		if (!result.success) {
-			setLocalError(result.error.issues[0]?.message || "Некорректный формат");
-		} else {
-			setLocalError(null);
+			setLocalError(result.error.issues[0]?.message ?? "Некорректный формат");
+			return false;
 		}
+		setLocalError(null);
+		return true;
 	};
 
-	const handleAddOrUpdate = async () => {
-		const validation = socialMediaSchema.safeParse({
-			platform: selectedPlatform,
-			url: inputValue,
-		});
-
-		if (!validation.success) {
-			setLocalError(
-				validation.error.issues[0]?.message || "Некорректный формат"
-			);
-			return;
-		}
-
-		const currentPlatformLinks = fields.filter(
-			(f) => f.platform === selectedPlatform
-		);
-
-		if (!selectedPlatform || inputValue.length < 2) return;
-		if (
-			editingIndex === null &&
-			currentPlatformLinks.length >= MAX_LINKS_PER_PLATFORM
-		) {
-			toast.info(`Лимит достигнут`, {
-				description: `Вы добавили максимольное колличество ссылок для ${activeOption?.label || selectedPlatform}`,
-			});
-			return;
-		}
+	const handleAddOrUpdate = () => {
+		if (!validate(inputValue)) return;
 
 		if (editingIndex !== null) {
-			update(editingIndex, { platform: selectedPlatform, url: inputValue });
-			toast.success(`Ссылка ${inputValue} успешно обновлена`);
+			update(editingIndex, { url: inputValue });
 			setEditingIndex(null);
+			toast.success("Ссылка обновлена");
 		} else {
-			append(validation.data);
-			toast.success(
-				`Профиль ${activeOption?.label} - ${inputValue} успешно добавлен`
-			);
+			if (fields.length >= 5) {
+				toast.error("Максимум 5 ссылок");
+				return;
+			}
+			append({ url: inputValue });
+			toast.success("Ссылка добавлена");
 		}
+
+		// Auto-clear and refocus for next entry
+		setInputValue("");
+		setLocalError(null);
+		setTimeout(() => inputRef.current?.focus(), 0);
+	};
+
+	const startEdit = (index: number) => {
+		setEditingIndex(index);
+		setInputValue(fields[index]?.url ?? "");
+		setLocalError(null);
+		setTimeout(() => inputRef.current?.focus(), 0);
+	};
+
+	const cancelEdit = () => {
+		setEditingIndex(null);
 		setInputValue("");
 		setLocalError(null);
 	};
 
+	const arrayError =
+		errors.applicationData?.contacts?.socials?.root?.message ??
+		errors.applicationData?.contacts?.socials?.message;
+
 	return (
-		<div
-			ref={containerRef}
-			className="space-y-6 h-full flex  justify-between flex-col"
-		>
-			<FormRadioGroup
-				required={true}
-				name="temp_platform_selector"
-				options={mappedOptions}
-				label="Ваши соцсети"
-				onValueChange={(val) => {
-					setSelectedPlatform(val as SocialPlatform);
-					setEditingIndex(null);
-					setInputValue("");
-				}}
-				externalError={arrayErrorMessage}
-				renderExtra={(option, labelContent) => {
-					const links = fields
-						.map((f, idx) => ({ ...f, originalIndex: idx }))
-						.filter((f) => f.platform === option.id);
+		<div className="space-y-4">
+			{/* Array-level error */}
+			{arrayError && (
+				<p className="text-xs text-destructive px-1">{arrayError}</p>
+			)}
 
-					if (links.length === 0) return labelContent;
-
-					return (
-						<DropdownMenu
-							onOpenChange={(open) => {
-								if (open) {
-									setSelectedPlatform(option.id as SocialPlatform);
-									setValue("temp_platform_selector", option.id);
-								}
-							}}
-						>
-							<DropdownMenuTrigger asChild>
-								<div className="outline-none">{labelContent}</div>
-							</DropdownMenuTrigger>
-							<DropdownMenuContent
-								align="start"
-								className="w-full border-white/10 backdrop-blur-xl rounded-xl p-1 shadow-2xl"
-							>
-								{links.length < MAX_LINKS_PER_PLATFORM && (
-									<>
-										<DropdownMenuItem
-											className="gap-2 focus:bg-emerald-500/10 text-emerald-400 font-bold text-[10px] uppercase cursor-pointer"
-											disabled={links.length >= MAX_LINKS_PER_PLATFORM}
-											onClick={() => {
-												setSelectedPlatform(option.id as SocialPlatform);
-												inputRef.current?.focus();
-											}}
-										>
-											<Plus className="w-3 h-3" />
-											Добавить профиль
-										</DropdownMenuItem>
-										<DropdownMenuSeparator className="bg-foreground/2" />
-									</>
-								)}
-								{links.map((link) => (
-									<DropdownMenuItem
-										key={link.id}
-										className="flex justify-between focus:bg-foreground/5 py-2"
-									>
-										<span className="text-xs text-foreground truncate mr-2">
-											{link.url}
-										</span>
-										<div className="flex gap-1">
-											<button
-												type="button"
-												onClick={() => {
-													setEditingIndex(link.originalIndex);
-													setInputValue(link.url);
-													setSelectedPlatform(option.id as SocialPlatform);
-												}}
-												className="p-1 hover:text-sky-300 transition-colors"
-											>
-												<Edit3 className="w-3 h-3" />
-											</button>
-											<button
-												type="button"
-												onClick={() => {
-													remove(link.originalIndex);
-													toast.info(
-														`Профиль ${link.platform} - ${link.url} успешно удален`
-													);
-												}}
-												className="p-1 hover:text-red-400 transition-colors"
-											>
-												<Trash2 className="w-3 h-3" />
-											</button>
-										</div>
-									</DropdownMenuItem>
-								))}
-							</DropdownMenuContent>
-						</DropdownMenu>
-					);
-				}}
-			/>
-
-			<div className="flex gap-2 items-end h-auto">
+			{/* Input row */}
+			<div className="flex gap-2 items-end">
 				<div className="flex-1">
 					<ValidatedInput
 						ref={inputRef}
 						label={
-							selectedPlatform
-								? `Ссылка: ${selectedPlatform}`
-								: "Выберите соцсеть"
+							editingIndex !== null
+								? `Редактирование ссылки #${editingIndex + 1}`
+								: "Соцсети и мессенджеры"
 						}
+						placeholder="@username или https://..."
 						value={inputValue}
 						error={localError ?? ""}
 						onChange={(e) => {
-							const val = e.target.value;
-							setInputValue(val);
-							if (selectedPlatform) validateCurrentInput(selectedPlatform, val);
+							setInputValue(e.target.value);
+							if (localError) validate(e.target.value);
 						}}
-						placeholder={activeOption?.placeholder || "Выберите платформу"}
-						disabled={!selectedPlatform}
-						onKeyDown={(e) => e.key === "Enter" && handleAddOrUpdate()}
+						onKeyDown={(e) => {
+							if (e.key === "Enter") {
+								e.preventDefault();
+								handleAddOrUpdate();
+							}
+							if (e.key === "Escape" && editingIndex !== null) {
+								cancelEdit();
+							}
+						}}
+						icon={<Globe className="h-4 w-4" />}
 					/>
 				</div>
-				<Button
-					variant="glass"
-					onClick={handleAddOrUpdate}
-					disabled={!selectedPlatform || inputValue.length < 2}
-					className={`w-11 h-11 mb-5 rounded-xl flex items-center justify-center transition-all`}
-				>
-					{editingIndex !== null ? <Check /> : <Plus />}
-				</Button>
+
+				{editingIndex !== null ? (
+					<div className="flex gap-1 mb-5">
+						<Button
+							type="button"
+							variant="default"
+							onClick={handleAddOrUpdate}
+							disabled={!inputValue}
+							className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
+						>
+							<Check size={18} />
+						</Button>
+						<Button
+							type="button"
+							variant="ghost"
+							onClick={cancelEdit}
+							className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 text-muted-foreground"
+						>
+							<X size={18} />
+						</Button>
+					</div>
+				) : (
+					<Button
+						type="button"
+						variant="glass"
+						onClick={handleAddOrUpdate}
+						disabled={!inputValue || fields.length >= 5}
+						className="w-11 h-11 mb-5 rounded-xl flex items-center justify-center shrink-0"
+					>
+						<Plus size={20} />
+					</Button>
+				)}
 			</div>
+
+			{/* Link cards */}
+			{fields.length > 0 && (
+				<div className="space-y-2">
+					{fields.map((field, index) => {
+						const { label, color } = getSocialMeta(field.url);
+						const isEditing = editingIndex === index;
+
+						return (
+							<div
+								key={field.id}
+								className={cn(
+									"flex items-center gap-3 rounded-xl transition-all duration-200 px-2 py-2 md:py-0",
+									isEditing
+										? "border-primary/30 bg-primary/5"
+										: "border-foreground/10 hover:bg-foreground/[0.07]"
+								)}
+							>
+								{/* Platform badge */}
+								<span
+									className={cn(
+										"shrink-0 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border",
+										color
+									)}
+								>
+									{label}
+								</span>
+
+								{/* URL */}
+								<span className="flex-1 text-sm truncate text-foreground/80 min-w-0">
+									{field.url}
+								</span>
+
+								{/* Actions */}
+								<div className="flex items-center gap-1 shrink-0">
+									<button
+										type="button"
+										onClick={() => {
+											remove(index);
+											if (editingIndex === index) cancelEdit();
+											toast.info("Ссылка удалена");
+										}}
+										className="w-7 h-7 flex items-center justify-center rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+										title="Удалить"
+									>
+										<Trash2 size={14} />
+									</button>
+									<button
+										type="button"
+										onClick={() =>
+											isEditing ? cancelEdit() : startEdit(index)
+										}
+										className="w-7 h-7 flex items-center justify-center rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+										title={isEditing ? "Отмена" : "Редактировать"}
+									>
+										{isEditing ? <X size={14} /> : <Edit3 size={14} />}
+									</button>
+								</div>
+							</div>
+						);
+					})}
+				</div>
+			)}
+
+			{/* Counter hint */}
+			{fields.length > 0 && (
+				<p className="text-[11px] text-muted-foreground/50 text-right">
+					{fields.length} / 5
+				</p>
+			)}
 		</div>
 	);
 };

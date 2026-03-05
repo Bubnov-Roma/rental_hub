@@ -15,7 +15,7 @@ interface ValidatedInputProps
 export const ValidatedInput = React.forwardRef<
 	HTMLInputElement,
 	ValidatedInputProps
->(({ label, error, icon, suffix, className, ...props }, ref) => {
+>(({ label, error, icon, suffix, className, onKeyDown, ...props }, ref) => {
 	return (
 		<FormFieldWrapper
 			label={label}
@@ -32,6 +32,7 @@ export const ValidatedInput = React.forwardRef<
 				<Input
 					ref={ref}
 					{...props}
+					onKeyDown={onKeyDown}
 					className={cn(
 						"glass-input w-full",
 						icon && "pl-10",
@@ -50,3 +51,5 @@ export const ValidatedInput = React.forwardRef<
 		</FormFieldWrapper>
 	);
 });
+
+ValidatedInput.displayName = "ValidatedInput";

@@ -36,7 +36,7 @@ function ActionLink({
 		<Link
 			href={action.href}
 			onClick={onClose}
-			className="inline-flex items-center gap-1 text-xs font-bold text-primary hover:underline mt-1.5"
+			className="inline-flex items-center gap-1 text-xs font-bold text-foreground hover:underline mt-1.5"
 		>
 			{action.label}
 			<ArrowRight size={11} />
@@ -67,6 +67,7 @@ export const VerificationBadge: React.FC<Props> = ({
 					<TooltipTrigger asChild>
 						<DialogTrigger asChild>
 							<Button
+								variant="tab"
 								className={cn("transition-all border", bgColor, borderColor)}
 							>
 								{/* Мобильная версия — только иконка */}

@@ -9,6 +9,7 @@ import {
 	ShieldCheck,
 	XCircle,
 } from "lucide-react";
+import { SUPPORT_PHONE, SUPPORT_TELEGRAM } from "@/constants/support";
 import type { ApplicationStatus } from "@/types";
 
 export interface StatusAction {
@@ -25,13 +26,6 @@ export interface StatusConfig {
 	borderColor: string;
 	glowColor?: string;
 	showBadge?: boolean;
-	/**
-	 * Опциональная ссылка-действие — хранится как данные (href + label),
-	 * рендерится компонентом ActionLink в нужном месте.
-	 * Это позволяет избежать:
-	 * 1. JSX в конфиге (нет зависимостей от React.ReactNode)
-	 * 2. Ошибок exactOptionalPropertyTypes при передаче onClose
-	 */
 	action?: StatusAction;
 }
 
@@ -47,7 +41,7 @@ export const VERIFICATION_CONFIG: Record<ApplicationStatus, StatusConfig> = {
 	},
 	no_application: {
 		label: "Нет анкеты",
-		description: "Заполните анкету для аренды без залога",
+		description: "Заполните анкету чтобы арендовать технику без залога",
 		Icon: Search,
 		color: "text-foreground/50",
 		bgColor: "bg-foreground/5",
@@ -55,14 +49,28 @@ export const VERIFICATION_CONFIG: Record<ApplicationStatus, StatusConfig> = {
 		glowColor: "shadow-foreground/10",
 		action: { href: "/dashboard/profile", label: "Заполнить анкету" },
 	},
+	draft: {
+		label: "Анкета в процессе заполнения",
+		description:
+			"Завершите заполнение анкеты. Обноаление статуса произойдет автоматически",
+		Icon: Search,
+		color: "text-foreground/50",
+		bgColor: "bg-foreground/5",
+		borderColor: "border-foreground/10",
+		glowColor: "shadow-foreground/10",
+		action: {
+			href: "/dashboard/profile",
+			label: "Завершить заполнение анкеты",
+		},
+	},
 	pending: {
 		label: "Анкета отправлена",
-		description: "Ожидает проверки модератором",
+		description: "Ожидает начала проверки модератором",
 		Icon: SendHorizontal,
-		color: "text-yellow-400",
-		bgColor: "bg-yellow-400/10",
-		borderColor: "border-yellow-400/20",
-		glowColor: "shadow-yellow-400/20",
+		color: "text-pink-400",
+		bgColor: "bg-pink-400/10",
+		borderColor: "border-pink-400/20",
+		glowColor: "shadow-pink-400/20",
 		action: { href: "/dashboard/profile", label: "Открыть профиль" },
 	},
 	reviewing: {
@@ -77,7 +85,8 @@ export const VERIFICATION_CONFIG: Record<ApplicationStatus, StatusConfig> = {
 	},
 	clarification: {
 		label: "Требуются уточнения",
-		description: "Нужны дополнительные данные",
+		description:
+			"Пожалуйста ответьте на вопрос модератора, эти данные помогут завершить проверку анкеты.",
 		Icon: MessageSquareWarning,
 		color: "text-orange-400",
 		bgColor: "bg-orange-400/10",
@@ -88,7 +97,7 @@ export const VERIFICATION_CONFIG: Record<ApplicationStatus, StatusConfig> = {
 	standard: {
 		label: "Стандартные условия",
 		description:
-			"Аренда с полным залогом. Попробуйте запросить повторную проверку анкеты позднее",
+			"На данный момент вам доступна аренда под залог. Позднее условия аренды могут быть пересмотрены.",
 		Icon: CheckCircle2,
 		color: "text-emerald-400",
 		bgColor: "bg-emerald-400/10",
@@ -98,7 +107,8 @@ export const VERIFICATION_CONFIG: Record<ApplicationStatus, StatusConfig> = {
 	},
 	approved: {
 		label: "Профиль верифицирован",
-		description: "Аренда с беззалоговым лимитом доступна",
+		description:
+			"Ваша анкета успешно проверена. Вам доступна аренда без залога. Благодарим за доверие!",
 		Icon: ShieldCheck,
 		color: "text-green-400",
 		bgColor: "bg-green-400/10",
@@ -108,13 +118,13 @@ export const VERIFICATION_CONFIG: Record<ApplicationStatus, StatusConfig> = {
 	},
 	rejected: {
 		label: "Запрос отклонён",
-		description: "Анкета не прошла проверку",
+		description: `К сожалению ваша анкета не прошла проверку. Если у вас возникли вопросы пожалуйста свяжитесь с нами по телфону ${SUPPORT_PHONE} либо в telegram`,
 		Icon: AlertCircle,
 		color: "text-red-400",
 		bgColor: "bg-red-400/10",
 		borderColor: "border-red-400/20",
 		glowColor: "shadow-red-400/20",
-		action: { href: "/dashboard/profile", label: "Подать повторно" },
+		action: { href: `${SUPPORT_TELEGRAM}`, label: "Написать в telegram" },
 	},
 	blocked: {
 		label: "Профиль заблокирован",

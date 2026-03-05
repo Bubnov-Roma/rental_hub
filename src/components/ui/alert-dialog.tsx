@@ -78,7 +78,7 @@ function AlertDialogContent({
 					>
 						<div className="absolute inset-0 bg-noise opacity-[0.09] pointer-events-none" />
 						<div className="absolute inset-0 glass-glow-subtle pointer-events-none" />
-						<div className="relative z-10 p-2">{children}</div>
+						<div className="relative z-10 px-2 space-y-4">{children}</div>
 					</AlertDialogPrimitive.Content>
 				</motion.div>
 			</div>

@@ -21,7 +21,7 @@ export const ProfileViewClient: React.FC<ProfileViewClientProps> = () => {
 
 	return (
 		<div className="relative min-h-screen">
-			{status === "no_application" ? (
+			{status === "no_application" || status === "draft" ? (
 				<ClientForm />
 			) : (
 				<ProfileDetails data={applicationData} />
