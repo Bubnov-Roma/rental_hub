@@ -35,7 +35,7 @@
   --foreground: oklch(0.1967 0.0723 259.2);
   --foreground: oklch(0.2453 0.0939 259.41);
   --muted-foreground: oklch(0.2 0.05 264 / 0.5);
-  --bg-card: oklch(1 0 0 / 0.9);
+  --bg-card: oklch(100% 0.00011 271.152 / 0.961);
   --border-soft: oklch(0 0 0 / 0.1);
   --brand-color: oklch(0.875 0.1783 92.59);
   --brand-accent:oklch(0.7584 0.160163 74.7753);
@@ -43,9 +43,9 @@
   --brand-soft-contrast: oklch(0.3144 0.0656 255.42);
   --brand-glow:  var(--brand-color);
   --brand-bg-soft: oklch(0.6 0.22 264 / 0.04);
-  --secondary-color: oklch(81.86% 0.12634 184.196);
+  --secondary-color: oklch(0.9418 0.0201 84.59);
   --secondary-foreground: oklch(0.15 0.04 45);  /* dark brown for text on secondary bg */
-  --destructive: oklch(60.743% 0.22891 31.895 / 0.847);
+  --destructive: oklch(60.951% 0.18179 33.143);
   --warning: oklch(61.775% 0.2387 27.968 / 0.699);
   /* Light theme inputs */
   --input-bg: transparent;
@@ -70,9 +70,10 @@
   --background: oklch(17.711% 0.01236 292.708); 
   --foreground: oklch(0.98 0.01 264);
   --muted-foreground: oklch(0.98 0.01 264 / 0.5);
-  --bg-card: oklch(28% 0.012 268 / 0.92);
+  --bg-card: oklch(28.04% 0.01189 264.39 / 0.892);
   --border-soft: oklch(1 0 0 / 0.5);
   --brand-bg-soft: oklch(0.75 0.15 250 / 0.08);
+  --secondary-color: oklch(0.3327 0.0174 93.27);
   /* Dark theme inputs */
   --input-bg: oklch(1 0 0 / 0.07); 
   --input-shadow: 0 1px 0 oklch(1 0 0 / 0.06);
@@ -92,19 +93,12 @@
   --error-bg-glow: var(--brand-glow);
 }
 
-[data-client-type="individual"] {
-  --brand-color: oklch(0.6 0.22 264);
-}
-
-[data-client-type="legal"] {
-  --brand-color: oklch(0.65 0.2 160); 
-  --shadow-brand-glow: 0 0 15px rgba(104, 165, 125, 0.4);
-}
-
 @layer base {
+  * {
+    @apply border-border;
+  }
   body {
     @apply bg-background text-foreground transition-colors duration-300 min-h-screen flex flex-col;
-    background-image: radial-gradient(circle at top right, var(--brand-glow), transparent 40%);
   }
 }
 
@@ -212,6 +206,125 @@
     background: var(--bg-card);
   }
 
+  /* ── Surface cards ──────────────────────────────────────────────────────── */
+
+  .card-surface {
+    border-radius: var(--radius-2xl);
+    border: 1px solid oklch(from var(--foreground) l c h / 0.05);
+    background-color: oklch(from var(--bg-card) l c h / 0.4);
+    overflow: hidden;
+  }
+
+  .card-surface-hover {
+    border-radius: var(--radius-2xl);
+    border: 1px solid oklch(from var(--foreground) l c h / 0.05);
+    background-color: oklch(from var(--bg-card) l c h / 0.4);
+    overflow: hidden;
+    transition: background-color 0.2s, border-color 0.2s;
+  }
+  .card-surface-hover:hover {
+    background-color: oklch(from var(--foreground) l c h / 0.03);
+    border-color: oklch(from var(--foreground) l c h / 0.1);
+  }
+
+  .card-hero {
+    border-radius: var(--radius-3xl);
+    border: 1px solid oklch(from var(--foreground) l c h / 0.05);
+    background-color: oklch(from var(--bg-card) l c h / 0.4);
+    overflow: hidden;
+  }
+
+  /* ── Avatar ─────────────────────────────────────────────────────────────── */
+
+  .avatar-container {
+    background-color: oklch(from var(--foreground) l c h / 0.05);
+    border: 1px solid oklch(from var(--foreground) l c h / 0.1);
+    overflow: hidden;
+  }
+
+  .avatar-placeholder {
+    display: flex;
+    height: 100%;
+    width: 100%;
+    align-items: center;
+    justify-content: center;
+    background-color: oklch(from var(--brand-color) l c h / 0.1);
+    color: var(--brand-color);
+    font-weight: 900;
+  }
+
+  .avatar-edit-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: oklch(from var(--background) l c h / 0.6);
+    backdrop-filter: blur(4px);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  /* Tailwind v4: group-hover variant applied via parent class="group" */
+  .group:hover .avatar-edit-overlay {
+    opacity: 1;
+  }
+
+  /* ── Card internals ──────────────────────────────────────────────────────── */
+
+  .card-section-header {
+    padding: 0.625rem 1.25rem;
+    border-bottom: 1px solid oklch(from var(--foreground) l c h / 0.05);
+  }
+
+  .card-section-label {
+    font-size: 0.625rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: oklch(from var(--muted-foreground) l c h / 0.5);
+  }
+
+  .detail-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.875rem 1.25rem;
+  }
+
+  /*
+    .interactive-accent
+    ────────────────────────────────────────────────────────────────────────────
+    Adds a branded tinted surface to any element (card, button, badge, etc.)
+
+    Default:
+      bg   = primary/12  (approximates the layered fg/5 + primary/10)
+      border = foreground/10
+      color  = primary (brand colour)
+
+    Hover:
+      bg   = primary/18  +  backdrop-blur-sm
+      border = foreground/15
+      color  = foreground
+    ────────────────────────────────────────────────────────────────────────────
+  */
+  .interactive-accent {
+    background-color: oklch(from var(--brand-color) l c h / 0.12);
+    border: 1px solid oklch(from var(--foreground) l c h / 0.1);
+    color: var(--brand-color);
+    transition: background-color 0.2s, color 0.2s, backdrop-filter 0.2s, border-color 0.2s;
+  }
+  .interactive-accent:hover {
+    background-color: oklch(from var(--brand-color) l c h / 0.18);
+    border-color: oklch(from var(--foreground) l c h / 0.15);
+    backdrop-filter: blur(4px);
+    color: var(--foreground);
+  }
+
+  .tabs-group {
+    @apply flex gap-1 p-1 bg-foreground/5 rounded-2xl w-fit
+  }
+
   [data-slot="calendar"] {
     --rdp-accent-color: var(--brand-color);
     --rdp-accent-background-color: oklch(from var(--brand-color) l c h / 0.15);
@@ -299,13 +412,4 @@
 
 .glass-shimmer:hover::after {
   animation: shimmer 0.4s ease-in-out;
-}
-
-@layer base {
-  * {
-    @apply border-border;
-  }
-  body {
-    @apply bg-background text-foreground;
-  }
 }
