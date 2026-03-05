@@ -7,6 +7,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import type { DashboardBooking } from "@/app/(dashboard)/dashboard/page";
+import { ClientTime } from "@/components/shared";
 import {
 	Button,
 	Dialog,
@@ -136,13 +137,16 @@ function BookingPreviewRow({
 
 				{/* Dates */}
 				<div className="flex items-center gap-1.5 mt-1 text-[11px] text-muted-foreground">
-					<span>
+					{/* <span>
 						{format(new Date(booking.start_date), "d MMM", { locale: ru })}
-					</span>
+					</span> */}
+					<ClientTime iso={booking.start_date} />
 					<span className="opacity-40">→</span>
-					<span>
+					{/* <span>
 						{format(new Date(booking.end_date), "d MMM", { locale: ru })}
-					</span>
+					</span> */}
+
+					<ClientTime iso={booking.end_date} />
 					{/* Desktop: show exact times */}
 					<span className="hidden sm:inline opacity-40">·</span>
 					<span className="hidden sm:inline">

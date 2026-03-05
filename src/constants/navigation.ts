@@ -7,31 +7,23 @@ import {
 	Heart,
 	Home,
 	LayoutDashboard,
+	LayoutGrid,
 	type LucideIcon,
 	MessageSquare,
 	Package,
 	Settings,
-	SunMoon,
 	Users,
 } from "lucide-react";
 
-// ─── Специальные маркеры для элементов с нестандартным поведением ─────────────
-// "theme"  → рендерить ThemeToggle вместо ссылки
-// "auth"   → рендерить динамически: LayoutDashboard/LogIn в зависимости от auth
 export type NavItemSpecial = "theme" | "auth";
 
 export type NavItem = {
 	title: string;
 	href: string;
 	icon: LucideIcon;
-	// icon: React.ElementType;
 	badge?: string | number;
 	special?: NavItemSpecial;
 };
-
-// ─── CLIENT NAV ───────────────────────────────────────────────────────────────
-// Используется как для авторизованных, так и для гостей.
-// Элемент с special="auth" рендерится динамически на клиенте.
 
 export const CLIENT_NAV: NavItem[] = [
 	{
@@ -42,7 +34,7 @@ export const CLIENT_NAV: NavItem[] = [
 	{
 		title: "Каталог",
 		href: "/equipment",
-		icon: Camera,
+		icon: LayoutGrid,
 	},
 	{
 		title: "Календарь",
@@ -60,18 +52,12 @@ export const CLIENT_NAV: NavItem[] = [
 		icon: LayoutDashboard,
 		special: "auth",
 	},
-	{
-		title: "Тема",
-		href: "#",
-		icon: SunMoon,
-		special: "theme", // → <ThemeToggle>
-	},
 ];
 
 // Fallback для неавторизованного состояния элемента special="auth"
 export const GUEST_AUTH_ITEM: NavItem = {
 	title: "Как стать клиентом",
-	href: "/auth?view=register",
+	href: "/how-it-works",
 	icon: CircleHelp,
 };
 

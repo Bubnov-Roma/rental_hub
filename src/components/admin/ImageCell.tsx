@@ -50,7 +50,6 @@ export function ImageCell({ equipmentId, initialImages }: ImageCellProps) {
 			}
 
 			if (filePath) {
-				console.log("Cleaning path for storage:", filePath);
 				await supabase.storage.from("equipment-images").remove([filePath]);
 			}
 
@@ -96,7 +95,6 @@ export function ImageCell({ equipmentId, initialImages }: ImageCellProps) {
 			const timeoutId = setTimeout(() => controller.abort(), 45000);
 
 			try {
-				console.log(`Запуск попытки загрузки №${attempt}...`);
 				const result = await uploadEquipmentImage(file, equipmentId, (p) => {
 					setUploadProgress(p);
 				});

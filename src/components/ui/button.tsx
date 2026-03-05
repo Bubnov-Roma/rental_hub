@@ -32,6 +32,11 @@ const buttonVariants = cva(
 				),
 				brand:
 					"bg-muted-foreground/10 text-foreground/80 hover:bg-primary hover:text-primary-foreground transition-all duration-200 group/auth",
+				tab: "rounded-2xl text-muted-foreground hover:text-foreground transition-all duration-200 font-semibold",
+			},
+			isActive: {
+				true: "",
+				false: "",
 			},
 			size: {
 				default: "h-9 px-4 py-2 has-[>svg]:px-3",
@@ -46,6 +51,13 @@ const buttonVariants = cva(
 				"icon-lg": "size-10",
 			},
 		},
+		compoundVariants: [
+			{
+				variant: "tab",
+				isActive: true,
+				class: "bg-background text-foreground shadow-sm",
+			},
+		],
 		defaultVariants: {
 			variant: "default",
 			size: "default",
@@ -58,6 +70,7 @@ function Button({
 	variant = "default",
 	size = "default",
 	asChild = false,
+	isActive,
 	...props
 }: React.ComponentProps<"button"> &
 	VariantProps<typeof buttonVariants> & {
@@ -70,7 +83,8 @@ function Button({
 			data-slot="button"
 			data-variant={variant}
 			data-size={size}
-			className={cn(buttonVariants({ variant, size, className }))}
+			data-active={isActive}
+			className={cn(buttonVariants({ variant, size, isActive, className }))}
 			{...props}
 		/>
 	);

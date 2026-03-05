@@ -56,7 +56,6 @@ export const useApplicationStore = create<ApplicationState>()(
 							filter: `user_id=eq.${userId}`,
 						},
 						(payload) => {
-							console.log("Realtime update received:", payload.new);
 							set({
 								status: payload.new.status,
 								applicationData: payload.new.application_data,

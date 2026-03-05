@@ -443,12 +443,9 @@ export async function migrateCategoriesToIds() {
 		return { success: false, error };
 	}
 
-	console.log(`Starting migration for ${items.length} items...`);
-
 	let updatedCount = 0;
 
 	for (const item of items) {
-		// Ищем соответствие в константах по полю name (кириллица)
 		const categoryConfig = CATEGORIES.find(
 			(c) => c.name.toLowerCase() === item.category?.toLowerCase()
 		);
@@ -463,8 +460,6 @@ export async function migrateCategoriesToIds() {
 			if (!updateError) updatedCount++;
 		}
 	}
-
-	console.log(`Migration finished. Updated ${updatedCount} items.`);
 	revalidatePath("/admin/equipment");
 	return { success: true, updatedCount };
 }
