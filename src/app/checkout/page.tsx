@@ -1,19 +1,5 @@
 "use client";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// CheckoutPage — оформление заказа
-//
-// Исправления от предыдущей версии:
-//  1. Hydration skeleton: zustand/persist гидратируется асинхронно.
-//     До завершения показываем <CheckoutSkeleton> вместо ложного "Пусто".
-//  2. Прошедшее время: buildDropdownSlots(selectedDate) фильтрует слоты
-//     до текущего времени + MIN_BUFFER_MINUTES если выбран сегодняшний день.
-//  3. Крупнее ячейки календаря: CSS-переменная [--rdp-cell-size:44px] на мобиле.
-//  4. Шире/выше дропдаун: min-h-[44px] на кнопке, py-2.5 на строках,
-//     text-sm вместо text-xs, max-h-52 на списке.
-//  5. Заблокированный/отклонённый профиль: <BlockedBanner> вместо кнопки.
-// ─────────────────────────────────────────────────────────────────────────────
-
 import { addHours, format, isToday, startOfHour } from "date-fns";
 import { ru } from "date-fns/locale";
 import {
@@ -1448,7 +1434,7 @@ export default function CheckoutPage() {
 
 			{/* ── Мобильный FAB ──────────────────────────────────────────── */}
 			<div
-				className="md:hidden fixed inset-x-0 z-70 bg-transparent transition-all duration-300"
+				className="md:hidden fixed inset-x-0 z-29 bg-transparent transition-all duration-300"
 				style={{ bottom: "calc(5rem + env(safe-area-inset-bottom))" }}
 			>
 				<div className="w-full px-4 py-4 box-border mx-auto">

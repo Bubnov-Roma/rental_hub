@@ -42,7 +42,7 @@ export function ThemeCard() {
 						className={cn(
 							"flex flex-col items-center gap-2 p-3 sm:p-4 rounded-2xl border transition-all duration-200",
 							active
-								? "border-primary/30 bg-primary/5 text-primary"
+								? "border-primary/30 bg-primary/5 text-primary-accent"
 								: "border-foreground/5 hover:border-foreground/10 text-muted-foreground hover:text-foreground"
 						)}
 					>

@@ -57,15 +57,18 @@ export function SignOutButton({
 		<AlertDialog open={isOpen} onOpenChange={setIsOpen}>
 			<AlertDialogTrigger asChild>
 				<Button
+					size="xl"
 					variant="ghost"
 					disabled={isPending}
 					className={cn(
-						"hover:bg-red-600/80 hover:text-white transition-colors duration-100 justify-start",
+						"w-full box-border duration-100 justify-start px-5 py-4 rounded-2xl border border-foreground/5 bg-card/40 text-muted-foreground hover:text-foreground hover:bg-foreground/5 transition-colors",
 						className
 					)}
 				>
 					<LogOut size={18} className={cn(isPending && "animate-spin")} />
-					{showText && <span>{isPending ? "Выход..." : "Выйти"}</span>}
+					{showText && (
+						<span>{isPending ? "Выход..." : "Выйти из аккаунта"}</span>
+					)}
 				</Button>
 			</AlertDialogTrigger>
 
@@ -93,7 +96,7 @@ export function SignOutButton({
 
 				<AlertDialogFooter className="mt-8 gap-3">
 					<AlertDialogCancel asChild>
-						<Button variant="ghost" className="rounded-2xl px-6 h-10">
+						<Button variant="outline" className="rounded-2xl px-6 h-10">
 							Отмена
 						</Button>
 					</AlertDialogCancel>

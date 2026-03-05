@@ -97,86 +97,83 @@ export function CategoryFilter({ isPending = false }: CategoryFilterProps) {
 	const loading = isPending || isPendingInternal;
 
 	return (
-		<div className="space-y-1 w-full">
+		<div className="space-y-1">
 			{/* Category row */}
-			<div className="flex items-center gap-1 overflow-x-auto scroll-smooth no-scrollbar w-full">
-				{CATEGORIES.map((cat) => {
-					const isActive = optimisticCategory === cat.slug;
-					const hasSubs = (cat.subcategories?.length ?? 0) > 0;
-					const isExpanded = expandedCategory === cat.slug;
+			<div className="w-full flex items-center gap-1 overflow-x-auto scroll-smooth no-scrollbar">
+				<div className="tabs-group w-fit no-scrollbar">
+					{CATEGORIES.map((cat) => {
+						const isActive = optimisticCategory === cat.slug;
+						const hasSubs = (cat.subcategories?.length ?? 0) > 0;
+						const isExpanded = expandedCategory === cat.slug;
 
-					return (
-						<Button
-							key={cat.slug}
-							variant="ghost"
-							onClick={() => handleCategoryClick(cat.slug)}
-							className={cn(
-								"relative flex items-center gap-1 whitespace-nowrap transition-all duration-150 shrink-0",
-								"text-[11px] uppercase tracking-[0.15em] font-bold h-9 px-3 rounded-lg",
-								isActive
-									? "text-foreground bg-muted-foreground/10"
-									: "text-muted-foreground hover:text-foreground hover:bg-muted-foreground/10",
-								loading && isActive && "opacity-70"
-							)}
-						>
-							{cat.name}
-							{hasSubs && (
-								<ChevronRight
-									size={11}
-									className={cn(
-										"transition-transform duration-200 opacity-60",
-										isExpanded && "rotate-90"
-									)}
-								/>
-							)}
-							{isActive && (
-								<span
-									className={cn(
-										"absolute bottom-0.5 left-3 right-3 h-0.5 rounded-full",
-										loading
-											? "bg-primary/40 animate-pulse"
-											: "bg-primary animate-in fade-in zoom-in duration-200"
-									)}
-								/>
-							)}
-						</Button>
-					);
-				})}
-			</div>
-
-			{/* Subcategory row */}
-			{expandedCategory && subcategories.length > 0 && (
-				<div className="flex items-center gap-1 overflow-x-auto scroll-smooth no-scrollbar pl-1 animate-in fade-in slide-in-from-top-1 duration-200">
-					{subcategories.map((sub) => {
-						const isActive = optimisticSubcategory === sub.slug;
 						return (
 							<Button
-								key={sub.slug}
-								variant="ghost"
-								onClick={() =>
-									handleSubcategoryClick(expandedCategory, sub.slug)
-								}
-								className={cn(
-									"relative whitespace-nowrap transition-all duration-150 shrink-0",
-									"text-[10px] uppercase tracking-[0.12em] font-semibold h-7 px-2.5 rounded-md",
-									isActive
-										? "text-foreground bg-primary/5"
-										: "text-muted-foreground/70 hover:text-foreground hover:bg-muted-foreground/10",
-									loading && isActive && "opacity-70"
-								)}
+								key={cat.slug}
+								isActive={isActive}
+								variant="tab"
+								onClick={() => handleCategoryClick(cat.slug)}
+								className={cn("relative", loading && isActive && "opacity-70")}
 							>
-								{sub.name}
+								{cat.name}
+								{hasSubs && (
+									<ChevronRight
+										size={11}
+										className={cn(
+											"transition-transform duration-200 opacity-60",
+											isExpanded && "rotate-90"
+										)}
+									/>
+								)}
 								{isActive && (
 									<span
 										className={cn(
-											"absolute bottom-0.5 left-2 right-2 h-0.5 rounded-full",
-											loading ? "bg-primary/40 animate-pulse" : "bg-primary"
+											"absolute bottom-0.5 left-3 right-3 h-0.5 rounded-full",
+											loading
+												? "bg-primary/40 animate-pulse"
+												: "bg-primary animate-in fade-in zoom-in duration-200"
 										)}
 									/>
 								)}
 							</Button>
 						);
 					})}
+				</div>
+			</div>
+
+			{/* Subcategory row */}
+
+			{expandedCategory && subcategories.length > 0 && (
+				<div className="w-full flex items-center gap-1 overflow-x-auto scroll-smooth no-scrollbar animate-in fade-in slide-in-from-top-1 duration-200">
+					<div className="no-scrollbar tabs-group w-fit">
+						{subcategories.map((sub) => {
+							const isActive = optimisticSubcategory === sub.slug;
+							return (
+								<Button
+									key={sub.slug}
+									isActive={isActive}
+									variant="tab"
+									onClick={() =>
+										handleSubcategoryClick(expandedCategory, sub.slug)
+									}
+									className={cn(
+										"relative",
+										loading && isActive && "opacity-70",
+										isActive && "snap-center shrink-0"
+									)}
+								>
+									{sub.name}
+									{isActive && (
+										<span
+											className={cn(
+												"absolute bottom-0.5 left-2 right-2 h-0.5 rounded-full",
+												loading ? "bg-primary/40 animate-pulse" : "bg-primary"
+											)}
+										/>
+									)}
+								</Button>
+							);
+						})}
+					</div>
 				</div>
 			)}
 

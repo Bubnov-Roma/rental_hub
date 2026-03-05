@@ -199,11 +199,9 @@ export function AppSidebarClient({ isAdmin, isLoggedIn }: Props) {
 		: CLIENT_NAV;
 
 	// Фильтруем auth-элемент — он переехал в SidebarFooter (UserMenu)
-	const navItems: NavItem[] = baseNav
-		.filter((item) => item.special !== "theme")
-		.map((item) =>
-			item.special === "auth" && !isLoggedIn ? GUEST_AUTH_ITEM : item
-		);
+	const navItems: NavItem[] = baseNav.map((item) =>
+		item.special === "auth" && !isLoggedIn ? GUEST_AUTH_ITEM : item
+	);
 
 	return (
 		<>
@@ -291,7 +289,7 @@ export function AppSidebarClient({ isAdmin, isLoggedIn }: Props) {
 								if (isCollapsed) {
 									return (
 										<fieldset
-											key={item.href}
+											key={item.title}
 											className="relative duration-300 transition-all"
 											onMouseLeave={debouncedHide}
 											onMouseEnter={handleMouseEnter}
@@ -470,7 +468,7 @@ export function AppSidebarClient({ isAdmin, isLoggedIn }: Props) {
 								if (!isMobile) {
 									return (
 										<Collapsible
-											key={item.href}
+											key={item.title}
 											asChild
 											defaultOpen={isCatalogActive}
 											className="group/collapsible"
@@ -656,7 +654,7 @@ export function AppSidebarClient({ isAdmin, isLoggedIn }: Props) {
 								// Mobile: full-size collapsible
 								return (
 									<Collapsible
-										key={item.href}
+										key={item.title}
 										asChild
 										defaultOpen={isCatalogActive}
 										className="group/collapsible"
@@ -808,7 +806,7 @@ export function AppSidebarClient({ isAdmin, isLoggedIn }: Props) {
 
 							// ── Regular nav item ───────────────────────────────────────────
 							return (
-								<SidebarMenuItem key={`${item.href}-${item.special ?? ""}`}>
+								<SidebarMenuItem key={`${item.title}-${item.special ?? ""}`}>
 									<SidebarMenuButton
 										asChild
 										isActive={isActive}

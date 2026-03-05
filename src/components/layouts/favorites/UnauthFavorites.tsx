@@ -54,10 +54,6 @@ export default function UnauthFavorites() {
 					<h1 className="text-3xl font-black tracking-tight uppercase italic">
 						Избранное
 					</h1>
-					<p className="text-muted-foreground leading-relaxed">
-						Сохраняйте технику в избранное и собирайте готовые сеты для любимых
-						сценариев съёмок.
-					</p>
 				</div>
 
 				{/* Features */}

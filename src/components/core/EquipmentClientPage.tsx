@@ -27,10 +27,6 @@ const crumbLinkClass =
 	"text-muted-foreground hover:text-foreground transition-colors text-sm";
 
 export default function EquipmentClientPage({ initialData }: PageProps) {
-	// Единственный источник правды — URL search params.
-	// При смене фильтра CategoryFilter делает router.push → searchParams
-	// обновляются → здесь примитивы пересчитываются → useMemo ниже
-	// пересоздаёт объект только если реально изменилось значение.
 	const searchParams = useSearchParams();
 
 	const categorySlug = searchParams.get("category") || "all";
@@ -127,7 +123,7 @@ export default function EquipmentClientPage({ initialData }: PageProps) {
 				)}
 				{!isLoading && items && items.length > 0 && (
 					<p className="text-muted-foreground mt-2">
-						Найдено {formatPlural(items.length, "equipment")}
+						{formatPlural(items.length, "equipment")}
 					</p>
 				)}
 			</div>

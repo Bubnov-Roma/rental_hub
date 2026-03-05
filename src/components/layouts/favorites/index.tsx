@@ -263,7 +263,7 @@ export default function ClientFavoritesPage({
 				</div>
 
 				{/* Tabs */}
-				<div className="flex gap-1 p-1 bg-foreground/5 rounded-2xl w-fit">
+				<div className="tabs-group">
 					{tabs.map(({ id, label, icon: Icon, count }) => (
 						<button
 							key={id}

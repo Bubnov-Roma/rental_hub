@@ -82,58 +82,8 @@ export default async function DashboardPage() {
 		.eq("user_id", user.id)
 		.maybeSingle();
 
-	const showBanner = application?.status === "no_application";
-
-	// ── Parallel data fetching ────────────────────────────────────────────────
-	// We request booking_items with equipment AND equipment_image_links
-	// so we can show thumbnails in the preview cards.
-	// All in one parallel batch to avoid waterfalls.
-	// const [
-	// 	{ data: bookingsRaw },
-	// 	{ count: totalBookings },
-	// 	{ count: activeBookings },
-	// 	{ data: spendingData },
-	// ] = await Promise.all([
-	// 	supabase
-	// 		.from("bookings")
-	// 		.select(`
-	// 			id,
-	// 			start_date,
-	// 			end_date,
-	// 			total_amount,
-	// 			status,
-	// 			created_at,
-	// 			booking_items (
-	// 				price_at_booking,
-	// 				equipment (
-	// 					title,
-	// 					equipment_image_links (
-	// 						images ( url )
-	// 					)
-	// 				)
-	// 			)
-	// 		`)
-	// 		.eq("user_id", user.id)
-	// 		.order("created_at", { ascending: false })
-	// 		.limit(10),
-
-	// 	supabase
-	// 		.from("bookings")
-	// 		.select("id", { count: "exact", head: true })
-	// 		.eq("user_id", user.id),
-
-	// 	supabase
-	// 		.from("bookings")
-	// 		.select("id", { count: "exact", head: true })
-	// 		.eq("user_id", user.id)
-	// 		.in("status", ["pending", "confirmed", "active"]),
-
-	// 	supabase
-	// 		.from("bookings")
-	// 		.select("total_amount")
-	// 		.eq("user_id", user.id)
-	// 		.eq("status", "completed"),
-	// ]);
+	const showBanner =
+		application?.status === "no_application" || application?.status === "draft";
 
 	const [
 		{ data: bookingsRaw },
@@ -167,13 +117,13 @@ export default async function DashboardPage() {
 			.eq("user_id", user.id)
 			.in("status", ["pending", "confirmed", "active"]),
 
-		supabase // ← новое
+		supabase
 			.from("bookings")
 			.select("id", { count: "exact", head: true })
 			.eq("user_id", user.id)
 			.eq("status", "completed"),
 
-		supabase // ← новое
+		supabase
 			.from("bookings")
 			.select("id", { count: "exact", head: true })
 			.eq("user_id", user.id)
