@@ -71,3 +71,30 @@ export function combineDateAndTime(
 	if (hours !== undefined) newDate.setHours(hours, minutes, 0, 0);
 	return newDate;
 }
+
+export type Fmt = "time" | "date" | "datetime" | "full";
+
+export function clientTimeFormat(date: Date, fmt: Fmt): string {
+	const timeOpts: Intl.DateTimeFormatOptions = {
+		hour: "2-digit",
+		minute: "2-digit",
+	};
+	const dateOpts: Intl.DateTimeFormatOptions = {
+		day: "numeric",
+		month: "short",
+	};
+	switch (fmt) {
+		case "time":
+			return date.toLocaleTimeString("ru-RU", timeOpts);
+		case "date":
+			return date.toLocaleDateString("ru-RU", dateOpts);
+		case "datetime":
+			return `${date.toLocaleDateString("ru-RU", dateOpts)}, ${date.toLocaleTimeString("ru-RU", timeOpts)}`;
+		case "full":
+			return date.toLocaleDateString("ru-RU", {
+				day: "numeric",
+				month: "long",
+				year: "numeric",
+			});
+	}
+}
