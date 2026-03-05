@@ -1,6 +1,53 @@
 import { createClient } from "@/lib/supabase/client";
 import { getFileHash, slugify } from "@/utils";
 
+// ── Avatar upload ─────────────────────────────────────────────────────────────
+// Bucket: "avatars" — public bucket, one file per user (keyed by user id).
+// RLS policy:
+//   CREATE POLICY "avatar_upload" ON storage.objects FOR INSERT
+//     WITH CHECK (bucket_id = 'avatars' AND auth.uid()::text = (storage.foldername(name))[1]);
+//   CREATE POLICY "avatar_update" ON storage.objects FOR UPDATE
+//     WITH CHECK (bucket_id = 'avatars' AND auth.uid()::text = (storage.foldername(name))[1]);
+
+export async function uploadAvatarImage(file: File): Promise<string> {
+	const supabase = createClient();
+
+	const {
+		data: { user },
+	} = await supabase.auth.getUser();
+	if (!user) throw new Error("Не авторизован");
+
+	const ext = file.name.split(".").pop() ?? "webp";
+	// Store as <user_id>/<user_id>.<ext> so RLS folder check passes
+	const filePath = `${user.id}/${user.id}.${ext}`;
+
+	const { error: uploadError } = await supabase.storage
+		.from("avatars")
+		.upload(filePath, file, {
+			upsert: true,
+			contentType: file.type,
+		});
+
+	if (uploadError) throw uploadError;
+
+	const {
+		data: { publicUrl },
+	} = supabase.storage.from("avatars").getPublicUrl(filePath);
+
+	// Bust CDN cache by appending a timestamp query param
+	const bustUrl = `${publicUrl}?t=${Date.now()}`;
+
+	// Persist to auth metadata and profiles table in parallel
+	await Promise.all([
+		supabase.auth.updateUser({ data: { avatar_url: bustUrl } }),
+		supabase.from("profiles").update({ avatar_url: bustUrl }).eq("id", user.id),
+	]);
+
+	return bustUrl;
+}
+
+// ── Equipment image upload ────────────────────────────────────────────────────
+
 export async function uploadEquipmentImage(
 	file: File,
 	equipmentId: string,
@@ -8,7 +55,6 @@ export async function uploadEquipmentImage(
 ): Promise<{ id: string; url: string }> {
 	const supabase = createClient();
 
-	// Get equipment title for folder naming
 	const { data: equipmentData } = await supabase
 		.from("equipment")
 		.select("title")
@@ -16,8 +62,6 @@ export async function uploadEquipmentImage(
 		.single();
 
 	const equipmentTitle = equipmentData?.title || "unknown";
-
-	// We will use the file hash to check for duplicates
 	const fileHash = await getFileHash(file);
 
 	const uploadOptions = {
@@ -29,7 +73,6 @@ export async function uploadEquipmentImage(
 		},
 	};
 
-	// check if an image with the same hash already exists
 	const { data: existingImage } = await supabase
 		.from("images")
 		.select("id, url")
@@ -44,7 +87,6 @@ export async function uploadEquipmentImage(
 		publicUrl = existingImage.url;
 		if (onProgress) onProgress(100);
 	} else {
-		// if no duplicate, upload the file and create a new record
 		const folderName = slugify(equipmentTitle);
 		const fileExt = file.name.split(".").pop();
 		const fileName = `${fileHash}.${fileExt}`;
@@ -61,7 +103,6 @@ export async function uploadEquipmentImage(
 		} = supabase.storage.from("equipment-images").getPublicUrl(filePath);
 
 		publicUrl = url;
-		// save the new image record in the database
 		const { data: newImage, error: dbError } = await supabase
 			.from("images")
 			.insert({ url: publicUrl, hash: fileHash })
@@ -72,7 +113,6 @@ export async function uploadEquipmentImage(
 		targetImageId = newImage.id;
 	}
 
-	// link the image to the equipment (if not already linked)
 	const { error: linkError } = await supabase
 		.from("equipment_image_links")
 		.upsert({ equipment_id: equipmentId, image_id: targetImageId });

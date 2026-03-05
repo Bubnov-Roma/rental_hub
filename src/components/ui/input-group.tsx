@@ -3,32 +3,36 @@
 import { cva, type VariantProps } from "class-variance-authority";
 import type * as React from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 
-function InputGroup({ className, ...props }: React.ComponentProps<"div">) {
+function InputGroup({
+	className,
+	error,
+	...props
+}: React.ComponentProps<"div"> & { error?: boolean }) {
 	return (
 		// biome-ignore lint/a11y/useSemanticElements: the use of div is justified by styling
 		<div
 			data-slot="input-group"
 			role="group"
 			className={cn(
-				"group/input-group border-input dark:bg-input/30 relative flex w-full items-center rounded-md border shadow-xs transition-[color,box-shadow] outline-none",
-				"h-9 min-w-0 has-[>textarea]:h-auto",
+				// "glass-input",
+				"group/input-group relative flex w-full items-center transition-all duration-300",
+				"h-12 min-w-0 rounded-xl overflow-hidden",
+				"hover:bg-(--input-bg-hover) hover:border-black/15 dark:hover:border-white/15 focus:border-primary/30",
+				"focus-within:bg-(--input-bg-focus)! focus-within:shadow-(--input-shadow-focus)!",
+				"focus-within:border-[oklch(from_var(--brand-color)_l_c_h/0.5)] focus-within:translate-y-0 focus-within:ring-1 focus-within:ring-primary/10",
+				error
+					? "border-red-400/50 ring-red-400/10 shadow-error-glow"
+					: "border-foreground/10",
+				"has-[>textarea]:h-auto",
 
 				// Variants based on alignment.
 				"has-[>[data-align=inline-start]]:[&>input]:pl-2",
 				"has-[>[data-align=inline-end]]:[&>input]:pr-2",
 				"has-[>[data-align=block-start]]:h-auto has-[>[data-align=block-start]]:flex-col has-[>[data-align=block-start]]:[&>input]:pb-3",
 				"has-[>[data-align=block-end]]:h-auto has-[>[data-align=block-end]]:flex-col has-[>[data-align=block-end]]:[&>input]:pt-3",
-
-				// Focus state.
-				"has-[[data-slot=input-group-control]:focus-visible]:border-ring has-[[data-slot=input-group-control]:focus-visible]:ring-ring/50 has-[[data-slot=input-group-control]:focus-visible]:ring-[3px]",
-
-				// Error state.
-				"has-[[data-slot][aria-invalid=true]]:ring-destructive/20 has-[[data-slot][aria-invalid=true]]:border-destructive dark:has-[[data-slot][aria-invalid=true]]:ring-destructive/40",
-
 				className
 			)}
 			{...props}
@@ -37,7 +41,7 @@ function InputGroup({ className, ...props }: React.ComponentProps<"div">) {
 }
 
 const inputGroupAddonVariants = cva(
-	"text-muted-foreground flex h-auto cursor-text items-center justify-center gap-2 py-1.5 text-sm font-medium select-none [&>svg:not([class*='size-'])]:size-4 [&>kbd]:rounded-[calc(var(--radius)-5px)] group-data-[disabled=true]/input-group:opacity-50",
+	"text-muted-foreground flex h-full cursor-text items-center justify-center gap-2 px-3 text-sm font-medium select-none transition-colors duration-300",
 	{
 		variants: {
 			align: {
@@ -135,10 +139,13 @@ function InputGroupInput({
 	...props
 }: React.ComponentProps<"input">) {
 	return (
-		<Input
+		<input
 			data-slot="input-group-control"
 			className={cn(
-				"flex-1 rounded-none border-0 bg-transparent shadow-none focus-visible:ring-0 dark:bg-transparent",
+				"flex-1 h-full w-full bg-transparent border-none outline-none px-3",
+				"text-base md:text-sm placeholder:text-foreground/30",
+				"focus:ring-0 focus:outline-none",
+				"disabled:cursor-not-allowed disabled:opacity-50",
 				className
 			)}
 			{...props}

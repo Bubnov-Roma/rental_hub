@@ -1,5 +1,6 @@
 export * from "./booking-status.utils";
 export * from "./client-data.utils";
+export * from "./deep-set-application";
 export * from "./error-handler";
 export * from "./get-hash";
 export * from "./get-url";

@@ -2,7 +2,6 @@
 
 import { motion } from "framer-motion";
 import { useFormContext, useWatch } from "react-hook-form";
-import { SectionWrapper } from "@/components/forms/client-forms/shared";
 import { FormInput } from "@/components/forms/shared/FormInput";
 import { FormRadioGroup } from "@/components/forms/shared/FormRadioGroup";
 import { REFERRAL_OPTIONS } from "@/constants";
@@ -21,13 +20,13 @@ export const FinalsSection = () => {
 	);
 
 	const showExtraInput = !!selectedOption && selectedOption.placeholder !== "";
-
 	const inputIsDisabled =
 		referralSource !== "friends" &&
 		referralSource !== "photo_school" &&
 		referralSource !== "other";
+
 	return (
-		<SectionWrapper className="lg:grid-cols-1">
+		<div className="space-y-5">
 			<FormRadioGroup
 				name="applicationData.additional.referralSource"
 				label="Как вы о нас узнали?"
@@ -43,16 +42,16 @@ export const FinalsSection = () => {
 					<FormInput
 						name="applicationData.additional.recommendation"
 						label={selectedOption.placeholder}
-						placeholder={""}
+						placeholder=""
 						disabled={inputIsDisabled}
 					/>
 				</motion.div>
 			)}
-			{/* <FormInput
+			<FormInput
 				name="agreements.promoCode"
 				label="Промокод"
-				placeholder="введите промокод"
-			/> */}
-		</SectionWrapper>
+				placeholder="Введите промокод"
+			/>
+		</div>
 	);
 };

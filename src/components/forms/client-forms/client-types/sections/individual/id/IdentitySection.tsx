@@ -8,16 +8,11 @@ import {
 	SectionColumn,
 	SectionWrapper,
 } from "@/components/forms/client-forms/shared";
-import { FormInput, FormRadioGroup } from "@/components/forms/shared";
 import { DateInput } from "@/components/forms/shared/DateInput";
 import { FormTextarea } from "@/components/forms/shared/FormTextarea";
 import { PassportInput } from "@/components/forms/shared/PassportInput";
 import { PhoneInput } from "@/components/forms/shared/PhoneInput";
 import { cn } from "@/lib/utils";
-
-// ─── Mobile accordion column ───────────────────────────────────────────────────
-// On mobile (<md), each SectionColumn becomes an accordion panel.
-// On desktop it renders as normal SectionColumn side-by-side.
 
 interface AccordionColumnProps {
 	title: string;
@@ -54,12 +49,7 @@ function AccordionColumn({
 						{title}
 					</span>
 					{headerRight && (
-						<button
-							type="button"
-							onClick={(e) => {
-								e.stopPropagation();
-							}}
-						>
+						<button type="button" onClick={(e) => e.stopPropagation()}>
 							{headerRight}
 						</button>
 					)}
@@ -87,7 +77,7 @@ function AccordionColumn({
 				</AnimatePresence>
 			</div>
 
-			{/* Desktop original SectionColumn */}
+			{/* Desktop SectionColumn */}
 			<div className="hidden md:block">
 				<SectionColumn
 					title={title}
@@ -101,8 +91,6 @@ function AccordionColumn({
 		</>
 	);
 }
-
-// ─── IdentitySection ───────────────────────────────────────────────────────────
 
 export const IdentitySection = () => {
 	return (
@@ -129,13 +117,6 @@ export const IdentitySection = () => {
 						label="Телефон"
 					/>
 				</div>
-				<FormInput
-					required
-					name="applicationData.personalData.email"
-					label="Email"
-					type="email"
-					placeholder="name@example.com"
-				/>
 			</AccordionColumn>
 
 			<AccordionColumn
@@ -162,15 +143,6 @@ export const IdentitySection = () => {
 					placeholder="Наименование органа выдавшего документ"
 					rows={3}
 					className="min-h-25"
-				/>
-				<FormRadioGroup
-					required
-					name="applicationData.personalData.maritalStatus"
-					label="Семейное положение"
-					options={[
-						{ id: "single", label: "Холост / Не замужем", color: "#60a5fa" },
-						{ id: "married", label: "Женат / Замужем", color: "#f472b6" },
-					]}
 				/>
 			</AccordionColumn>
 		</SectionWrapper>
