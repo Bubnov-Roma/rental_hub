@@ -4,7 +4,7 @@ import { FilePenLine, MapPin, ShieldCheck, User } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
-import { updateApplicationDataAction } from "@/app/actions/client-application.actions";
+import { updateApplicationDataAction } from "@/actions/client-application-actions";
 import { InlineEditField } from "@/components/shared";
 import {
 	AlertDialog,
@@ -249,7 +249,7 @@ export function ApplicationDataEditor({ data }: ApplicationDataEditorProps) {
 					<FieldRow label="Город">
 						<InlineEditField
 							value={ad.addresses.registration.city}
-							placeholder="Москва"
+							placeholder="Самара"
 							onSave={makeFieldSaver(
 								"applicationData.addresses.registration.city",
 								"Город регистрации",

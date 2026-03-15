@@ -40,8 +40,8 @@ import {
 	Button,
 	Input,
 } from "@/components/ui";
-import { SUPPORT_PHONE, SUPPORT_TELEGRAM } from "@/constants";
-import { useAuth } from "@/hooks/useAuth";
+import { SUPPORT_PHONE_DEFAULT, SUPPORT_TELEGRAM_DEFAULT } from "@/constants";
+import { useAuth } from "@/hooks/use-auth";
 import { createClient } from "@/lib/supabase/client";
 import { uploadAvatarImage } from "@/lib/supabase/storage";
 import { cn } from "@/lib/utils";
@@ -97,7 +97,7 @@ export function ProfileDetails({ data }: { data: ClientFormValues | null }) {
 	const nickname = user?.user_metadata?.nickname as string | undefined;
 	const fullName =
 		displayData?.name ??
-		(user?.user_metadata?.name as string | undefined) ??
+		(user?.user_metadata?.full_name as string | undefined) ??
 		null;
 	const displayName = nickname ?? fullName ?? user?.email?.split("@")[0] ?? "—";
 	const avatarUrl = user?.user_metadata?.avatar_url as string | undefined;
@@ -385,7 +385,7 @@ export function ProfileDetails({ data }: { data: ClientFormValues | null }) {
 
 					<SectionCard title="Поддержка">
 						<a
-							href={SUPPORT_TELEGRAM}
+							href={SUPPORT_TELEGRAM_DEFAULT}
 							target="_blank"
 							rel="noopener noreferrer"
 							className="detail-row hover:bg-foreground/5 transition-colors group"
@@ -400,13 +400,13 @@ export function ProfileDetails({ data }: { data: ClientFormValues | null }) {
 							/>
 						</a>
 						<a
-							href={`tel:${SUPPORT_PHONE.replace(/\s/g, "")}`}
+							href={`tel:${SUPPORT_PHONE_DEFAULT.replace(/\s/g, "")}`}
 							className="detail-row hover:bg-foreground/5 transition-colors"
 						>
 							<div className="flex items-center gap-3">
 								<Phone size={14} className="text-muted-foreground/40" />
 								<span className="text-sm text-muted-foreground">
-									{SUPPORT_PHONE}
+									{SUPPORT_PHONE_DEFAULT}
 								</span>
 							</div>
 						</a>
@@ -503,7 +503,10 @@ export function ProfileDetails({ data }: { data: ClientFormValues | null }) {
 					{(status === "approved" || status === "standard") && (
 						<button
 							type="button"
-							onClick={() => setActiveTab("update_data")}
+							onClick={() => {
+								window.scrollTo({ top: 0, behavior: "smooth" });
+								setActiveTab("update_data");
+							}}
 							className="w-full flex items-center gap-3 px-5 py-4 rounded-2xl border border-primary/10 bg-secondary/30 text-primary-accent/60 hover:text-primary-accent hover:bg-secondary/60 transition-colors"
 						>
 							<FilePenLine size={16} />

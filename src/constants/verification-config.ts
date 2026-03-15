@@ -9,7 +9,10 @@ import {
 	ShieldCheck,
 	XCircle,
 } from "lucide-react";
-import { SUPPORT_PHONE, SUPPORT_TELEGRAM } from "@/constants/support";
+import {
+	SUPPORT_PHONE_DEFAULT,
+	SUPPORT_TELEGRAM_DEFAULT,
+} from "@/constants/support";
 import type { ApplicationStatus } from "@/types";
 
 export interface StatusAction {
@@ -118,13 +121,16 @@ export const VERIFICATION_CONFIG: Record<ApplicationStatus, StatusConfig> = {
 	},
 	rejected: {
 		label: "Запрос отклонён",
-		description: `К сожалению ваша анкета не прошла проверку. Если у вас возникли вопросы пожалуйста свяжитесь с нами по телфону ${SUPPORT_PHONE} либо в telegram`,
+		description: `К сожалению ваша анкета не прошла проверку. Если у вас возникли вопросы пожалуйста свяжитесь с нами по телфону ${SUPPORT_PHONE_DEFAULT} либо в telegram`,
 		Icon: AlertCircle,
 		color: "text-red-400",
 		bgColor: "bg-red-400/10",
 		borderColor: "border-red-400/20",
 		glowColor: "shadow-red-400/20",
-		action: { href: `${SUPPORT_TELEGRAM}`, label: "Написать в telegram" },
+		action: {
+			href: `${SUPPORT_TELEGRAM_DEFAULT}`,
+			label: "Написать в telegram",
+		},
 	},
 	blocked: {
 		label: "Профиль заблокирован",

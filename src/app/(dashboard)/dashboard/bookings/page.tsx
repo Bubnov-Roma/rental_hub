@@ -1,4 +1,7 @@
+import { ArrowLeft } from "lucide-react";
+import Link from "next/link";
 import { BookingsTable } from "@/components/dashboard/bookings/BookingsTable";
+import { DashboardBreadcrumb } from "@/components/dashboard/DashboardBreadcrumb";
 import { createClient } from "@/lib/supabase/server";
 import type { BookingRow } from "@/types";
 
@@ -37,47 +40,30 @@ export default async function BookingsPage() {
 		.eq("user_id", user?.id ?? "")
 		.order("created_at", { ascending: false });
 
-	// Cast to our strict type — Supabase inference is sometimes too wide
 	const bookings = (raw ?? []) as unknown as BookingRow[];
-
-	const totalBookings = bookings.length;
-	// const totalSpent = bookings.reduce(
-	// 	(acc, b) => acc + (b.total_amount || 0),
-	// 	0
-	// );
 
 	return (
 		<div className="min-h-screen">
 			<div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-8">
+				<DashboardBreadcrumb items={[{ label: "Мои заказы" }]} />
 				{/* Header */}
-				<div className="space-y-1">
-					<h1 className="text-3xl sm:text-4xl font-black uppercase italic tracking-tighter">
-						Мои заказы
-					</h1>
-					<p className="text-muted-foreground text-sm">
-						История и статусы аренды
-					</p>
-				</div>
-
-				{/* Stats */}
-				<div className="flex gap-4 sm:gap-8">
-					<div>
-						<div className="text-2xl sm:text-3xl font-black tabular-nums">
-							{totalBookings}
-						</div>
-						<div className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium">
-							Всего заказов
+				<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+					<div className="flex items-center gap-4">
+						<Link
+							href="/dashboard"
+							className="w-10 h-10 rounded-xl border border-foreground/10 flex items-center justify-center hover:bg-foreground/5 transition-all shrink-0"
+						>
+							<ArrowLeft size={18} />
+						</Link>
+						<div>
+							<p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/40">
+								История аренды
+							</p>
+							<h1 className="text-2xl font-black italic uppercase tracking-tighter leading-tight">
+								Мои заказы
+							</h1>
 						</div>
 					</div>
-					<div className="w-px bg-border" />
-					{/* <div>
-						<div className="text-2xl sm:text-3xl font-black tabular-nums">
-							{totalSpent.toLocaleString()} ₽
-						</div>
-						<div className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium">
-							Потрачено
-						</div>
-					</div> */}
 				</div>
 				<BookingsTable bookings={bookings} />
 			</div>

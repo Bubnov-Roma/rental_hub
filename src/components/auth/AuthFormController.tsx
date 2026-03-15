@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 import { SuccessView } from "@/components/auth/forms/SuccessView";
 import { UpdatePasswordForm } from "@/components/auth/forms/UpdatePasswordForm";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/hooks/use-auth";
 import { ForgotPasswordForm } from "./forms/ForgotPasswordForm";
 import { LoginForm } from "./forms/LoginForm";
 import { OtpForm } from "./forms/OtpForm";

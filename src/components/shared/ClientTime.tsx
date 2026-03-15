@@ -15,7 +15,7 @@ import { clientTimeFormat, type Fmt } from "@/lib/utils";
 //   <span>{format(new Date(booking.start_date), "HH:mm")}</span>
 //   <span>{new Date(booking.end_date).toLocaleTimeString()}</span>
 //
-//   // Стало (гидратация-безопасно):
+// Стало (гидратация-безопасно):
 //   <ClientTime iso={booking.start_date} />
 //   <ClientTime iso={booking.end_date} fmt="datetime" />
 
@@ -26,7 +26,6 @@ interface ClientTimeProps {
 	iso: string | Date;
 	fmt?: Fmt;
 	className?: string;
-	/** Что показать до гидратации (на сервере и мгновение после). Default: "" */
 	fallback?: string;
 }
 

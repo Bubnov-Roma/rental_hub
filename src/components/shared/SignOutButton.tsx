@@ -3,7 +3,7 @@
 import { LogOut } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { signOutAction } from "@/app/actions/auth";
+import { signOutAction } from "@/actions/auth";
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -30,7 +30,7 @@ export function SignOutButton({
 }: SignOutButtonProps) {
 	const [isPending, setIsPending] = useState(false);
 	const [isOpen, setIsOpen] = useState(false);
-	const { isDirty, setDirty } = useUnsavedChanges();
+	const { isDirty, markDirty, markClean } = useUnsavedChanges();
 
 	const handleSignOut = async () => {
 		setIsOpen(false);
@@ -38,7 +38,7 @@ export function SignOutButton({
 		try {
 			const result = await signOutAction();
 			if (result?.success) {
-				setDirty(false);
+				markDirty();
 				window.location.href = "/";
 			} else {
 				toast.error(result?.error || "Ошибка при выходе");
@@ -47,6 +47,7 @@ export function SignOutButton({
 		} catch (error) {
 			console.error(error);
 			setIsPending(false);
+			markClean();
 			toast.success("Вы успешно разлогинились");
 		} finally {
 			setIsPending(false);
