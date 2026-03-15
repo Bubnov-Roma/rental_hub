@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
-import { CATEGORIES } from "@/constants/categories";
 import type {
 	DbEquipment,
 	GroupedEquipment,
@@ -49,31 +48,37 @@ export function useEquipment(
         *,
         equipment_image_links(images(id, url))
       `);
+			query = query.eq("is_available", true);
 
 			if (memoFilters.search) {
 				query = query.ilike("title", `%${memoFilters.search}%`);
 			}
 
 			if (memoFilters.categorySlug !== "all") {
-				const cat = CATEGORIES.find((c) => c.slug === memoFilters.categorySlug);
-				if (cat) query = query.eq("category", cat.id);
+				// Ищем категорию по slug в БД через join или отдельным запросом.
+				// Поскольку category хранит UUID, сначала резолвим slug → UUID.
+				const { data: catRow } = await supabase
+					.from("categories")
+					.select("id")
+					.eq("slug", memoFilters.categorySlug)
+					.single();
+
+				if (catRow) {
+					query = query.eq("category", catRow.id);
+				}
 			}
 
 			if (memoFilters.subcategorySlug) {
-				let subcategoryId: string | null = null;
-				outer: for (const cat of CATEGORIES) {
-					if (!cat.subcategories) continue;
-					for (const sub of cat.subcategories as Array<{
-						id: string;
-						slug: string;
-					}>) {
-						if (sub.slug === memoFilters.subcategorySlug) {
-							subcategoryId = sub.id;
-							break outer;
-						}
-					}
+				// Резолвим subcategory slug → UUID
+				const { data: subRow } = await supabase
+					.from("subcategories")
+					.select("id")
+					.eq("slug", memoFilters.subcategorySlug)
+					.single();
+
+				if (subRow) {
+					query = query.eq("subcategory", subRow.id);
 				}
-				if (subcategoryId) query = query.eq("subcategory", subcategoryId);
 			}
 
 			if (memoFilters.limit) query = query.limit(memoFilters.limit);
@@ -159,12 +164,8 @@ export function useEquipment(
 
 			return Object.values(groupedMap);
 		},
-		// initialData приходит с сервера (SSR) и уже отфильтрована под текущий URL.
-		// React Query кладёт её в кэш под текущим queryKey.
-		// При смене фильтра queryKey меняется → кэша нет → уходит клиентский запрос.
-		// При повторном заходе на тот же фильтр → данные из кэша (staleTime).
 		initialData,
-		staleTime: 1000 * 60 * 3, // 3 минуты — достаточно для навигации туда-обратно
+		staleTime: 1000 * 60 * 3,
 		gcTime: 1000 * 60 * 10,
 		refetchOnWindowFocus: false,
 		retry: 1,

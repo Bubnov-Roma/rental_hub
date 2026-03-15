@@ -1,9 +1,9 @@
 "use client";
 
 import { Box } from "lucide-react";
+import { EquipmentCard } from "@/components/shared/EquipmentCard";
 import { Skeleton } from "@/components/ui";
 import type { GroupedEquipment } from "@/core/domain/entities/Equipment";
-import { EquipmentCard } from "./EquipmentCard";
 
 interface EquipmentGridProps {
 	items: GroupedEquipment[];
@@ -38,7 +38,9 @@ export function EquipmentGrid({ items, isLoading }: EquipmentGridProps) {
 		);
 	}
 
-	if (items.length === 0) {
+	const visibleItems = items.filter((item) => item.is_available);
+
+	if (visibleItems.length === 0) {
 		return (
 			<div className="flex flex-col items-center justify-center py-24 text-center">
 				<div className="w-16 h-16 mb-4 bg-foreground/5 rounded-full flex items-center justify-center">
@@ -54,7 +56,7 @@ export function EquipmentGrid({ items, isLoading }: EquipmentGridProps) {
 
 	return (
 		<div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-x-3 gap-y-6">
-			{items.map((item) => (
+			{visibleItems.map((item) => (
 				<EquipmentCard key={item.id} item={item} />
 			))}
 		</div>

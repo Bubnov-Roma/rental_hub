@@ -8,13 +8,6 @@ interface ApplicationStatusBadgeProps {
 	className?: string;
 }
 
-/**
- * Универсальный badge статуса анкеты.
- * Обновляется мгновенно через zustand (realtime Supabase).
- *
- * Использование в шапке профиля:
- * <ApplicationStatusBadge variant="compact" />
- */
 export function ApplicationStatusBadge({
 	variant = "compact",
 	className,

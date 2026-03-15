@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { CATEGORIES } from "@/constants";
+import type { DbCategory } from "@/constants/navigation";
 
 export interface SearchPanelState {
 	query: string;
@@ -13,7 +13,7 @@ export interface SearchPanelState {
 	handleCategoryClick: (slug: string) => void;
 }
 
-export function useSearchState() {
+export function useSearchState(categories: DbCategory[] = []) {
 	const [query, setQuery] = useState("");
 	const [category, setCategory] = useState("all");
 	const [subcategory, setSubcategory] = useState("");
@@ -31,7 +31,7 @@ export function useSearchState() {
 	const handleCategoryClick = useCallback(
 		(slug: string) => {
 			const hasSubs =
-				(CATEGORIES.find((c) => c.slug === slug)?.subcategories?.length ?? 0) >
+				(categories.find((c) => c.slug === slug)?.subcategories?.length ?? 0) >
 				0;
 			if (slug === "all") {
 				selectCategory("all");
@@ -41,7 +41,7 @@ export function useSearchState() {
 			selectCategory(slug);
 			setExpandedCat(hasSubs ? (expandedCat === slug ? "" : slug) : "");
 		},
-		[selectCategory, expandedCat]
+		[selectCategory, expandedCat, categories]
 	);
 
 	const reset = useCallback(() => {

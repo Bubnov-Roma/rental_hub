@@ -4,14 +4,10 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { get, useFormContext, useWatch } from "react-hook-form";
 import { AddressFieldsGroup } from "@/components/forms/client-forms/client-types/sections/individual/address/AddressFieldsGroup";
+import { FinalsSection } from "@/components/forms/client-forms/client-types/sections/individual/contacts/FinalsSection";
 import { SocialsSection } from "@/components/forms/client-forms/client-types/sections/individual/contacts/SocialsSection";
-import { FinalsSection } from "@/components/forms/client-forms/client-types/sections/individual/final/FinalsSection";
 import { FioInput } from "@/components/forms/client-forms/client-types/sections/individual/id/FioInput";
-import {
-	FormCheckbox,
-	FormInput,
-	SubmitButton,
-} from "@/components/forms/shared";
+import { FormCheckbox, SubmitButton } from "@/components/forms/shared";
 import { DateInput } from "@/components/forms/shared/DateInput";
 import { FormTextarea } from "@/components/forms/shared/FormTextarea";
 import { PassportInput } from "@/components/forms/shared/PassportInput";
@@ -32,7 +28,6 @@ interface SectionDef {
 	dotColor: string;
 	fields: string[];
 	content: React.ReactNode;
-	triggerExtra?: React.ReactNode;
 }
 
 interface MobileClientFormProps {
@@ -95,8 +90,6 @@ export function MobileClientForm({
 				"applicationData.personalData.name",
 				"applicationData.personalData.birth",
 				"applicationData.personalData.phone",
-				"applicationData.personalData.email",
-				"applicationData.personalData.maritalStatus",
 			],
 			content: (
 				<div className="space-y-4">
@@ -117,13 +110,6 @@ export function MobileClientForm({
 							label="Телефон"
 						/>
 					</div>
-					<FormInput
-						required
-						name="applicationData.personalData.email"
-						label="Email"
-						type="email"
-						placeholder="name@example.com"
-					/>
 				</div>
 			),
 		},
@@ -172,20 +158,21 @@ export function MobileClientForm({
 				"applicationData.addresses.registration.region",
 				"applicationData.addresses.registration.index",
 			],
-			triggerExtra: (
-				<div
-					onClick={(e) => e.stopPropagation()}
-					onKeyDown={(e) => e.stopPropagation()}
-					role="none"
-				>
-					<FormCheckbox
-						name="applicationData.addresses.isSame"
-						label="= Факт."
-					/>
-				</div>
-			),
 			content: (
-				<AddressFieldsGroup prefix="applicationData.addresses.registration" />
+				<div className="space-y-4">
+					<AddressFieldsGroup prefix="applicationData.addresses.registration" />
+					{/* Checkbox inside form body — works correctly on mobile */}
+					<div
+						onClick={(e) => e.stopPropagation()}
+						onKeyDown={(e) => e.stopPropagation()}
+						role="none"
+					>
+						<FormCheckbox
+							name="applicationData.addresses.isSame"
+							label="Совпадает с фактическим адресом"
+						/>
+					</div>
+				</div>
 			),
 		},
 		...(isSame
@@ -208,20 +195,21 @@ export function MobileClientForm({
 					} as SectionDef,
 				]),
 		{
-			id: "socials",
-			title: "Мессенджеры и соцсети",
+			id: "contacts",
+			title: "Соцсети и контакты",
 			dotColor: "bg-sky-400",
-			fields: ["applicationData.contacts.socials"],
-			content: <SocialsSection />,
-		},
-		{
-			id: "discovery",
-			title: "Как вы о нас узнали",
-			dotColor: "bg-rose-500",
-			// ✅ FIXED: was "applicationData.contacts.discovery" — field doesn't exist!
-			// Correct Zod path: applicationData.additional.referralSource
-			fields: ["applicationData.additional.referralSource"],
-			content: <FinalsSection />,
+			fields: [
+				"applicationData.contacts.socials",
+				"applicationData.additional.referralSource",
+			],
+			content: (
+				<div className="space-y-6">
+					<SocialsSection />
+					<div className="border-t border-foreground/5 pt-5">
+						<FinalsSection />
+					</div>
+				</div>
+			),
 		},
 	];
 
@@ -259,7 +247,7 @@ export function MobileClientForm({
 
 	return (
 		<>
-			<div className="py-4">
+			<div className="py-4 pb-10">
 				<h1 className="text-3xl font-black tracking-tight uppercase italic text-center pb-4">
 					Анкета
 				</h1>
@@ -310,7 +298,6 @@ export function MobileClientForm({
 									>
 										{section.title}
 									</span>
-									{section.triggerExtra}
 									{!isOpen && status !== "untouched" && (
 										<span
 											className={cn(

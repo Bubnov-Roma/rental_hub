@@ -1,6 +1,5 @@
 import {
 	Maximize,
-	// Maximize,
 	Monitor,
 	RectangleHorizontal,
 	RotateCwSquare,

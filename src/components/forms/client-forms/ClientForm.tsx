@@ -1,34 +1,25 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft } from "lucide-react";
-import Link from "next/link";
 import { useQueryState } from "nuqs";
 import { useCallback, useEffect, useRef } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { submitClientApplicationAction } from "@/app/actions/client-form.action";
 import {
 	loadDraftAction,
 	saveDraftAction,
-} from "@/app/actions/save-draft-action";
+	submitClientApplicationAction,
+} from "@/actions/client-application-actions";
 import { UniversalClientForm } from "@/components/forms/client-forms/client-types/UniversalClientForm";
 import { Card } from "@/components/ui/card";
+import { useAuth } from "@/hooks/use-auth";
 import { type ClientFormValues, clientFormSchema } from "@/schemas";
 import { useApplicationStore } from "@/store";
 
-/**
- * Draft save strategy:
- * - On mount: load from server (cross-device, all fields including passport)
- * - On change (debounced 2s): autosave to server via saveDraftAction
- * - On submit: full submit via submitClientApplicationAction
- *
- * Sensitive data (passport) stays on server — never in localStorage.
- * Server row protected by RLS (user sees only their own row).
- */
 export const ClientForm = () => {
 	const submitSuccess = useApplicationStore((s) => s.submitSuccess);
 	const clearFormDraft = useApplicationStore((s) => s.clearFormDraft);
+	const { user } = useAuth();
 
 	const [step, setStep] = useQueryState("step", {
 		defaultValue: 0,
@@ -40,21 +31,48 @@ export const ClientForm = () => {
 	const methods = useForm<ClientFormValues>({
 		resolver: zodResolver(clientFormSchema),
 		mode: "onBlur",
-		defaultValues: { clientType: "individual" },
+		defaultValues: {
+			clientType: "individual",
+			applicationData: {
+				personalData: {
+					email: user?.email ?? "",
+				},
+			},
+		},
 	});
 
-	const { handleSubmit, setError, watch, reset } = methods;
+	const { handleSubmit, setError, watch, reset, setValue } = methods;
 
-	// Load server draft on mount
+	// biome-ignore lint/correctness/useExhaustiveDependencies: <draft save>
 	useEffect(() => {
+		const registrationEmail = user?.email ?? "";
+
 		loadDraftAction().then(({ data, status }) => {
 			if (data && status === "draft") {
-				reset({ ...data, clientType: "individual" } as ClientFormValues, {
-					keepDefaultValues: false,
-				});
+				// Merge draft into a full IndividualClient shape.
+				// Since clientFormSchema = individualClientSchema (no discriminated union),
+				// ClientFormValues IS IndividualClient — no cast needed.
+				const draft = data as Partial<ClientFormValues>;
+
+				reset(
+					{
+						...draft,
+						clientType: "individual",
+						applicationData: {
+							...draft.applicationData,
+							personalData: {
+								...draft.applicationData?.personalData,
+								email: registrationEmail,
+							},
+						},
+					},
+					{ keepDefaultValues: false }
+				);
+			} else if (registrationEmail) {
+				setValue("applicationData.personalData.email", registrationEmail);
 			}
 		});
-	}, [reset]);
+	}, [user?.email]);
 
 	// Autosave debounced 2s
 	const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -79,7 +97,7 @@ export const ClientForm = () => {
 			if (!result.success) {
 				if (result.errors) {
 					Object.entries(result.errors).forEach(([path, messages]) => {
-						setError(path as keyof ClientFormValues, {
+						setError(path as Parameters<typeof setError>[0], {
 							message: messages[0] ?? "",
 						});
 					});
@@ -96,7 +114,7 @@ export const ClientForm = () => {
 	};
 
 	return (
-		<div className="max-w-4xl mx-auto space-y-8">
+		<div className="max-w-4xl mx-auto space-y-4">
 			<FormProvider {...methods}>
 				<form
 					onSubmit={handleSubmit(onSubmit)}
@@ -107,14 +125,6 @@ export const ClientForm = () => {
 					</Card>
 				</form>
 			</FormProvider>
-
-			<Link
-				href="/dashboard"
-				className="flex items-center gap-2 text-foreground/40 hover:text-foreground transition-colors w-fit py-6"
-			>
-				<ArrowLeft size={16} />
-				<span className="text-sm">Вернуться в дашборд</span>
-			</Link>
 		</div>
 	);
 };

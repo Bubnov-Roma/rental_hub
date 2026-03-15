@@ -1,9 +1,10 @@
 import { X } from "lucide-react";
 import { useMemo } from "react";
-import { CATEGORIES } from "@/constants";
+import type { DbCategory } from "@/constants/navigation";
 import { cn } from "@/lib/utils";
 
 export function SearchFilters({
+	categories = [],
 	category,
 	subcategory,
 	expandedCat,
@@ -11,6 +12,7 @@ export function SearchFilters({
 	onSubcategory,
 	variant = "desktop",
 }: {
+	categories: DbCategory[];
 	category: string;
 	subcategory: string;
 	expandedCat: string;
@@ -19,8 +21,8 @@ export function SearchFilters({
 	variant?: "desktop" | "mobile";
 }) {
 	const subs = useMemo(
-		() => CATEGORIES.find((c) => c.slug === expandedCat)?.subcategories ?? [],
-		[expandedCat]
+		() => categories.find((c) => c.slug === expandedCat)?.subcategories ?? [],
+		[expandedCat, categories]
 	);
 
 	const isMobile = variant === "mobile";
@@ -31,9 +33,23 @@ export function SearchFilters({
 		>
 			{/* ── Строка Категорий ── */}
 			<div className="flex gap-1.5 overflow-x-auto no-scrollbar">
-				{CATEGORIES.map((cat) => {
+				{/* Кнопка "Все" */}
+				<button
+					type="button"
+					onClick={() => onCategory("all")}
+					className={cn(
+						"flex items-center gap-1 whitespace-nowrap shrink-0 rounded-xl transition-all font-bold uppercase tracking-[0.12em]",
+						isMobile ? "h-10 px-4 text-xs" : "h-8 px-3 text-[11px]",
+						category === "all"
+							? "bg-primary/10 text-primary"
+							: "bg-foreground/5 text-muted-foreground hover:text-foreground"
+					)}
+				>
+					Все
+				</button>
+				{categories.map((cat) => {
 					const active = category === cat.slug;
-					const hasSubs = (cat.subcategories?.length ?? 0) > 0;
+					const hasSubs = cat.subcategories.length > 0;
 					const expanded = expandedCat === cat.slug;
 					return (
 						<button

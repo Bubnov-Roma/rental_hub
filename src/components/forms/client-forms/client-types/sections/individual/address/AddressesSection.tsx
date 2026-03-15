@@ -9,10 +9,12 @@ import {
 	SectionWrapper,
 } from "@/components/forms/client-forms/shared";
 import { FormCheckbox } from "@/components/forms/shared";
+import { useIsMobile } from "@/hooks";
 import type { ClientFormValues } from "@/schemas";
 
 export const AddressesSection = () => {
 	const { control, setValue } = useFormContext<ClientFormValues>();
+	const isMobile = useIsMobile();
 
 	const isSame = useWatch({
 		control,
@@ -31,13 +33,7 @@ export const AddressesSection = () => {
 		} else {
 			setValue(
 				"applicationData.addresses.actual",
-				{
-					address: "",
-					index: "",
-					country: "",
-					region: "",
-					city: "",
-				},
+				{ address: "", index: "", country: "", region: "", city: "" },
 				{ shouldValidate: false }
 			);
 		}
@@ -50,6 +46,15 @@ export const AddressesSection = () => {
 		opacity: { duration: 0.1 },
 	};
 
+	const syncCheckbox = (
+		<FormCheckbox
+			name="applicationData.addresses.isSame"
+			label={
+				isMobile ? "Совпадает с фактическим адресом" : "Совпадает с фактическим"
+			}
+		/>
+	);
+
 	return (
 		<SectionWrapper
 			layout
@@ -58,14 +63,10 @@ export const AddressesSection = () => {
 			<SectionColumn
 				title="Адрес регистрации"
 				indicatorColor="bg-emerald-400"
-				headerRight={
-					<FormCheckbox
-						name="applicationData.addresses.isSame"
-						label="Совпадает с фактическим"
-					/>
-				}
+				headerRight={!isMobile ? syncCheckbox : undefined}
 			>
 				<AddressFieldsGroup prefix="applicationData.addresses.registration" />
+				{isMobile && <div className="pt-1">{syncCheckbox}</div>}
 			</SectionColumn>
 			<AnimatePresence mode="popLayout">
 				{!isSame && (

@@ -6,11 +6,15 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useCallback, useMemo } from "react";
 import { useDebounceValue } from "usehooks-ts";
-import { searchEquipmentAction } from "@/app/actions/equipment-actions";
+import { searchEquipmentAction } from "@/actions/equipment-actions";
 import { AddToCartButton } from "@/components/core/AddToCartButton";
 import { SearchFilters } from "@/components/core/search/SearchFilters";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { GroupedEquipment } from "@/core/domain/entities/Equipment";
+import type { DbCategory } from "@/constants/navigation";
+import type {
+	DbEquipment,
+	GroupedEquipment,
+} from "@/core/domain/entities/Equipment";
 import type { SearchPanelState } from "@/hooks";
 import { useSearchHistory } from "@/hooks/use-search-history";
 import { cn } from "@/lib/utils";
@@ -28,7 +32,7 @@ function ResultSkeleton({
 		<div className="space-y-1 py-2">
 			{Array.from({ length: count }).map((_, i) => (
 				<div
-					// biome-ignore lint/suspicious/noArrayIndexKey: <s>
+					// biome-ignore lint/suspicious/noArrayIndexKey: <skeleton>
 					key={i}
 					className={cn(
 						"flex items-center gap-3 px-2",
@@ -54,6 +58,7 @@ function ResultSkeleton({
 
 interface SearchPanelProps {
 	state: SearchPanelState;
+	categories: DbCategory[];
 	variant: "desktop" | "mobile";
 	onClose?: () => void;
 	className?: string;
@@ -61,6 +66,7 @@ interface SearchPanelProps {
 
 export function SearchPanel({
 	state,
+	categories = [],
 	variant,
 	onClose,
 	className,
@@ -88,18 +94,24 @@ export function SearchPanel({
 	const results = useMemo(() => {
 		if (!allResults) return undefined;
 		if (category === "all") return allResults;
-		return allResults.filter((item) => {
-			const catMatch = item.category === category;
+
+		// Найти UUID категории по slug
+		const catId = categories.find((c) => c.slug === category)?.id;
+
+		return allResults.filter((item: DbEquipment) => {
+			const catMatch = catId ? item.category === catId : true;
 			if (!subcategory) return catMatch;
-			return (
-				catMatch &&
-				(item as unknown as GroupedEquipment).subcategory === subcategory
-			);
+			// Найти UUID подкатегории по slug
+			const catData = categories.find((c) => c.slug === category);
+			const subId = catData?.subcategories.find(
+				(s) => s.slug === subcategory
+			)?.id;
+			return catMatch && (subId ? item.subcategory === subId : true);
 		});
-	}, [allResults, category, subcategory]);
+	}, [allResults, category, subcategory, categories]);
 
 	const handleItemClick = useCallback(
-		(item: GroupedEquipment) => {
+		(item: DbEquipment) => {
 			addToHistory(item.title);
 			router.push(`/equipment/item/${slugify(item.title)}`);
 			onClose?.();
@@ -117,6 +129,7 @@ export function SearchPanel({
 			{showFilters && isDesktop && (
 				<div className="shrink-0 border-b border-foreground/5 space-y-1 px-3 py-2">
 					<SearchFilters
+						categories={categories}
 						category={category}
 						subcategory={subcategory}
 						expandedCat={expandedCat}
@@ -209,9 +222,7 @@ export function SearchPanel({
 									<button
 										type="button"
 										className="flex items-center gap-3 flex-1 min-w-0 px-2 py-2 text-left"
-										onClick={() =>
-											handleItemClick(item as unknown as GroupedEquipment)
-										}
+										onClick={() => handleItemClick(item)}
 									>
 										<div
 											className={cn(
@@ -244,8 +255,6 @@ export function SearchPanel({
 											</div>
 										</div>
 									</button>
-
-									{/* Icon variant — handles cart state internally */}
 									<div
 										className={cn(
 											"shrink-0 mr-2 transition-opacity",

@@ -7,55 +7,49 @@ interface ValidatedInputProps
 	extends React.InputHTMLAttributes<HTMLInputElement> {
 	label: string;
 	error?: string;
-	placeholder?: string;
+	icon?: React.ReactNode;
+	suffix?: React.ReactNode;
 	name?: string;
 }
 
 export const ValidatedInput = React.forwardRef<
 	HTMLInputElement,
 	ValidatedInputProps
->(
-	(
-		{
-			placeholder,
-			label,
-			error,
-			required = false,
-			name = "",
-			onKeyDown,
-			className,
-			...props
-		},
-		ref
-	) => {
-		const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-			if (e.key === "Enter") {
-				const form = e.currentTarget.form;
-				if (form) {
-					form.requestSubmit();
-				}
-			}
-			onKeyDown?.(e);
-		};
+>(({ label, error, icon, suffix, className, onKeyDown, ...props }, ref) => {
+	return (
+		<FormFieldWrapper
+			label={label}
+			error={error ?? ""}
+			id={`field-${props.name}`}
+		>
+			<div className="relative flex items-center">
+				{icon && (
+					<div className="z-1 absolute left-3 text-muted-foreground pointer-events-none">
+						{icon}
+					</div>
+				)}
 
-		return (
-			<FormFieldWrapper
-				label={label}
-				required={required}
-				error={error ?? ""}
-				id={`field-${name || label}`}
-			>
 				<Input
 					ref={ref}
 					{...props}
-					id={`field-${name || label}`}
-					placeholder={placeholder}
-					onKeyDown={handleKeyDown}
-					className={cn("glass-input", error && "border-red-400/50", className)}
+					onKeyDown={onKeyDown}
+					className={cn(
+						"glass-input w-full",
+						icon && "pl-10",
+						suffix && "pr-10",
+						error && "border-red-400/50",
+						className
+					)}
 				/>
-			</FormFieldWrapper>
-		);
-	}
-);
+
+				{suffix && (
+					<div className="z-1 absolute right-3 flex items-center justify-center">
+						{suffix}
+					</div>
+				)}
+			</div>
+		</FormFieldWrapper>
+	);
+});
 
 ValidatedInput.displayName = "ValidatedInput";

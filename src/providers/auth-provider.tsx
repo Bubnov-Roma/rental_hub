@@ -1,4 +1,4 @@
-"use client";
+`use client`;
 
 import type { User } from "@supabase/supabase-js";
 import {
@@ -42,7 +42,40 @@ export const AuthContext = createContext<AuthContextType | undefined>(
 	undefined
 );
 
-// Синглтон на уровне модуля — один объект на всё время жизни страницы.
+const CACHE_KEY = "linza:profile";
+
+interface CacheEntry {
+	userId: string;
+	profile: Profile;
+}
+
+function readCache(userId: string): Profile | null {
+	if (typeof window === "undefined") return null;
+	try {
+		const raw = sessionStorage.getItem(CACHE_KEY);
+		if (!raw) return null;
+		const entry = JSON.parse(raw) as CacheEntry;
+		return entry.userId === userId ? entry.profile : null;
+	} catch {
+		return null;
+	}
+}
+
+function writeCache(userId: string, profile: Profile): void {
+	try {
+		sessionStorage.setItem(
+			CACHE_KEY,
+			JSON.stringify({ userId, profile } satisfies CacheEntry)
+		);
+	} catch {}
+}
+
+function clearCache(): void {
+	try {
+		sessionStorage.removeItem(CACHE_KEY);
+	} catch {}
+}
+
 const supabase = createClient();
 
 export function AuthProvider({
@@ -52,25 +85,27 @@ export function AuthProvider({
 	children: ReactNode;
 	initialUser: User | null;
 }) {
-	// Инициализируем user из SSR-данных — не ждём getSession на клиенте.
 	const [user, setUser] = useState<User | null>(initialUser);
-	const [profile, setProfile] = useState<Profile | null>(null);
-	// Если initialUser уже есть — profile ещё грузится (isLoading=true).
-	// Если нет — уже готово (isLoading=false).
-	const [isLoading, setIsLoading] = useState(!!initialUser);
 
-	// Защита от двойного запуска в React Strict Mode (dev).
-	// useRef не вызывает re-render при изменении.
+	// Читаем кеш прямо в инициализаторе useState — он вызывается только
+	// на клиенте, поэтому sessionStorage доступен.
+	// Если кеш есть → profile уже не null при первом рендере → нет спиннера.
+	const [profile, setProfile] = useState<Profile | null>(() =>
+		initialUser ? readCache(initialUser.id) : null
+	);
+
+	// isLoading=true только если есть юзер, но нет кешированного профиля.
+	// Если кеш есть → сразу false → аватар виден мгновенно.
+	const [isLoading, setIsLoading] = useState(
+		Boolean(initialUser) && readCache(initialUser?.id ?? "") === null
+	);
+
 	const fetchingRef = useRef(false);
 
-	const fetchProfile = useCallback(async (userId: string) => {
-		// Дедупликация: если уже идёт запрос — не запускаем второй.
-		if (fetchingRef.current) return;
-		if (!userId) return;
-
+	const fetchProfile = useCallback(async (userId: string, silent = false) => {
+		if (fetchingRef.current || !userId) return;
 		if (typeof window !== "undefined" && !window.navigator.onLine) {
-			console.warn("Offline: skipping profile fetch");
-			setIsLoading(false);
+			if (!silent) setIsLoading(false);
 			return;
 		}
 
@@ -85,77 +120,78 @@ export function AuthProvider({
 			if (error) {
 				if (error.code === "PGRST116") {
 					setProfile(null);
+					clearCache();
 				} else {
 					throw error;
 				}
 			} else {
-				setProfile(data as Profile);
+				const fresh = data as Profile;
+				setProfile(fresh);
+				writeCache(userId, fresh);
 			}
 		} catch (err) {
-			const errMsg = getErrorMessage(err);
-			if (errMsg.includes("Failed to fetch") || !window.navigator.onLine) {
+			const msg = getErrorMessage(err);
+			if (msg.includes("Failed to fetch") || !window.navigator.onLine) {
 				toast.error("Проблемы с интернетом, проверьте соединение");
-			} else {
+			} else if (!silent) {
 				setProfile(null);
 			}
 		} finally {
 			fetchingRef.current = false;
 			setIsLoading(false);
 		}
-	}, []); // нет deps — supabase и fetchingRef стабильны
+	}, []);
 
 	const refreshProfile = useCallback(async () => {
 		if (user) {
-			fetchingRef.current = false; // сбрасываем guard для ручного обновления
+			fetchingRef.current = false;
 			await fetchProfile(user.id);
 		}
 	}, [user, fetchProfile]);
 
-	// biome-ignore lint/correctness/useExhaustiveDependencies: <ONLY FOR MOUTHING>
+	// biome-ignore lint/correctness/useExhaustiveDependencies: only on mount
 	useEffect(() => {
 		let mounted = true;
 
-		// Если initialUser уже есть из SSR — НЕ вызываем getSession повторно,
-		// просто грузим profile. Это убирает лишний round-trip к Supabase.
 		if (initialUser) {
-			fetchProfile(initialUser.id);
+			const hasCached = readCache(initialUser.id) !== null;
+			fetchProfile(initialUser.id, hasCached);
 		} else {
-			// Гость: нужно подписаться на auth state, но getSession не нужен —
-			// initialUser уже null (передан из layout SSR).
 			setIsLoading(false);
 		}
 
-		// Подписка на изменения auth state (логин/логаут/обновление токена).
 		const {
 			data: { subscription },
 		} = supabase.auth.onAuthStateChange(async (event, session) => {
 			if (!mounted) return;
-
 			const newUser = session?.user ?? null;
 
 			if (event === "SIGNED_IN") {
 				setUser(newUser);
 				if (newUser) {
+					const cached = readCache(newUser.id);
+					if (cached) {
+						setProfile(cached);
+						setIsLoading(false);
+					}
 					fetchingRef.current = false;
-					await fetchProfile(newUser.id);
+					await fetchProfile(newUser.id, !!cached);
 				}
 			} else if (event === "TOKEN_REFRESHED") {
-				// Токен обновился — user не менялся, profile не нужно перезагружать.
 				setUser(newUser);
 			} else if (event === "SIGNED_OUT") {
 				setUser(null);
 				setProfile(null);
 				setIsLoading(false);
+				clearCache();
 				invalidateFavoritesCache();
 			}
-			// INITIAL_SESSION игнорируем — initialUser уже пришёл из SSR.
 		});
 
 		return () => {
 			mounted = false;
 			subscription.unsubscribe();
 		};
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
 	return (

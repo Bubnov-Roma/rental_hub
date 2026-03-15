@@ -12,25 +12,23 @@ import {
 	BreadcrumbPage,
 	BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { CATEGORIES } from "@/constants";
+import type { DbCategory } from "@/constants/navigation";
 import type { GroupedEquipment } from "@/core/domain/entities/Equipment";
 import { useEquipment } from "@/hooks";
 import { formatPlural } from "@/utils";
 
 interface PageProps {
-	// initialData — только для первого рендера (SSR prefetch).
-	// Больше не передаём resolvedParams — берём фильтры прямо из URL.
 	initialData: GroupedEquipment[];
+	categories: DbCategory[];
 }
 
 const crumbLinkClass =
 	"text-muted-foreground hover:text-foreground transition-colors text-sm";
 
-export default function EquipmentClientPage({ initialData }: PageProps) {
-	// Единственный источник правды — URL search params.
-	// При смене фильтра CategoryFilter делает router.push → searchParams
-	// обновляются → здесь примитивы пересчитываются → useMemo ниже
-	// пересоздаёт объект только если реально изменилось значение.
+export default function EquipmentClientPage({
+	initialData,
+	categories,
+}: PageProps) {
 	const searchParams = useSearchParams();
 
 	const categorySlug = searchParams.get("category") || "all";
@@ -38,16 +36,15 @@ export default function EquipmentClientPage({ initialData }: PageProps) {
 	const searchQuery = searchParams.get("search") || "";
 
 	const currentCategory = useMemo(
-		() => CATEGORIES.find((c) => c.slug === categorySlug) ?? CATEGORIES[0],
-		[categorySlug]
+		() => categories.find((c) => c.slug === categorySlug) ?? null,
+		[categorySlug, categories]
 	);
 
 	const currentSubcategory = useMemo(() => {
 		if (!subcategorySlug || !currentCategory?.subcategories) return null;
 		return (
-			(
-				currentCategory.subcategories as Array<{ slug: string; name: string }>
-			).find((s) => s.slug === subcategorySlug) ?? null
+			currentCategory.subcategories.find((s) => s.slug === subcategorySlug) ??
+			null
 		);
 	}, [subcategorySlug, currentCategory]);
 
@@ -96,10 +93,10 @@ export default function EquipmentClientPage({ initialData }: PageProps) {
 							<BreadcrumbItem>
 								{currentSubcategory ? (
 									<Link
-										href={`/equipment?category=${currentCategory.slug}`}
+										href={`/equipment?category=${currentCategory?.slug}`}
 										className={crumbLinkClass}
 									>
-										{currentCategory.name}
+										{currentCategory?.name}
 									</Link>
 								) : (
 									<BreadcrumbPage>{currentCategory?.name}</BreadcrumbPage>
@@ -127,13 +124,13 @@ export default function EquipmentClientPage({ initialData }: PageProps) {
 				)}
 				{!isLoading && items && items.length > 0 && (
 					<p className="text-muted-foreground mt-2">
-						Найдено {formatPlural(items.length, "equipment")}
+						{formatPlural(items.length, "equipment")}
 					</p>
 				)}
 			</div>
 
 			<div className="max-w-full">
-				<CategoryFilter />
+				<CategoryFilter categories={categories} />
 			</div>
 
 			<EquipmentGrid items={items || []} isLoading={isLoading} />

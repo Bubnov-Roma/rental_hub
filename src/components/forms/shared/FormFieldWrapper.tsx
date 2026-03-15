@@ -31,7 +31,7 @@ export const FormFieldWrapper = ({
 				</Label>
 			</div>
 
-			<div className="relative pb-5">
+			<div className="relative pb-4">
 				{children}
 				<AnimatePresence>
 					{error && (

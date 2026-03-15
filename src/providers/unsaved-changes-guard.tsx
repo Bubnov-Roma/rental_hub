@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/hooks/use-auth";
 import { useUnsavedChanges } from "@/store";
 
 export function UnsavedChangesGuard() {

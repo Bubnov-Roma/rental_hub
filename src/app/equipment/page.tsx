@@ -1,8 +1,8 @@
 import { Suspense } from "react";
+import { getCategoriesFromDb } from "@/actions/category-actions";
+import { getEquipment } from "@/actions/equipment-actions";
 import EquipmentClientPage from "@/components/core/EquipmentClientPage";
 import { EquipmentGrid } from "@/components/core/EquipmentGrid";
-import { getEquipment } from "@/lib/api/equipment";
-
 export type EquipmentSearchParams = {
 	category?: string;
 	subcategory?: string;
@@ -24,15 +24,18 @@ function PageSkeleton() {
 export default async function EquipmentPage({ searchParams }: PageProps) {
 	const params = await searchParams;
 
-	const initialData = await getEquipment({
-		categorySlug: params.category || "all",
-		subcategorySlug: params.subcategory || "",
-		search: params.search || "",
-	});
+	const [initialData, categories] = await Promise.all([
+		getEquipment({
+			categorySlug: params.category || "all",
+			subcategorySlug: params.subcategory || "",
+			search: params.search || "",
+		}),
+		getCategoriesFromDb(),
+	]);
 
 	return (
 		<Suspense fallback={<PageSkeleton />}>
-			<EquipmentClientPage initialData={initialData} />
+			<EquipmentClientPage initialData={initialData} categories={categories} />
 		</Suspense>
 	);
 }

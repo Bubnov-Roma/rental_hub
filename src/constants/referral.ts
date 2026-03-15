@@ -11,13 +11,13 @@ export const REFERRAL_OPTIONS = [
 		id: "friends",
 		label: "Рекомендация",
 		color: "#f472b6",
-		placeholder: "Подскажите кто нас  порекомендовал",
+		placeholder: "Расскажите кто нас  порекомендовал",
 	},
 	{
 		id: "photo_school",
 		label: "Фотошкола",
 		color: "#fbbf24",
-		placeholder: "Расскажите в какой фотошколе вы узнали про нас",
+		placeholder: "Подскажите название фотошколы",
 	},
 	{
 		id: "other",

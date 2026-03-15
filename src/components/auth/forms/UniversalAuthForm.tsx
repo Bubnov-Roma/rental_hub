@@ -5,13 +5,16 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { AuthCard } from "@/components/auth/AuthCard";
-import { Button, Input, Label } from "@/components/ui";
-import { useOtpAuth } from "@/hooks/useOtpAuth";
+import { ValidatedInput } from "@/components/forms";
+import { Button } from "@/components/ui";
+import { useOtpAuth } from "@/hooks/use-otp-auth";
 import { createClient } from "@/lib/supabase/client";
+import { emailSchema } from "@/schemas";
 import { getURL } from "@/utils";
 
 export function UniversalAuthForm() {
 	const [email, setEmail] = useState("");
+	const [error, setError] = useState("");
 	const [isLoading, setIsLoading] = useState(false);
 	const { sendOtpCode, isSendingCode } = useOtpAuth();
 	const supabase = createClient();
@@ -19,6 +22,12 @@ export function UniversalAuthForm() {
 
 	const handleSubmit = async (e: React.SubmitEvent) => {
 		e.preventDefault();
+		const result = emailSchema.safeParse(email);
+		if (!result.success && result.error.issues[0]) {
+			setError(result.error.issues[0].message);
+			return;
+		}
+		setError("");
 		const success = await sendOtpCode(email, "email");
 		if (success) {
 			router.push(`/auth?view=otp&email=${encodeURIComponent(email)}`);
@@ -36,7 +45,7 @@ export function UniversalAuthForm() {
 	return (
 		<AuthCard
 			title="Войти"
-			description="Введите email, чтобы войти"
+			description="Если у вас ещё нет аккаунта он будет создан автоматически"
 			footerLink={{
 				text: "Есть постоянный пароль?",
 				label: "Войти по паролю",
@@ -44,45 +53,9 @@ export function UniversalAuthForm() {
 			}}
 			isLoading={isSendingCode || isLoading}
 		>
-			<form onSubmit={handleSubmit} className="space-y-4">
-				<div className="space-y-2">
-					<Label>Email</Label>
-					<div className="relative">
-						<Mail className="z-1 absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-						<Input
-							type="email"
-							placeholder="name@example.com"
-							className="pl-10"
-							value={email}
-							onChange={(e) => setEmail(e.target.value)}
-							required
-						/>
-					</div>
-				</div>
-
-				<Button
-					type="submit"
-					disabled={!email || isSendingCode}
-					className="w-full h-12 font-bold text-base shadow-xl shadow-primary/20 hover:scale-[1.02] transition-transform"
-				>
-					{isSendingCode ? "Отправка..." : "Продолжить"}
-				</Button>
-			</form>
-
-			<div className="relative py-4">
-				<div className="absolute inset-0 flex items-center">
-					<span className="w-full border-t border-primary/5" />
-				</div>
-				<div className="relative flex justify-center text-xs uppercase">
-					<span className="bg-primary/6 rounded-xl px-2 text-muted-foreground backdrop-blur-2xl">
-						Или
-					</span>
-				</div>
-			</div>
-
 			<Button
 				variant="social"
-				className="w-full h-12 gap-2"
+				className="w-full h-12 gap-2 mb-4"
 				onClick={handleGoogleLogin}
 			>
 				Вход с
@@ -95,9 +68,34 @@ export function UniversalAuthForm() {
 				Google
 			</Button>
 
-			<p className="flex items-center justify-center text-center pt-8 w-full text-xs text-muted-foreground hover:text-foreground select-none">
-				Если у вас ещё нет аккаунта он будет создан автоматически
-			</p>
+			<div className="relative flex justify-center text-xs uppercase">
+				<span className="bg-muted-foreground/6 rounded-xl px-2 text-muted-foreground">
+					Или
+				</span>
+			</div>
+
+			<form onSubmit={handleSubmit} className="space-y-2" noValidate>
+				<ValidatedInput
+					label="Email"
+					type="email"
+					placeholder="введите ваш email"
+					value={email}
+					onChange={(e) => {
+						setEmail(e.target.value);
+						if (error) setError("");
+					}}
+					error={error}
+					icon={<Mail className="h-4 w-4" />}
+					required
+				/>
+				<Button
+					type="submit"
+					disabled={!email || isSendingCode}
+					className="w-full h-12 font-bold text-base shadow-xl shadow-primary/20 hover:scale-[1.02] transition-transform"
+				>
+					{isSendingCode ? "Отправка..." : "Продолжить"}
+				</Button>
+			</form>
 		</AuthCard>
 	);
 }

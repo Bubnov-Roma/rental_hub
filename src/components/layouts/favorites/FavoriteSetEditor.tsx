@@ -15,7 +15,7 @@ import {
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { saveSetAction } from "@/app/actions/favorites.action";
+import { saveSetAction } from "@/actions/favorites-actions";
 import { Button, Label } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import type { EquipmentSet, FavoriteItem } from "./types";
