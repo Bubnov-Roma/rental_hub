@@ -7,7 +7,7 @@ import { useState } from "react";
 import { AuthCard } from "@/components/auth/AuthCard";
 import { ValidatedInput } from "@/components/forms";
 import { Button } from "@/components/ui";
-import { useOtpAuth } from "@/hooks/useOtpAuth";
+import { useOtpAuth } from "@/hooks/use-otp-auth";
 import { createClient } from "@/lib/supabase/client";
 import { emailSchema } from "@/schemas";
 import { getURL } from "@/utils";

@@ -17,7 +17,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
-import { EquipmentCard } from "@/components/core/EquipmentCard";
+import { EquipmentCard } from "@/components/shared/EquipmentCard";
 import {
 	Button,
 	DropdownMenu,

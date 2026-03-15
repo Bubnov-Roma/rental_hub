@@ -28,7 +28,7 @@ export function QuickActionLink({
 		>
 			<div className="flex items-center gap-4">
 				{/* Иконка с мягким свечением */}
-				<div className="flex items-center justify-center w-10 h-10 rounded-xl bg-white/5 text-primary/70 group-hover:text-blue-400 group-hover:bg-blue-500/10 transition-all duration-300">
+				<div className="flex items-center justify-center w-10 h-10 rounded-xl bg-white/5 text-muted-foreground/70 group-hover:text-blue-400 group-hover:bg-blue-500/10 transition-all duration-300">
 					{icon}
 				</div>
 

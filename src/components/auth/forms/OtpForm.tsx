@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { AuthCard } from "@/components/auth/AuthCard";
 import { Button } from "@/components/ui/button";
-import { useOtpAuth } from "@/hooks/useOtpAuth";
+import { useOtpAuth } from "@/hooks/use-otp-auth";
 import { cn } from "@/lib/utils";
 import { getErrorMessage } from "@/utils";
 

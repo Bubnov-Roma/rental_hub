@@ -4,14 +4,18 @@ import { ChevronRight } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useOptimistic, useState, useTransition } from "react";
 import { Button } from "@/components/ui";
-import { CATEGORIES } from "@/constants";
+import type { DbCategory } from "@/constants/navigation";
 import { cn } from "@/lib/utils";
 
 interface CategoryFilterProps {
+	categories: DbCategory[];
 	isPending?: boolean;
 }
 
-export function CategoryFilter({ isPending = false }: CategoryFilterProps) {
+export function CategoryFilter({
+	categories,
+	isPending = false,
+}: CategoryFilterProps) {
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	const [isPendingInternal, startTransition] = useTransition();
@@ -24,21 +28,17 @@ export function CategoryFilter({ isPending = false }: CategoryFilterProps) {
 	const [optimisticSubcategory, setOptimisticSubcategory] =
 		useOptimistic(currentSubcategory);
 
-	// expandedCategory инициализируется из URL и больше не синхронизируется
-	// через useEffect — тот useEffect вызывал лишние рендеры.
-	// Вместо этого вычисляем его из оптимистичного состояния.
 	const [manualExpanded, setManualExpanded] = useState<string>(() => {
 		if (currentSubcategory && currentCategory !== "all") return currentCategory;
 		return currentCategory !== "all" ? currentCategory : "";
 	});
 
-	// expandedCategory = то что пользователь раскрыл вручную
 	const expandedCategory = manualExpanded;
 
 	const subcategories = useMemo(
 		() =>
-			CATEGORIES.find((c) => c.slug === expandedCategory)?.subcategories ?? [],
-		[expandedCategory]
+			categories.find((c) => c.slug === expandedCategory)?.subcategories ?? [],
+		[expandedCategory, categories]
 	);
 
 	const navigate = (params: Record<string, string | null>) => {
@@ -61,11 +61,10 @@ export function CategoryFilter({ isPending = false }: CategoryFilterProps) {
 			return;
 		}
 
-		const cat = CATEGORIES.find((c) => c.slug === slug);
+		const cat = categories.find((c) => c.slug === slug);
 		const hasSubs = (cat?.subcategories?.length ?? 0) > 0;
 
 		if (slug === optimisticCategory) {
-			// Повторный клик — только переключает раскрытие подкатегорий
 			if (hasSubs) setManualExpanded((prev) => (prev === slug ? "" : slug));
 			return;
 		}
@@ -79,8 +78,6 @@ export function CategoryFilter({ isPending = false }: CategoryFilterProps) {
 	};
 
 	const handleSubcategoryClick = (catSlug: string, subSlug: string) => {
-		// ВСЕ вызовы setOptimistic должны быть ВНУТРИ startTransition —
-		// иначе React бросает ошибку и форсирует лишний рендер.
 		if (optimisticSubcategory === subSlug) {
 			startTransition(() => {
 				setOptimisticSubcategory("");
@@ -96,14 +93,23 @@ export function CategoryFilter({ isPending = false }: CategoryFilterProps) {
 
 	const loading = isPending || isPendingInternal;
 
+	// "Все категории" всегда первый пункт
+	const allCategories: Array<{ id: string; slug: string; name: string }> = [
+		{ id: "all", slug: "all", name: "Все категории" },
+		...categories,
+	];
+
 	return (
 		<div className="space-y-1">
 			{/* Category row */}
 			<div className="w-full flex items-center gap-1 overflow-x-auto scroll-smooth no-scrollbar">
 				<div className="tabs-group w-fit no-scrollbar">
-					{CATEGORIES.map((cat) => {
+					{allCategories.map((cat) => {
 						const isActive = optimisticCategory === cat.slug;
-						const hasSubs = (cat.subcategories?.length ?? 0) > 0;
+						const hasSubs =
+							cat.slug !== "all" &&
+							(categories.find((c) => c.slug === cat.slug)?.subcategories
+								?.length ?? 0) > 0;
 						const isExpanded = expandedCategory === cat.slug;
 
 						return (
@@ -141,7 +147,6 @@ export function CategoryFilter({ isPending = false }: CategoryFilterProps) {
 			</div>
 
 			{/* Subcategory row */}
-
 			{expandedCategory && subcategories.length > 0 && (
 				<div className="w-full flex items-center gap-1 overflow-x-auto scroll-smooth no-scrollbar animate-in fade-in slide-in-from-top-1 duration-200">
 					<div className="no-scrollbar tabs-group w-fit">

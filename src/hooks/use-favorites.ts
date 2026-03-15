@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { toggleFavoriteAction } from "@/app/actions/favorites.action";
+import { toggleFavoriteAction } from "@/actions/favorites-actions";
 import { createClient } from "@/lib/supabase/client";
 
 // ─── Global favorites cache ───────────────────────────────────────────────────

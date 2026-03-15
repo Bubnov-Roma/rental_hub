@@ -1,4 +1,6 @@
 import { notFound } from "next/navigation";
+import { getCategoriesFromDb } from "@/actions/category-actions";
+import { getEquipmentBySlug } from "@/actions/equipment-actions";
 import EquipmentDetails from "@/components/core/EquipmentDetails";
 import {
 	Breadcrumb,
@@ -8,9 +10,7 @@ import {
 	BreadcrumbPage,
 	BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { CATEGORIES } from "@/constants";
 import type { GroupedEquipment } from "@/core/domain/entities/Equipment";
-import { getEquipmentBySlug } from "@/lib/api/equipment";
 
 export default async function EquipmentDetailsPage({
 	params,
@@ -18,18 +18,18 @@ export default async function EquipmentDetailsPage({
 	params: Promise<{ slug: string }>;
 }) {
 	const { slug } = await params;
-	const equipment = await getEquipmentBySlug(slug);
+
+	const [equipment, categories] = await Promise.all([
+		getEquipmentBySlug(slug),
+		getCategoriesFromDb(),
+	]);
 
 	if (!equipment) notFound();
 
-	// Находим категорию для хлебных крошек
-	const currentCategory = CATEGORIES.find(
-		(c) => c.id === equipment.category || c.name === equipment.category
-	);
+	const currentCategory = categories.find((c) => c.id === equipment.category);
 
 	return (
 		<div className="min-h-screen bg-background text-foreground pb-20">
-			{/* Хлебные крошки */}
 			<div className="container mx-auto px-6 py-4">
 				<Breadcrumb>
 					<BreadcrumbList>

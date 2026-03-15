@@ -14,12 +14,5 @@ export default async function DashboardLayout({
 	if (!user) {
 		redirect("/auth/login");
 	}
-
-	return (
-		<div className="min-h-screen">
-			<div className="flex">
-				<main className="flex-1 overflow-y-auto">{children}</main>
-			</div>
-		</div>
-	);
+	return <>{children}</>;
 }

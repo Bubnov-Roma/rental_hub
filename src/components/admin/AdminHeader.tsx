@@ -13,7 +13,7 @@ import {
 	DropdownMenuTrigger,
 	Input,
 } from "@/components/ui";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/hooks/use-auth";
 
 export function AdminHeader() {
 	const { user } = useAuth();

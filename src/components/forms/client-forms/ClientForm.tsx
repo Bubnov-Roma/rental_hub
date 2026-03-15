@@ -5,14 +5,14 @@ import { useQueryState } from "nuqs";
 import { useCallback, useEffect, useRef } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { submitClientApplicationAction } from "@/app/actions/client-application.actions";
 import {
 	loadDraftAction,
 	saveDraftAction,
-} from "@/app/actions/save-draft-action";
+	submitClientApplicationAction,
+} from "@/actions/client-application-actions";
 import { UniversalClientForm } from "@/components/forms/client-forms/client-types/UniversalClientForm";
 import { Card } from "@/components/ui/card";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/hooks/use-auth";
 import { type ClientFormValues, clientFormSchema } from "@/schemas";
 import { useApplicationStore } from "@/store";
 

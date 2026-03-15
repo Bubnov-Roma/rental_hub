@@ -16,22 +16,19 @@ export function ApplicationInitializer({
 	const { setInitialState, subscribe } = useApplicationStore();
 	const isInitialized = useRef(false);
 
-	const initialDataRef = useRef(initialData);
+	if (!isInitialized.current) {
+		setInitialState(
+			initialData?.status || "no_application",
+			initialData?.application_data || null
+		);
+		isInitialized.current = true;
+	}
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: <initialize user>
 	useEffect(() => {
-		if (!isInitialized.current) {
-			setInitialState(
-				initialDataRef.current?.status || "no_application",
-				initialDataRef.current?.application_data || null
-			);
-			isInitialized.current = true;
-		}
-		if (userId) {
-			const unsubscribe = subscribe(userId);
-			return () => unsubscribe();
-		}
-		return undefined;
+		if (!userId) return;
+		const unsubscribe = subscribe(userId);
+		return () => unsubscribe();
 	}, [userId]);
 
 	return <>{children}</>;

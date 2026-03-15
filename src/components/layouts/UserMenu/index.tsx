@@ -26,7 +26,7 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui";
 import { useSidebar } from "@/components/ui/sidebar";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 import { useApplicationStore } from "@/store";
 import { getClientDisplayData } from "@/utils/client-data.utils";

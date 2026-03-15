@@ -1,10 +1,7 @@
-import { format } from "date-fns";
-import { ru } from "date-fns/locale";
 import {
 	Boxes,
 	Calendar,
 	Heart,
-	Layers,
 	Package,
 	Package2,
 	PackageOpen,
@@ -14,57 +11,11 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { BookingPreviewList } from "@/components/dashboard/bookings/BookingPreviewList";
 import { VerificationBanner } from "@/components/forms/verification/VerificationBanner";
+import { ClientTime } from "@/components/shared";
 import { QuickActionLink } from "@/components/shared/QuickActionLink";
-import {
-	Button,
-	Card,
-	CardContent,
-	CardHeader,
-	CardTitle,
-} from "@/components/ui";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
 import { createClient } from "@/lib/supabase/server";
-
-// ─── Dashboard-specific narrow types ─────────────────────────────────────────
-// These match exactly what the Supabase query returns — no casts needed.
-
-export interface DashboardEquipment {
-	title: string;
-	// imageUrl comes from equipment_image_links → images
-}
-
-export interface DashboardBookingItem {
-	equipment: DashboardEquipment;
-	price_at_booking: number;
-	/** First image URL extracted from equipment_image_links */
-	imageUrl: string | null;
-}
-
-export interface DashboardBooking {
-	id: string;
-	start_date: string;
-	end_date: string;
-	total_amount: number;
-	status: string;
-	created_at: string;
-	booking_items: DashboardBookingItem[];
-}
-
-// ─── Status helpers ───────────────────────────────────────────────────────────
-const STATUS_STYLES: Record<string, string> = {
-	pending: "bg-amber-500/10 text-amber-500",
-	confirmed: "bg-emerald-500/10 text-emerald-500",
-	active: "bg-blue-500/10 text-blue-500",
-	completed: "bg-foreground/5 text-muted-foreground",
-	cancelled: "bg-red-500/10 text-red-400",
-};
-
-const STATUS_LABELS: Record<string, string> = {
-	pending: "Ожидает",
-	confirmed: "Подтверждён",
-	active: "Активен",
-	completed: "Завершён",
-	cancelled: "Отменён",
-};
+import type { DashboardBooking } from "@/types";
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default async function DashboardPage() {
@@ -185,15 +136,25 @@ export default async function DashboardPage() {
 		)
 		.slice(0, 2);
 
+	const nickname = user?.user_metadata?.nickname as string | undefined;
+	const fullName = user.user_metadata?.full_name as string | undefined;
+
+	// Приоритет: nickname → полное имя (первое слово) → email-prefix → fallback
+	const firstName =
+		nickname ||
+		fullName?.trim().split(/\s+/)[0] || // Берем первое слово из ФИО
+		user?.email?.split("@")[0] ||
+		"Пользователь";
+
 	return (
 		<div className="max-w-7xl mx-auto space-y-8 p-4 sm:p-8">
 			{/* Greeting */}
 			<div>
 				<h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground/90">
-					Привет, {user.user_metadata?.name?.split(" ")[0] || "Пользователь"}!
+					Привет, {firstName}!
 				</h1>
-				<p className="text-muted-foreground mt-1 text-sm">
-					Ваш кабинет управления арендой техники.
+				<p className="text-muted-foreground mt-1 pl-2 text-sm ">
+					персональный кабинет управления заказами
 				</p>
 			</div>
 
@@ -202,7 +163,7 @@ export default async function DashboardPage() {
 			{/* Stats */}
 			<div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
 				<StatCard
-					title="Всего заказов"
+					title="Всего"
 					value={stats.totalBookings}
 					icon={<Boxes size={18} />}
 				/>
@@ -224,7 +185,7 @@ export default async function DashboardPage() {
 			</div>
 
 			<div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-				<Card className="lg:col-span-2 overflow-hidden ">
+				<Card className="lg:col-span-2">
 					<CardHeader className="flex flex-row items-center justify-between pb-0 px-4 sm:px-6 pt-4 sm:pt-5">
 						<CardTitle className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
 							Последние заказы
@@ -237,23 +198,58 @@ export default async function DashboardPage() {
 						</Link>
 					</CardHeader>
 					<CardContent className="p-0 mt-1">
-						<BookingPreviewList
-							bookings={bookings}
-							statusLabels={STATUS_LABELS}
-							statusStyles={STATUS_STYLES}
-						/>
+						<BookingPreviewList bookings={bookings} />
 					</CardContent>
 				</Card>
 
 				{/* ── Sidebar ── */}
 				<div className="space-y-6">
-					<Card className="bg-background">
+					<Card>
+						<CardHeader className="pb-2">
+							<CardTitle className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
+								Предстоящие аренды
+							</CardTitle>
+						</CardHeader>
+						{upcoming.length > 0 && (
+							<div className="space-y-2">
+								{upcoming.map((booking) => (
+									<Link
+										href={`/dashboard/bookings/${booking.id}`}
+										key={booking.id}
+										className="rounded-xl bg-card/40 w-full  block p-3 hover:bg-muted-foreground/20 transition-colors"
+									>
+										<div className="flex items-start justify-between gap-2">
+											<div className="min-w-0">
+												<p className="font-bold text-sm truncate">
+													{booking.booking_items[0]?.equipment.title ?? "Заказ"}
+												</p>
+												<div className="flex text-[11px] text-muted-foreground mt-0.5 gap-1">
+													<ClientTime
+														iso={booking.start_date}
+														fmt="datetime"
+														fallback="---"
+													/>
+													<span className="opacity-40">{" → "}</span>
+													<ClientTime
+														iso={booking.end_date}
+														fmt="datetime"
+														fallback="---"
+													/>
+												</div>
+											</div>
+										</div>
+									</Link>
+								))}
+							</div>
+						)}
+					</Card>
+					<Card>
 						<CardHeader className="pb-2">
 							<CardTitle className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
 								Быстрый доступ
 							</CardTitle>
 						</CardHeader>
-						<CardContent className="flex flex-col gap-2">
+						<div className="flex flex-col gap-2 w-full">
 							<QuickActionLink
 								href="/booking/new"
 								icon={<Calendar size={18} />}
@@ -272,59 +268,7 @@ export default async function DashboardPage() {
 								label="Избранное"
 								description="Понравившаяся техника"
 							/>
-							<QuickActionLink
-								href="/favorites"
-								icon={<Layers size={18} />}
-								label="Сеты"
-								description="Любимые комплекты"
-							/>
-
-							{upcoming.length > 0 && (
-								<div className="mt-4 pt-4 border-t border-border">
-									<p className="text-[11px] uppercase font-bold text-muted-foreground tracking-wider mb-3">
-										Предстоящие аренды
-									</p>
-									<div className="space-y-2">
-										{upcoming.map((booking) => (
-											<div
-												key={booking.id}
-												className="rounded-xl border border-border bg-card/40 p-3 hover:bg-muted/20 transition-colors"
-											>
-												<div className="flex items-start justify-between gap-2">
-													<div className="min-w-0">
-														<p className="font-bold text-sm truncate">
-															{booking.booking_items[0]?.equipment.title ??
-																"Заказ"}
-														</p>
-														<p className="text-[11px] text-muted-foreground mt-0.5">
-															до{" "}
-															{format(
-																new Date(booking.end_date),
-																"d MMM, HH:mm",
-																{ locale: ru }
-															)}
-														</p>
-													</div>
-													<Button
-														size="sm"
-														variant="ghost"
-														className="rounded-lg h-7 w-7 p-0 shrink-0 text-primary"
-														asChild
-													>
-														<Link
-															href="/dashboard/bookings"
-															aria-label="Открыть"
-														>
-															→
-														</Link>
-													</Button>
-												</div>
-											</div>
-										))}
-									</div>
-								</div>
-							)}
-						</CardContent>
+						</div>
 					</Card>
 				</div>
 			</div>

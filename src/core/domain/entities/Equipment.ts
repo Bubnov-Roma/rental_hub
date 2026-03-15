@@ -36,19 +36,15 @@ export interface Equipment {
 	readonly category: string;
 	readonly subcategory: string | null;
 	readonly inventory_number: string | null;
-	// Prices
 	readonly price_per_day: number;
 	readonly price_4h: number;
 	readonly price_8h: number;
 	readonly deposit: number;
 	readonly replacement_value: number;
 	readonly is_available: boolean;
-	// Status and ownership
 	readonly status: EquipmentStatus;
 	readonly ownership_type: OwnershipType;
 	readonly partner_name: string | null;
-
-	// Additional info
 	readonly defects: string | null;
 	readonly kit: string | null;
 	readonly kit_description?: string | null;
@@ -56,13 +52,11 @@ export interface Equipment {
 	readonly specifications: string | Record<string, unknown>;
 	readonly comments?: Comment[];
 	readonly slug: string;
-	// Media
 	imageUrl: string;
 	images: string[];
 	images_data?: SupabaseImage[];
 	rating: number;
 	reviewsCount: number;
-
 	readonly created_at: string;
 	readonly updated_at: string;
 }
@@ -81,31 +75,24 @@ export interface EquipmentImage {
 	readonly order_index: number;
 }
 
-/**
- * DTO for create/update (Admin Panel)
- */
 export interface CreateEquipmentDTO {
 	readonly title: string;
 	readonly description?: string;
 	readonly category: string;
 	readonly subcategory?: string;
 	readonly inventory_number?: string;
-
 	readonly price_per_day: number;
 	readonly price_4h: number;
 	readonly price_8h: number;
 	readonly deposit: number;
 	readonly replacement_value: number;
-
 	readonly status: EquipmentStatus;
 	readonly ownership_type: OwnershipType;
 	readonly partner_name?: string;
-
 	readonly defects?: string;
 	readonly kit?: string;
 	readonly kit_description?: string;
 	readonly related_ids?: string[];
-
 	readonly specifications: Record<string, unknown>;
 	readonly comments?: Comment[];
 	readonly images?: File[];

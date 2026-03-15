@@ -1,50 +1,80 @@
 "use client";
 
-import {
-	differenceInHours,
-	format,
-	isWithinInterval,
-	parseISO,
-} from "date-fns";
-import { ru } from "date-fns/locale";
-import { CalendarSearch, Package, Search, X } from "lucide-react";
+import { differenceInHours, isWithinInterval, parseISO } from "date-fns";
+import { Package, X } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { ClientTime } from "@/components/shared";
 import {
+	Button,
 	Table,
 	TableBody,
 	TableCell,
 	TableHead,
 	TableHeader,
 	TableRow,
-	Tooltip,
-	TooltipContent,
-	TooltipTrigger,
 } from "@/components/ui";
+import { BOOKING_STATUS_LABELS, BOOKING_STATUS_STYLES } from "@/constants";
 import { cn } from "@/lib/utils";
-import type { BookingRow } from "@/types";
-import {
-	BookingDetailsDialog,
-	STATUS_LABELS,
-	STATUS_STYLES,
-} from "./Bookingdetailsdialog";
+import type { BookingRow, BookingStatus, DashboardBooking } from "@/types";
+import { BookingDetailDialog } from "./Bookingdetailsdialog";
+
+function getStatusLabel(status: string): string {
+	return BOOKING_STATUS_LABELS[status as BookingStatus] ?? status;
+}
+function getStatusStyle(status: string): string {
+	return (
+		BOOKING_STATUS_STYLES[status as BookingStatus] ??
+		"bg-foreground/5 text-muted-foreground border-foreground/10"
+	);
+}
+
+function asDashboardBooking(row: BookingRow): DashboardBooking {
+	return {
+		...row,
+		booking_items: row.booking_items.map((item) => ({
+			...item,
+			imageUrl: item.imageUrl ?? null,
+		})),
+	};
+}
 
 // ─── Filter state ─────────────────────────────────────────────────────────────
 interface Filters {
-	search: string; // matches order ID or equipment title
-	status: string; // "" = all
+	search: string;
+	status: string;
 	dateFrom: string;
 	dateTo: string;
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
 export function BookingsTable({ bookings }: { bookings: BookingRow[] }) {
+	const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
 	const [filters, setFilters] = useState<Filters>({
 		search: "",
 		status: "",
 		dateFrom: "",
 		dateTo: "",
 	});
+
+	const toggleRow = (id: string) => {
+		const newSet = new Set(selectedIds);
+		if (newSet.has(id)) {
+			newSet.delete(id);
+		} else {
+			newSet.add(id);
+		}
+		setSelectedIds(newSet);
+	};
+
+	const toggleAll = () => {
+		if (selectedIds.size === filtered.length && filtered.length > 0) {
+			setSelectedIds(new Set());
+		} else {
+			setSelectedIds(new Set(filtered.map((b) => b.id)));
+		}
+	};
 
 	const setFilter = <K extends keyof Filters>(key: K, value: Filters[K]) =>
 		setFilters((prev) => ({ ...prev, [key]: value }));
@@ -95,17 +125,13 @@ export function BookingsTable({ bookings }: { bookings: BookingRow[] }) {
 			<div className="flex flex-col sm:flex-row gap-2">
 				{/* Search */}
 				<div className="relative flex-1">
-					<Search
-						size={14}
-						className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-					/>
 					<input
 						type="text"
-						placeholder="Поиск по № заказа или названию..."
+						placeholder="Поиск по № или названию"
 						value={filters.search}
 						onChange={(e) => setFilter("search", e.target.value)}
 						className={cn(
-							"w-full h-9 pl-9 pr-3 rounded-xl text-sm",
+							"w-full h-9 px-3 rounded-xl text-sm",
 							"bg-muted/30 border border-border",
 							"placeholder:text-muted-foreground/50",
 							"focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40",
@@ -120,7 +146,7 @@ export function BookingsTable({ bookings }: { bookings: BookingRow[] }) {
 					onChange={(e) => setFilter("status", e.target.value)}
 					className={cn(
 						"h-9 px-3 rounded-xl text-sm font-medium",
-						"bg-muted/30 border border-border",
+						"border border-border",
 						"focus:outline-none focus:ring-2 focus:ring-primary/30",
 						"text-foreground cursor-pointer min-w-32",
 						!filters.status && "text-muted-foreground"
@@ -129,42 +155,31 @@ export function BookingsTable({ bookings }: { bookings: BookingRow[] }) {
 					<option value="">Все статусы</option>
 					{allStatuses.map((s) => (
 						<option key={s} value={s}>
-							{STATUS_LABELS[s] ?? s}
+							{getStatusLabel(s)}
 						</option>
 					))}
 				</select>
 
-				{/* Date from */}
-				<div className="relative">
-					<CalendarSearch
-						size={13}
-						className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
-					/>
+				<div className="relative flex gap-2">
+					{/* Date from */}
 					<input
 						type="date"
 						value={filters.dateFrom}
 						onChange={(e) => setFilter("dateFrom", e.target.value)}
 						className={cn(
-							"h-9 pl-8 pr-3 rounded-xl text-sm",
+							"h-9 px-3 rounded-xl text-sm",
 							"bg-muted/30 border border-border",
 							"focus:outline-none focus:ring-2 focus:ring-primary/30",
 							"text-foreground cursor-pointer"
 						)}
 					/>
-				</div>
-
-				{/* Date to */}
-				<div className="relative">
-					<CalendarSearch
-						size={13}
-						className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
-					/>
+					{/* Date to */}
 					<input
 						type="date"
 						value={filters.dateTo}
 						onChange={(e) => setFilter("dateTo", e.target.value)}
 						className={cn(
-							"h-9 pl-8 pr-3 rounded-xl text-sm",
+							"h-9 px-3 rounded-xl text-sm",
 							"bg-muted/30 border border-border",
 							"focus:outline-none focus:ring-2 focus:ring-primary/30",
 							"text-foreground cursor-pointer"
@@ -173,16 +188,13 @@ export function BookingsTable({ bookings }: { bookings: BookingRow[] }) {
 				</div>
 
 				{/* Clear */}
-				{hasActiveFilters && (
-					<button
-						type="button"
-						onClick={clearFilters}
-						className="h-9 px-3 rounded-xl text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/40 border border-border transition-colors flex items-center gap-1.5 whitespace-nowrap"
-					>
-						<X size={12} />
-						Сбросить
-					</button>
-				)}
+				<Button
+					variant="social"
+					onClick={clearFilters}
+					disabled={!hasActiveFilters}
+				>
+					Сбросить
+				</Button>
 			</div>
 
 			{/* ── Active filter chips ── */}
@@ -198,7 +210,7 @@ export function BookingsTable({ bookings }: { bookings: BookingRow[] }) {
 					)}
 					{filters.status && (
 						<span className="px-2.5 py-1 rounded-full bg-muted/40 text-foreground font-medium border border-border flex items-center gap-1.5">
-							{STATUS_LABELS[filters.status] ?? filters.status}
+							{getStatusLabel(filters.status)}
 							<button type="button" onClick={() => setFilter("status", "")}>
 								<X size={10} />
 							</button>
@@ -228,108 +240,140 @@ export function BookingsTable({ bookings }: { bookings: BookingRow[] }) {
 			<div className="rounded-xl border border-border overflow-hidden">
 				<Table>
 					<TableHeader>
-						<TableRow className="hover:bg-transparent border-border bg-muted/30">
+						<TableRow className="hover:bg-transparent border-border bg-muted-foreground/30">
+							{/* Чекбокс "Выбрать все" */}
+							<TableHead className="w-10 px-4">
+								<input
+									type="checkbox"
+									className="accent-primary scale-110 cursor-pointer"
+									checked={
+										filtered.length > 0 && selectedIds.size === filtered.length
+									}
+									onChange={toggleAll}
+								/>
+							</TableHead>
 							<TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground py-2">
 								Заказ
 							</TableHead>
-							<TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground py-2 hidden sm:table-cell">
+							<TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground py-2 table-cell">
 								Период
 							</TableHead>
-							<TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground py-2 hidden md:table-cell">
+							<TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground py-2 table-cell">
 								Позиции
 							</TableHead>
 							<TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground py-2">
 								Статус
 							</TableHead>
-							<TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground py-2 text-right">
-								Сумма
-							</TableHead>
-							<TableHead className="py-3 w-24" />
+							<TableHead className="py-3 w-24">Сумма</TableHead>
 						</TableRow>
 					</TableHeader>
 					<TableBody>
 						{filtered.map((booking) => {
+							const isSelected = selectedIds.has(booking.id);
 							const hours = Math.ceil(
 								differenceInHours(
 									new Date(booking.end_date),
 									new Date(booking.start_date)
 								)
 							);
+
+							const dashboardBooking = asDashboardBooking(booking);
+
 							return (
-								<TableRow
+								<BookingDetailDialog
 									key={booking.id}
-									className="border-border hover:bg-muted/20 transition-colors"
+									booking={dashboardBooking}
+									hours={hours}
 								>
-									{/* Order ID */}
-									<TableCell className="py-4">
-										<div className="font-mono text-sm font-bold">
-											#{booking.id.split("-")[0]?.toUpperCase()}
-										</div>
-										<div className="text-[11px] text-muted-foreground mt-0.5">
-											{format(new Date(booking.created_at), "d MMM yyyy", {
-												locale: ru,
-											})}
-										</div>
-									</TableCell>
-
-									{/* Dates */}
-									<TableCell className="py-4 hidden sm:table-cell">
-										<div className="text-sm font-medium">
-											{format(new Date(booking.start_date), "d MMM", {
-												locale: ru,
-											})}
-											{" — "}
-											{format(new Date(booking.end_date), "d MMM", {
-												locale: ru,
-											})}
-										</div>
-										<div className="text-[11px] text-muted-foreground mt-0.5">
-											{hours} ч.
-										</div>
-									</TableCell>
-
-									{/* Items */}
-									<TableCell className="py-4 hidden md:table-cell">
-										<div className="text-sm">
-											{booking.booking_items.length} поз.
-										</div>
-										<div className="text-[11px] text-muted-foreground mt-0.5 truncate max-w-40">
-											{booking.booking_items[0]?.equipment.title}
-											{booking.booking_items.length > 1 &&
-												` +${booking.booking_items.length - 1}`}
-										</div>
-									</TableCell>
-
-									{/* Status */}
-									<TableCell className="py-4">
-										<span
-											className={cn(
-												"inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border",
-												STATUS_STYLES[booking.status] ??
-													"bg-foreground/5 text-muted-foreground border-foreground/10"
-											)}
+									<TableRow
+										className={cn(
+											"border-border transition-colors cursor-pointer",
+											isSelected
+												? "bg-secondary/40 hover:bg-secondary"
+												: "hover:bg-muted-foreground/10"
+										)}
+									>
+										<TableCell
+											className="px-4"
+											onClick={(e) => e.stopPropagation()}
 										>
-											{STATUS_LABELS[booking.status] ?? booking.status}
-										</span>
-									</TableCell>
+											<input
+												type="checkbox"
+												className="accent-primary scale-110 cursor-pointer"
+												checked={isSelected}
+												onChange={() => toggleRow(booking.id)}
+											/>
+										</TableCell>
+										{/* Order ID */}
+										<TableCell className="py-4">
+											<div className="font-mono text-sm font-bold">
+												№ {booking.id.split("-")[0]?.toUpperCase()}
+											</div>
+											<div className="text-[11px] text-muted-foreground mt-0.5">
+												<ClientTime
+													iso={booking.created_at}
+													fmt="full"
+													fallback="-"
+												/>
+											</div>
+										</TableCell>
 
-									{/* Amount */}
-									<TableCell className="py-4 text-right">
-										<div className="font-black text-sm tabular-nums">
-											{booking.total_amount.toLocaleString()} ₽
-										</div>
-									</TableCell>
+										{/* Dates */}
+										<TableCell className="py-4 table-cell">
+											<div className="text-sm font-medium">
+												{
+													<ClientTime
+														iso={booking.start_date}
+														fmt="datetime"
+														fallback="---"
+													/>
+												}
+												{" — "}
+												{
+													<ClientTime
+														iso={booking.end_date}
+														fmt="datetime"
+														fallback="---"
+													/>
+												}
+											</div>
+											<div className="text-[11px] text-muted-foreground mt-0.5">
+												{hours} ч.
+											</div>
+										</TableCell>
 
-									{/* Details */}
-									<TableCell className="py-4 text-right">
-										<Tooltip>
-											<TooltipTrigger asChild>
-												<BookingDetailsDialog booking={booking} />
-											</TooltipTrigger>
-											<TooltipContent>Детали заказа</TooltipContent>
-										</Tooltip>
-									</TableCell>
-								</TableRow>
+										{/* Items */}
+										<TableCell className="py-4 table-cell">
+											<div className="text-sm">
+												{booking.booking_items.length} поз.
+											</div>
+											<div className="text-[11px] text-muted-foreground mt-0.5 truncate max-w-40">
+												{booking.booking_items[0]?.equipment.title}
+												{booking.booking_items.length > 1 &&
+													` +${booking.booking_items.length - 1}`}
+											</div>
+										</TableCell>
+
+										{/* Status */}
+										<TableCell className="py-4">
+											<span
+												className={cn(
+													"inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border",
+													getStatusStyle(booking.status)
+												)}
+											>
+												{getStatusLabel(booking.status)}
+											</span>
+										</TableCell>
+
+										{/* Amount */}
+										<TableCell className="py-4">
+											<div className="font-black text-sm tabular-nums">
+												{booking.total_amount.toLocaleString()} ₽
+											</div>
+										</TableCell>
+									</TableRow>
+								</BookingDetailDialog>
 							);
 						})}
 					</TableBody>

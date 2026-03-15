@@ -16,12 +16,12 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { ThemeToggle } from "@/components/layouts/ThemeToggle";
 import { SignOutButton } from "@/components/shared/SignOutButton";
-import { CLIENT_NAV } from "@/constants/navigation";
-import { useAuth } from "@/hooks/useAuth";
+import { type DbCategory, MOBILE_NAV } from "@/constants/navigation";
+import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
-import { MobileSearch } from "./MobileSearch";
+import { MobileSearch, type MobileSearchHandle } from "./MobileSearch";
 
-// ─── Inline UserMenu Dropdown ─────────────────────────────────────────────────
+// ─── Inline User Dropdown ─────────────────────────────────────────────────────
 
 function MobileUserDropdown({
 	isOpen,
@@ -108,10 +108,10 @@ function MobileUserDropdown({
 					animate={{ opacity: 1, y: 0, scale: 1 }}
 					exit={{ opacity: 0, y: 12, scale: 0.95 }}
 					transition={{ type: "spring", stiffness: 400, damping: 30 }}
-					className="fixed bottom-19 left-4 z-71 w-72 rounded-2xl bg-background/80 backdrop-blur-xl border border-foreground/10 shadow-2xl overflow-hidden"
-					style={{ marginBottom: "env(safe-area-inset-bottom)" }}
+					// Позиционируем над панелью навигации
+					className="fixed bottom-[calc(3.5rem+env(safe-area-inset-bottom)+0.5rem)] left-4 z-71 w-72 rounded-2xl bg-background/80 backdrop-blur-xl border border-foreground/10 shadow-2xl overflow-hidden"
 				>
-					{/* User info header */}
+					{/* User info */}
 					<div className="flex items-center gap-3 px-4 py-3 border-b border-foreground/5">
 						<div className="relative shrink-0">
 							<div className="h-10 w-10 rounded-xl overflow-hidden bg-foreground/10">
@@ -171,7 +171,6 @@ function MobileUserDropdown({
 						</button>
 					</div>
 
-					{/* Menu items */}
 					<div className="p-2">
 						<MenuItem
 							icon={LayoutDashboard}
@@ -193,12 +192,9 @@ function MobileUserDropdown({
 							label="Профиль"
 							onClick={() => navigate("/dashboard/profile")}
 						/>
-
-						{/* ThemeToggle переиспользуем */}
 						<div className="px-4 py-1 hover:bg-foreground/5 rounded-xl">
 							<ThemeToggle className="w-full py-2" />
 						</div>
-
 						{isAdmin && (
 							<>
 								<div className="h-px bg-foreground/5 my-1" />
@@ -218,7 +214,6 @@ function MobileUserDropdown({
 								</button>
 							</>
 						)}
-
 						<div className="h-px bg-foreground/5 my-1" />
 						<div className="px-2">
 							<SignOutButton className="w-full h-9 text-sm rounded-xl" />
@@ -230,9 +225,9 @@ function MobileUserDropdown({
 	);
 }
 
-// ─── Nav Button ───────────────────────────────────────────────────────────────
+// ─── TabBtn — базовая кнопка таба ────────────────────────────────────────────
 
-function NavBtn({
+function TabBtn({
 	isActive,
 	onClick,
 	icon: Icon,
@@ -242,7 +237,7 @@ function NavBtn({
 }: {
 	isActive: boolean;
 	onClick?: () => void;
-	icon: React.ElementType;
+	icon?: React.ElementType;
 	label: string;
 	children?: React.ReactNode;
 	className?: string;
@@ -252,30 +247,31 @@ function NavBtn({
 			type="button"
 			onClick={onClick}
 			className={cn(
-				"relative flex flex-col items-center justify-center h-full gap-1 transition-colors group",
+				"relative flex flex-col items-center justify-center gap-0.5 transition-colors group shrink-0",
 				className
 			)}
 		>
 			{isActive && (
-				<span className="absolute inset-x-2 top-2 bottom-2 bg-primary/10 rounded-xl animate-in fade-in zoom-in-95" />
+				<span className="absolute inset-x-1 top-1 bottom-1 bg-primary/10 rounded-xl" />
 			)}
-			<div className="relative">
-				{children ?? (
-					<Icon
-						size={24}
-						strokeWidth={isActive ? 2.5 : 2}
-						className={cn(
-							"relative z-10 transition-all duration-200",
-							isActive
-								? "text-primary scale-105"
-								: "text-muted-foreground group-active:scale-90"
-						)}
-					/>
-				)}
+			<div className="relative z-10">
+				{children ??
+					(Icon && (
+						<Icon
+							size={24}
+							strokeWidth={isActive ? 2.5 : 2}
+							className={cn(
+								"transition-all duration-200",
+								isActive
+									? "text-primary scale-105"
+									: "text-muted-foreground group-active:scale-90"
+							)}
+						/>
+					))}
 			</div>
 			<span
 				className={cn(
-					"relative z-10 text-[10px] font-semibold tracking-wide transition-colors leading-none",
+					"relative z-10 text-[9px] font-semibold tracking-wide transition-colors leading-none",
 					isActive ? "text-primary" : "text-muted-foreground"
 				)}
 			>
@@ -285,13 +281,21 @@ function NavBtn({
 	);
 }
 
-// ─── Main ─────────────────────────────────────────────────────────────────────
+// ─── MobileNavBar ─────────────────────────────────────────────────────────────
 
-export function MobileNavBar() {
+interface MobileNavBarProps {
+	categories: DbCategory[];
+}
+
+export function MobileNavBar({ categories }: MobileNavBarProps) {
 	const pathname = usePathname();
 	const router = useRouter();
 	const [searchOpen, setSearchOpen] = useState(false);
 	const [userMenuOpen, setUserMenuOpen] = useState(false);
+
+	const [mounted, setMounted] = useState(false);
+
+	const searchRef = useRef<MobileSearchHandle>(null);
 	const { user, profile, isLoading } = useAuth();
 	const userBtnRef = useRef<HTMLButtonElement>(null);
 
@@ -299,109 +303,161 @@ export function MobileNavBar() {
 	const name =
 		profile?.name || user?.user_metadata?.name || user?.email?.split("@")[0];
 
-	// Берём из CLIENT_NAV только обычные и auth-элементы (не theme — он в UserMenu dropdown)
-	// Для nav bar показываем: Главная, Каталог, Избранное, Календарь
-	// special="theme" пропускаем — он есть в дропдауне юзер меню
-	const navItems = CLIENT_NAV.filter(
-		(item) => item.special !== "theme" && item.special !== "auth"
-	);
+	useEffect(() => {
+		setMounted(true);
+		setSearchOpen(false);
+	}, []);
 
 	return (
 		<>
-			<MobileSearch isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
+			{/* MobileSearch — выезжает сверху */}
+			<MobileSearch
+				ref={searchRef}
+				isOpen={searchOpen}
+				onClose={() => setSearchOpen(false)}
+				categories={categories}
+			/>
+
+			{/* Дропдаун пользователя */}
 			<MobileUserDropdown
 				isOpen={userMenuOpen}
 				onClose={() => setUserMenuOpen(false)}
 				anchorRef={userBtnRef}
 			/>
 
+			{/* ── Таб-панель ── */}
 			<nav className="md:hidden fixed bottom-0 inset-x-0 z-50">
-				<div className="absolute bottom-0 inset-x-0 h-32 pointer-events-none z-[-1] bg-linear-to-t from-background/80 via-background/60 to-transparent" />
-
-				<div className="mx-3 mb-2 flex items-center gap-2">
-					{/* User button / Войти / Loading */}
-					{!isLoading ? (
-						user ? (
+				<div
+					className="flex items-stretch mx-0 border-t border-foreground/8 bg-background/55 backdrop-blur-2xl"
+					style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+				>
+					{/* ── Закреплённый левый элемент: User / Войти / Loading ── */}
+					<div className="shrink-0 w-14 flex items-center justify-center border-r border-foreground/5">
+						{!mounted || isLoading ? (
+							<Loader2 size={20} className="animate-spin text-primary" />
+						) : user ? (
 							<button
 								ref={userBtnRef}
 								type="button"
 								onClick={() => setUserMenuOpen((v) => !v)}
-								className="h-14 w-14 flex items-center justify-center rounded-2xl border border-foreground/20 bg-muted-foreground/10 backdrop-blur-2xl shadow-xl active:scale-95 transition-transform"
+								className="relative w-9 h-9 rounded-xl overflow-hidden border transition-all active:scale-90"
+								style={{
+									borderColor: userMenuOpen
+										? "hsl(var(--primary) / 0.7)"
+										: "hsl(var(--foreground) / 0.12)",
+								}}
 							>
-								<div
-									className={cn(
-										"relative z-10 w-full h-full rounded-2xl overflow-hidden border transition-all duration-200",
-										userMenuOpen
-											? "border-primary scale-105"
-											: "border-foreground/20"
-									)}
-								>
-									{avatarUrl ? (
-										<Image
-											src={avatarUrl}
-											alt={name ?? ""}
-											width={64}
-											height={64}
-											className="object-cover w-full h-full"
-										/>
-									) : (
-										<div className="flex h-full w-full items-center justify-center bg-primary/10 text-foreground text-md font-bold">
-											{name?.charAt(0).toUpperCase()}
-										</div>
-									)}
-								</div>
+								{avatarUrl ? (
+									<Image
+										src={avatarUrl}
+										alt={name ?? ""}
+										width={36}
+										height={36}
+										className="object-cover w-full h-full"
+									/>
+								) : (
+									<div className="flex h-full w-full items-center justify-center bg-primary/10 text-foreground text-sm font-bold">
+										{name?.charAt(0).toUpperCase()}
+									</div>
+								)}
+								{/* Online dot */}
+								<span className="absolute bottom-0.5 right-0.5 h-2 w-2 rounded-full bg-green-500 border border-background" />
 							</button>
 						) : (
-							<NavBtn
-								isActive={false}
-								icon={LogIn}
-								label="Войти"
-								className="h-14 w-14 flex items-center justify-center rounded-2xl border border-foreground/20 bg-muted-foreground/10 backdrop-blur-2xl shadow-xl active:scale-95 transition-transform"
+							<button
+								type="button"
 								onClick={() => router.push("/auth?view=register")}
-							/>
-						)
-					) : (
-						<NavBtn
-							isActive={false}
-							icon={Loader2}
-							label=""
-							className="h-14 w-14 flex items-center justify-center rounded-2xl border border-foreground/20 bg-muted-foreground/10 backdrop-blur-2xl shadow-xl active:scale-95 transition-transform snap-center cursor-not-allowed animate-spin text-primary"
-						/>
-					)}
+								className="flex flex-col items-center gap-1 group"
+							>
+								<LogIn
+									size={22}
+									strokeWidth={2}
+									className="text-muted-foreground group-active:scale-90 transition-transform"
+								/>
+								<span className="text-[9px] font-semibold text-muted-foreground leading-none">
+									Войти
+								</span>
+							</button>
+						)}
+					</div>
 
-					{/* Main scrollable nav bar */}
-					<div
-						className="flex-1 flex items-center h-14 rounded-2xl border border-foreground/20 bg-muted-foreground/10 backdrop-blur-2xl shadow-xl overflow-x-auto no-scrollbar snap-x"
-						style={{ marginBottom: "env(safe-area-inset-bottom)" }}
-					>
-						<div className="flex items-center px-2 min-w-full">
-							{navItems.map(({ title, href, icon: Icon }) => {
+					{/* ── Прокручиваемые пункты навигации ── */}
+					<div className="flex-1 flex items-center h-14 overflow-x-auto no-scrollbar snap-x snap-mandatory">
+						<div className="flex items-stretch h-full px-1 gap-1 min-w-full">
+							{MOBILE_NAV.map((item) => {
+								const { href, title, icon: Icon } = item;
 								const isActive =
 									href === "/" ? pathname === "/" : pathname.startsWith(href);
 								return (
-									<NavBtn
+									<TabBtn
 										key={href}
 										isActive={isActive}
 										icon={Icon}
 										label={title}
 										onClick={() => router.push(href)}
-										className="min-w-18 snap-center"
+										className="min-w-15 h-full snap-center px-1"
 									/>
 								);
 							})}
 						</div>
 					</div>
 
-					{/* Search button */}
-					<motion.button
-						layoutId="search-box"
-						type="button"
-						onClick={() => setSearchOpen(true)}
-						className="h-14 w-14 flex items-center justify-center rounded-2xl border border-foreground/20 bg-muted-foreground/10 backdrop-blur-2xl shadow-xl active:scale-95 transition-transform shrink-0"
-						style={{ marginBottom: "env(safe-area-inset-bottom)" }}
-					>
-						<Search size={26} />
-					</motion.button>
+					<div className="shrink-0 w-14 flex items-center justify-center border-l border-foreground/5">
+						<button
+							type="button"
+							onClick={() => {
+								const nextState = !searchOpen;
+								setSearchOpen(nextState);
+
+								if (nextState) {
+									searchRef.current?.focus();
+								}
+							}}
+							className="flex flex-col h-full items-center justify-center gap-1 group active:scale-90 transition-transform"
+							aria-label={searchOpen ? "Закрыть поиск" : "Открыть поиск"}
+						>
+							{/* Анимация: Search ↔ X через AnimatePresence */}
+							<div className="relative w-5.5 h-5.5">
+								<AnimatePresence mode="wait" initial={false}>
+									{searchOpen ? (
+										<motion.div
+											key="close"
+											initial={{ opacity: 0, rotate: -90, scale: 0.5 }}
+											animate={{ opacity: 1, rotate: 0, scale: 1 }}
+											exit={{ opacity: 0, rotate: 90, scale: 0.5 }}
+											transition={{ duration: 0.15, ease: "easeOut" }}
+											className="absolute inset-0 flex items-center justify-center"
+										>
+											<X size={24} strokeWidth={2.5} className="text-primary" />
+										</motion.div>
+									) : (
+										<motion.div
+											key="search"
+											initial={{ opacity: 0, rotate: 90, scale: 0.5 }}
+											animate={{ opacity: 1, rotate: 0, scale: 1 }}
+											exit={{ opacity: 0, rotate: -90, scale: 0.5 }}
+											transition={{ duration: 0.15, ease: "easeOut" }}
+											className="absolute inset-0 flex items-center justify-center"
+										>
+											<Search
+												size={24}
+												strokeWidth={2}
+												className="text-muted-foreground"
+											/>
+										</motion.div>
+									)}
+								</AnimatePresence>
+							</div>
+							<span
+								className={cn(
+									"text-[9px] font-semibold leading-none transition-colors",
+									searchOpen ? "text-primary" : "text-muted-foreground"
+								)}
+							>
+								{searchOpen ? "Закрыть" : "Поиск"}
+							</span>
+						</button>
+					</div>
 				</div>
 			</nav>
 		</>

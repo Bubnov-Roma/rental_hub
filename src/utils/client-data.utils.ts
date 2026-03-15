@@ -1,3 +1,5 @@
+"use client";
+
 import type { ClientFormValues, IndividualClient } from "@/schemas";
 
 // ── Type guard ────────────────────────────────────────────────────────────────

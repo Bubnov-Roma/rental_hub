@@ -9,7 +9,7 @@ import {
 } from "react-hook-form";
 import { SuggestionsDropdown } from "@/components/forms/shared/SuggestionsDropdown";
 import { ValidatedInput } from "@/components/forms/shared/ValidatedInput";
-import { useDadataFioSuggestions } from "@/hooks/useDadataSuggestions";
+import { useDadataFioSuggestions } from "@/hooks/use-dadata-suggestions";
 import type { ClientFormValues } from "@/schemas";
 
 interface FioProps {

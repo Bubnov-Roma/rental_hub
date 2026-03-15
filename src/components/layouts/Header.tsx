@@ -5,20 +5,23 @@ import Link from "next/link";
 import { useRef, useState } from "react";
 import { useOnClickOutside } from "usehooks-ts";
 import { SearchPanel } from "@/components/core/search/SearchPanel";
-import { Button, SidebarTrigger, useSidebar } from "@/components/ui";
+import { Logo } from "@/components/icons/Logo";
+import { Button, useSidebar } from "@/components/ui";
+import type { DbCategory } from "@/constants";
 import { useSearchState } from "@/hooks";
 import { useSearchHistory } from "@/hooks/use-search-history";
 import { cn } from "@/lib/utils";
 import { useCartStore } from "@/store/use-cart-store";
 
-export function Header() {
+interface HeaderProps {
+	categories: DbCategory[];
+}
+
+export function Header({ categories }: HeaderProps) {
 	const [isFocused, setIsFocused] = useState(false);
 	const { state: searchState } = useSearchState();
 	const { addToHistory } = useSearchHistory();
 
-	// Подписка только на длину — не на весь массив.
-	// Иначе любое изменение корзины (добавление/удаление) перерисовывает Header
-	// → SearchPanel → SearchFilters, создавая лишние рендеры.
 	const cartCount = useCartStore((s) => s.items.length);
 
 	const { state: sidebarState, toggleSidebar, isMobile } = useSidebar();
@@ -39,21 +42,37 @@ export function Header() {
 	};
 
 	return (
-		<header className="sticky top-0 z-50 flex h-16 items-center justify-between gap-4 border-b border-foreground/5 bg-background/60 px-4 md:px-6 backdrop-blur-xl group">
-			<div className="md:hidden">
-				<SidebarTrigger className="color-foreground" />
+		<header
+			className={cn(
+				"fixed top-0 left-20 right-0 z-5",
+				isMobile && "left-0",
+				!isCollapsed && "md:left-(--sidebar-width)",
+				"transition-[left] duration-300 ease-in-out",
+				"flex h-16 items-center justify-between gap-4 border-b border-foreground/5 bg-background/60 px-4 md:px-6 backdrop-blur-xl group"
+			)}
+		>
+			{/* ── Mobile: логотип слева (sidebar trigger убран — он в MobileNavBar) ── */}
+			<div className="md:hidden flex items-center">
+				<Link href="/" className="flex items-center gap-2">
+					<div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground shrink-0">
+						<Logo className="h-5 w-auto text-primary-foreground pl-0.5" />
+					</div>
+					<span className="font-black tracking-tighter text-base">LINZA</span>
+				</Link>
 			</div>
 
+			{/* ── Desktop: toggle кнопка когда sidebar свёрнут ── */}
 			{isCollapsed && !isMobile && (
 				<Button
 					variant="ghost"
 					onClick={toggleSidebar}
-					className="opacity-0 group-hover:opacity-100 items-center justify-center h-8 w-8 rounded-lg text-primary transition-all duration-300 hover:scale-110"
+					className="items-center justify-center h-8 w-8 rounded-lg text-foreground transition-all duration-300 hover:scale-110"
 				>
 					<PanelLeft size={16} />
 				</Button>
 			)}
 
+			{/* ── Desktop: поле поиска ── */}
 			<div
 				ref={containerRef}
 				className="relative w-full max-w-xl h-11 hidden md:block"
@@ -104,6 +123,7 @@ export function Header() {
 						<div className="animate-in fade-in slide-in-from-top-1 duration-200">
 							<div className="h-px bg-foreground/5 mx-4 mb-1" />
 							<SearchPanel
+								categories={categories}
 								state={searchState}
 								variant="desktop"
 								onClose={handleClose}
@@ -114,7 +134,8 @@ export function Header() {
 				</div>
 			</div>
 
-			<div className="flex items-center gap-2">
+			{/* ── Desktop: корзина ── */}
+			<div className="md:flex items-center gap-2">
 				<Link
 					href="/checkout"
 					data-cart-icon
