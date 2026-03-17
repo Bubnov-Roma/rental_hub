@@ -209,7 +209,7 @@ export function AddToCartButton({
 					<button
 						type="button"
 						onClick={handleAdd}
-						disabled={quantity >= (item.available_count || 99)}
+						disabled={quantity >= (item.availableCount || 99)}
 						className={cn(
 							"flex items-center justify-center hover:bg-foreground/10 active:scale-75 transition-all",
 							"disabled:opacity-20",
@@ -298,7 +298,7 @@ export function AddToCartButton({
 				ref={btnRef}
 				type="button"
 				onClick={handleAdd}
-				disabled={quantity >= (item.available_count || 99)}
+				disabled={quantity >= (item.availableCount || 99)}
 				className={cn(
 					"flex items-center justify-center shrink-0 h-full",
 					"hover:bg-foreground/20 active:scale-75 transition-all text-foreground active:rounded-r-md",

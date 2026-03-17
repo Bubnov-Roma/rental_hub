@@ -1,60 +1,77 @@
 "use server";
 
+import {
+	type CategoryEntityType,
+	type HistoryAction,
+	Prisma,
+} from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { cache } from "react";
-import type { DbCategory, DbSubcategory } from "@/constants/navigation";
-import { createClient } from "@/lib/supabase/server";
+import type {
+	DbCategory,
+	DbSubcategory,
+} from "@/core/domain/entities/Equipment";
+import { prisma } from "@/lib/prisma";
 import { slugify } from "@/utils";
 
 // ─── Read ─────────────────────────────────────────────────────────────────────
 
 export const getCategoriesFromDb = cache(async (): Promise<DbCategory[]> => {
-	const supabase = await createClient();
-	const { data, error } = await supabase
-		.from("categories")
-		.select(
-			"id, name, slug, icon_name, image_url, is_modular, admin_notes, subcategories(id, name, slug, sort_order, image_url, admin_notes)"
-		)
-		.order("sort_order");
+	const data = await prisma.category.findMany({
+		orderBy: { sortOrder: "asc" },
+		include: {
+			subcategories: {
+				orderBy: { sortOrder: "asc" },
+			},
+		},
+	});
 
-	if (error || !data) return [];
+	if (!data) return [];
 
 	return data.map((cat) => ({
 		id: cat.id,
 		name: cat.name,
 		slug: cat.slug,
-		icon_name: cat.icon_name,
-		image_url: cat.image_url ?? null,
-		is_modular: cat.is_modular ?? false,
-		admin_notes: cat.admin_notes ?? null,
-		subcategories: (
-			(cat.subcategories as Array<DbSubcategory & { sort_order: number }>) ?? []
-		).sort((a, b) => a.sort_order - b.sort_order),
+		iconName: cat.iconName,
+		imageUrl: cat.imageUrl ?? undefined,
+		isModular: cat.isModular,
+		adminNotes: cat.adminNotes ?? undefined,
+		subcategories: cat.subcategories.map((sub) => ({
+			id: sub.id,
+			name: sub.name,
+			slug: sub.slug,
+			adminNotes: sub.adminNotes ?? undefined,
+			imageUrl: sub.imageUrl ?? undefined,
+			sortOrder: sub.sortOrder,
+		})),
 	}));
 });
 
 // ─── History helper ───────────────────────────────────────────────────────────
 
 async function logHistory(
-	entityType: "category" | "subcategory",
+	entityType: CategoryEntityType,
 	entityId: string,
-	action: "created" | "updated" | "deleted",
+	action: HistoryAction,
 	changes?: Record<string, [unknown, unknown]>
-) {
+): Promise<void> {
 	try {
-		const supabase = await createClient();
-		const {
-			data: { user },
-		} = await supabase.auth.getUser();
-		await supabase.from("category_history").insert({
-			entity_type: entityType,
-			entity_id: entityId,
-			action,
-			changed_by: user?.id ?? null,
-			changes: changes ?? null,
+		// В будущем здесь можно доставать ID пользователя через NextAuth
+		// const session = await auth();
+		// const userId = session?.user?.id;
+
+		await prisma.categoryHistory.create({
+			data: {
+				entityType,
+				entityId,
+				action,
+				// changedBy: userId,
+				// Приводим Record к типу, который ожидает Prisma для JSON-поля
+				changes: changes ? (changes as Prisma.InputJsonValue) : Prisma.JsonNull,
+			},
 		});
-	} catch {
-		// History logging is non-critical
+	} catch (error: unknown) {
+		console.error("History logging failed", error);
 	}
 }
 
@@ -62,416 +79,306 @@ async function logHistory(
 
 export async function createCategoryAction(data: {
 	name: string;
-	icon_name?: string;
-	image_url?: string;
-	is_modular?: boolean;
-	admin_notes?: string;
-}): Promise<{ success: boolean; category?: DbCategory; error?: string }> {
-	const supabase = await createClient();
+	iconName?: string;
+	imageUrl?: string;
+	isModular?: boolean;
+	adminNotes?: string;
+}): Promise<{
+	success: boolean;
+	category?: Omit<DbCategory, "subcategories">;
+	error?: string;
+}> {
+	try {
+		const last = await prisma.category.findFirst({
+			orderBy: { sortOrder: "desc" },
+			select: { sortOrder: true },
+		});
 
-	const { data: last } = await supabase
-		.from("categories")
-		.select("sort_order")
-		.order("sort_order", { ascending: false })
-		.limit(1)
-		.single();
+		const nextOrder = (last?.sortOrder ?? 0) + 1;
+		const slug = slugify(data.name);
 
-	const nextOrder = (last?.sort_order ?? 0) + 1;
-	const slug = slugify(data.name);
+		const created = await prisma.category.create({
+			data: {
+				name: data.name.trim(),
+				slug,
+				iconName: data.iconName ?? "Package",
+				// Конвертируем опциональные поля в null
+				imageUrl: data.imageUrl ?? null,
+				isModular: data.isModular ?? false,
+				adminNotes: data.adminNotes ?? null,
+				sortOrder: nextOrder,
+			},
+		});
 
-	const { data: created, error } = await supabase
-		.from("categories")
-		.insert({
-			name: data.name.trim(),
-			slug,
-			icon_name: data.icon_name ?? "Package",
-			image_url: data.image_url ?? null,
-			is_modular: data.is_modular ?? false,
-			admin_notes: data.admin_notes ?? null,
-			sort_order: nextOrder,
-		})
-		.select("id, name, slug, icon_name, image_url, is_modular, admin_notes")
-		.single();
+		await logHistory("CATEGORY", created.id, "CREATED");
+		revalidatePath("/", "layout");
 
-	if (error) {
-		if (error.code === "23505")
-			return {
-				success: false,
-				error: "Категория с таким названием уже существует",
-			};
-		return { success: false, error: error.message };
+		return {
+			success: true,
+			category: {
+				id: created.id,
+				name: created.name,
+				slug: created.slug,
+				iconName: created.iconName,
+				imageUrl: created.imageUrl ?? undefined,
+				isModular: created.isModular,
+				adminNotes: created.adminNotes ?? undefined,
+			},
+		};
+	} catch (error: unknown) {
+		if (error instanceof Prisma.PrismaClientKnownRequestError) {
+			if (error.code === "P2002") {
+				return {
+					success: false,
+					error: "Категория с таким названием уже существует",
+				};
+			}
+		}
+		if (error instanceof Error) return { success: false, error: error.message };
+		return { success: false, error: "Неизвестная ошибка" };
 	}
-
-	await logHistory("category", created.id, "created");
-	revalidatePath("/", "layout");
-	return {
-		success: true,
-		category: { ...created, subcategories: [] },
-	};
 }
 
 export async function updateCategoryAction(
 	id: string,
 	data: {
 		name?: string;
-		icon_name?: string;
-		image_url?: string;
-		is_modular?: boolean;
-		admin_notes?: string | undefined;
-		sort_order?: number;
+		iconName?: string | undefined;
+		imageUrl?: string | undefined;
+		isModular?: boolean;
+		adminNotes?: string | undefined;
+		sortOrder?: number;
 	}
 ): Promise<{ success: boolean; error?: string }> {
-	const supabase = await createClient();
+	try {
+		const current = await prisma.category.findUnique({ where: { id } });
+		if (!current) return { success: false, error: "Категория не найдена" };
 
-	const { data: current } = await supabase
-		.from("categories")
-		.select("*")
-		.eq("id", id)
-		.single();
+		const updates: Prisma.CategoryUpdateInput = {};
 
-	const updates: Record<string, unknown> = {};
-	if (data.name !== undefined) {
-		updates.name = data.name.trim();
-		updates.slug = slugify(data.name);
+		if (data.name !== undefined) {
+			updates.name = data.name.trim();
+			updates.slug = slugify(data.name);
+		}
+		if (data.iconName !== undefined) updates.iconName = data.iconName;
+		if (data.imageUrl !== undefined) updates.imageUrl = data.imageUrl;
+		if (data.isModular !== undefined) updates.isModular = data.isModular;
+		if (data.adminNotes !== undefined) updates.adminNotes = data.adminNotes;
+		if (data.sortOrder !== undefined) updates.sortOrder = data.sortOrder;
+
+		await prisma.category.update({
+			where: { id },
+			data: updates,
+		});
+
+		// Строгое вычисление изменений без any
+		const changes: Record<string, [unknown, unknown]> = {};
+		const currentRecord = current as Record<string, unknown>;
+
+		for (const [key, newVal] of Object.entries(updates)) {
+			const oldVal = currentRecord[key];
+			if (oldVal !== newVal) {
+				changes[key] = [oldVal, newVal];
+			}
+		}
+
+		await logHistory("CATEGORY", id, "UPDATED", changes);
+		revalidatePath("/", "layout");
+		return { success: true };
+	} catch (error: unknown) {
+		if (error instanceof Error) return { success: false, error: error.message };
+		return { success: false, error: "Неизвестная ошибка" };
 	}
-	if (data.icon_name !== undefined) updates.icon_name = data.icon_name;
-	if (data.image_url !== undefined) updates.image_url = data.image_url;
-	if (data.is_modular !== undefined) updates.is_modular = data.is_modular;
-	if (data.admin_notes !== undefined) updates.admin_notes = data.admin_notes;
-	if (data.sort_order !== undefined) updates.sort_order = data.sort_order;
-
-	const { error } = await supabase
-		.from("categories")
-		.update(updates)
-		.eq("id", id);
-	if (error) return { success: false, error: error.message };
-
-	const changes: Record<string, [unknown, unknown]> = {};
-	for (const [key, newVal] of Object.entries(updates)) {
-		if (current && current[key] !== newVal)
-			changes[key] = [current[key], newVal];
-	}
-	await logHistory("category", id, "updated", changes);
-	revalidatePath("/", "layout");
-	return { success: true };
 }
 
 export async function deleteCategoryAction(
 	id: string
 ): Promise<{ success: boolean; error?: string }> {
-	const supabase = await createClient();
+	try {
+		const count = await prisma.equipment.count({ where: { categoryId: id } });
 
-	const { count } = await supabase
-		.from("equipment")
-		.select("id", { count: "exact", head: true })
-		.eq("category", id);
+		if (count > 0) {
+			return {
+				success: false,
+				error: `Нельзя удалить: в категории ${count} позиций техники`,
+			};
+		}
 
-	if (count && count > 0)
-		return {
-			success: false,
-			error: `Нельзя удалить: в категории ${count} позиций техники`,
-		};
+		const cat = await prisma.category.findUnique({
+			where: { id },
+			select: { name: true },
+		});
 
-	const { data: cat } = await supabase
-		.from("categories")
-		.select("name")
-		.eq("id", id)
-		.single();
+		await prisma.category.delete({ where: { id } });
 
-	const { error } = await supabase.from("categories").delete().eq("id", id);
-	if (error) return { success: false, error: error.message };
-
-	await logHistory("category", id, "deleted", { name: [cat?.name, null] });
-	revalidatePath("/", "layout");
-	return { success: true };
+		await logHistory("CATEGORY", id, "DELETED", { name: [cat?.name, null] });
+		revalidatePath("/", "layout");
+		return { success: true };
+	} catch (error: unknown) {
+		if (error instanceof Error) return { success: false, error: error.message };
+		return { success: false, error: "Неизвестная ошибка" };
+	}
 }
 
 export async function reorderCategoriesAction(
 	orderedIds: string[]
 ): Promise<{ success: boolean; error?: string }> {
-	const supabase = await createClient();
-	const updates = orderedIds.map((id, index) =>
-		supabase
-			.from("categories")
-			.update({ sort_order: index + 1 })
-			.eq("id", id)
-	);
-	const results = await Promise.all(updates);
-	const firstError = results.find((r) => r.error)?.error;
-	if (firstError) return { success: false, error: firstError.message };
-	revalidatePath("/", "layout");
-	return { success: true };
+	try {
+		await prisma.$transaction(
+			orderedIds.map((id, index) =>
+				prisma.category.update({
+					where: { id },
+					data: { sortOrder: index + 1 },
+				})
+			)
+		);
+		revalidatePath("/", "layout");
+		return { success: true };
+	} catch (error: unknown) {
+		if (error instanceof Error) return { success: false, error: error.message };
+		return { success: false, error: "Неизвестная ошибка" };
+	}
 }
 
 export async function reorderSubcategoriesAction(
 	orderedIds: string[]
 ): Promise<{ success: boolean; error?: string }> {
-	const supabase = await createClient();
-	const updates = orderedIds.map((id, index) =>
-		supabase
-			.from("subcategories")
-			.update({ sort_order: index + 1 })
-			.eq("id", id)
-	);
-	const results = await Promise.all(updates);
-	const firstError = results.find((r) => r.error)?.error;
-	if (firstError) return { success: false, error: firstError.message };
-	revalidatePath("/", "layout");
-	return { success: true };
+	try {
+		await prisma.$transaction(
+			orderedIds.map((id, index) =>
+				prisma.subcategory.update({
+					where: { id },
+					data: { sortOrder: index + 1 },
+				})
+			)
+		);
+		revalidatePath("/", "layout");
+		return { success: true };
+	} catch (error: unknown) {
+		if (error instanceof Error) return { success: false, error: error.message };
+		return { success: false, error: "Неизвестная ошибка" };
+	}
 }
 
 export async function getCategoryHistoryAction(entityId: string) {
-	const supabase = await createClient();
-	const { data } = await supabase
-		.from("category_history")
-		.select("*, profiles(name, email)")
-		.eq("entity_id", entityId)
-		.order("changed_at", { ascending: false })
-		.limit(50);
-	return data ?? [];
+	const data = await prisma.categoryHistory.findMany({
+		where: { entityId },
+		orderBy: { changedAt: "desc" },
+		take: 50,
+	});
+	return data;
 }
 
 // ─── Subcategory CRUD ─────────────────────────────────────────────────────────
 
 export async function createSubcategoryAction(data: {
-	category_id: string;
+	categoryId: string;
 	name: string;
-	image_url?: string;
-	admin_notes?: string;
-}): Promise<{ success: boolean; subcategory?: DbSubcategory; error?: string }> {
-	const supabase = await createClient();
+	imageUrl?: string;
+	adminNotes?: string;
+}): Promise<{
+	success: boolean;
+	subcategory?: DbSubcategory;
+	error?: string;
+}> {
+	try {
+		const last = await prisma.subcategory.findFirst({
+			where: { categoryId: data.categoryId },
+			orderBy: { sortOrder: "desc" },
+			select: { sortOrder: true },
+		});
 
-	const { data: last } = await supabase
-		.from("subcategories")
-		.select("sort_order")
-		.eq("category_id", data.category_id)
-		.order("sort_order", { ascending: false })
-		.limit(1)
-		.single();
+		const nextOrder = (last?.sortOrder ?? 0) + 1;
 
-	const nextOrder = (last?.sort_order ?? 0) + 1;
+		const created = await prisma.subcategory.create({
+			data: {
+				categoryId: data.categoryId,
+				name: data.name.trim(),
+				slug: slugify(data.name),
+				sortOrder: nextOrder,
+				imageUrl: data.imageUrl ?? null,
+				adminNotes: data.adminNotes ?? null,
+			},
+		});
 
-	const { data: created, error } = await supabase
-		.from("subcategories")
-		.insert({
-			category_id: data.category_id,
-			name: data.name.trim(),
-			slug: slugify(data.name),
-			sort_order: nextOrder,
-			image_url: data.image_url ?? null,
-			admin_notes: data.admin_notes ?? null,
-		})
-		.select("id, name, slug, image_url, admin_notes")
-		.single();
+		await logHistory("SUBCATEGORY", created.id, "CREATED");
+		revalidatePath("/", "layout");
 
-	if (error) return { success: false, error: error.message };
-
-	await logHistory("subcategory", created.id, "created");
-	revalidatePath("/", "layout");
-	return { success: true, subcategory: created };
+		return {
+			success: true,
+			subcategory: {
+				id: created.id,
+				name: created.name,
+				slug: created.slug,
+				imageUrl: created.imageUrl ?? undefined,
+				adminNotes: created.adminNotes ?? undefined,
+			},
+		};
+	} catch (error: unknown) {
+		if (error instanceof Error) return { success: false, error: error.message };
+		return { success: false, error: "Неизвестная ошибка" };
+	}
 }
 
 export async function updateSubcategoryAction(
 	id: string,
 	data: {
 		name?: string;
-		image_url?: string;
-		admin_notes?: string | undefined;
-		sort_order?: number;
+		imageUrl?: string | undefined;
+		adminNotes?: string | undefined;
+		sortOrder?: number;
 	}
 ): Promise<{ success: boolean; error?: string }> {
-	const supabase = await createClient();
+	try {
+		const current = await prisma.subcategory.findUnique({ where: { id } });
+		if (!current) return { success: false, error: "Подкатегория не найдена" };
 
-	const { data: current } = await supabase
-		.from("subcategories")
-		.select("*")
-		.eq("id", id)
-		.single();
+		const updates: Prisma.SubcategoryUpdateInput = {};
 
-	const updates: Record<string, unknown> = {};
-	if (data.name !== undefined) {
-		updates.name = data.name.trim();
-		updates.slug = slugify(data.name);
+		if (data.name !== undefined) {
+			updates.name = data.name.trim();
+			updates.slug = slugify(data.name);
+		}
+		if (data.imageUrl !== undefined) updates.imageUrl = data.imageUrl;
+		if (data.adminNotes !== undefined) updates.adminNotes = data.adminNotes;
+		if (data.sortOrder !== undefined) updates.sortOrder = data.sortOrder;
+
+		await prisma.subcategory.update({
+			where: { id },
+			data: updates,
+		});
+
+		const changes: Record<string, [unknown, unknown]> = {};
+		const currentRecord = current as Record<string, unknown>;
+
+		for (const [key, newVal] of Object.entries(updates)) {
+			const oldVal = currentRecord[key];
+			if (oldVal !== newVal) {
+				changes[key] = [oldVal, newVal];
+			}
+		}
+
+		await logHistory("SUBCATEGORY", id, "UPDATED", changes);
+		revalidatePath("/", "layout");
+		return { success: true };
+	} catch (error: unknown) {
+		if (error instanceof Error) return { success: false, error: error.message };
+		return { success: false, error: "Неизвестная ошибка" };
 	}
-	if (data.image_url !== undefined) updates.image_url = data.image_url;
-	if (data.admin_notes !== undefined) updates.admin_notes = data.admin_notes;
-	if (data.sort_order !== undefined) updates.sort_order = data.sort_order;
-
-	const { error } = await supabase
-		.from("subcategories")
-		.update(updates)
-		.eq("id", id);
-	if (error) return { success: false, error: error.message };
-
-	const changes: Record<string, [unknown, unknown]> = {};
-	for (const [key, newVal] of Object.entries(updates)) {
-		if (current && current[key] !== newVal)
-			changes[key] = [current[key], newVal];
-	}
-	await logHistory("subcategory", id, "updated", changes);
-	revalidatePath("/", "layout");
-	return { success: true };
 }
 
 export async function deleteSubcategoryAction(
 	id: string
 ): Promise<{ success: boolean; error?: string }> {
-	const supabase = await createClient();
-	await supabase
-		.from("equipment")
-		.update({ subcategory: null })
-		.eq("subcategory", id);
-	const { error } = await supabase.from("subcategories").delete().eq("id", id);
-	if (error) return { success: false, error: error.message };
-	await logHistory("subcategory", id, "deleted");
-	revalidatePath("/", "layout");
-	return { success: true };
-}
+	try {
+		// В Prisma мы поставили SetNull для связи Equipment -> Subcategory
+		await prisma.subcategory.delete({ where: { id } });
 
-// ─── Create equipment ─────────────────────────────────────────────────────────
-
-export type CreateEquipmentData = {
-	title: string;
-	category: string;
-	subcategory?: string | null;
-	inventory_number?: string | undefined;
-	price_per_day: number;
-	price_4h?: number | undefined;
-	price_8h?: number | undefined;
-	deposit?: number | undefined;
-	replacement_value?: number | undefined;
-	description?: string | undefined;
-	kit_description?: string | undefined;
-	defects?: string | undefined;
-	status?: string | undefined;
-	is_available?: boolean | undefined;
-	ownership_type?: string | undefined;
-	partner_name?: string | undefined;
-	specifications?: Record<string, unknown>;
-	related_ids?: string[];
-};
-
-export async function createEquipmentAction(
-	data: CreateEquipmentData
-): Promise<{ success: boolean; id?: string; error?: string }> {
-	const supabase = await createClient();
-
-	const { data: created, error } = await supabase
-		.from("equipment")
-		.insert({
-			...data,
-			slug: slugify(data.title),
-			is_available: data.is_available ?? true,
-			status: data.status ?? "available",
-			ownership_type: data.ownership_type ?? "internal",
-			specifications: data.specifications ?? {},
-			comments: [],
-			related_ids: data.related_ids ?? [],
-		})
-		.select("id")
-		.single();
-
-	if (error) return { success: false, error: error.message };
-	revalidatePath("/admin/equipment");
-	return { success: true, id: created.id };
-}
-
-// ─── FAQ CRUD ─────────────────────────────────────────────────────────────────
-
-export type FaqItem = {
-	id: string;
-	question: string;
-	answer: string;
-	sort_order: number;
-	category: string | null;
-	is_active: boolean;
-	created_at: string;
-	updated_at: string;
-};
-
-export async function getFaqItemsAction(): Promise<FaqItem[]> {
-	const supabase = await createClient();
-	const { data } = await supabase
-		.from("faq_items")
-		.select("*")
-		.order("sort_order");
-	return (data as FaqItem[]) ?? [];
-}
-
-export async function createFaqItemAction(data: {
-	question: string;
-	answer: string;
-	category?: string;
-}): Promise<{ success: boolean; item?: FaqItem; error?: string }> {
-	const supabase = await createClient();
-
-	const { data: last } = await supabase
-		.from("faq_items")
-		.select("sort_order")
-		.order("sort_order", { ascending: false })
-		.limit(1)
-		.single();
-
-	const { data: created, error } = await supabase
-		.from("faq_items")
-		.insert({
-			question: data.question.trim(),
-			answer: data.answer.trim(),
-			category: data.category ?? null,
-			sort_order: (last?.sort_order ?? 0) + 1,
-		})
-		.select("*")
-		.single();
-
-	if (error) return { success: false, error: error.message };
-	revalidatePath("/faq");
-	revalidatePath("/admin");
-	return { success: true, item: created as FaqItem };
-}
-
-export async function updateFaqItemAction(
-	id: string,
-	data: Partial<
-		Pick<
-			FaqItem,
-			"question" | "answer" | "category" | "is_active" | "sort_order"
-		>
-	>
-): Promise<{ success: boolean; error?: string }> {
-	const supabase = await createClient();
-	const { error } = await supabase
-		.from("faq_items")
-		.update({ ...data, updated_at: new Date().toISOString() })
-		.eq("id", id);
-	if (error) return { success: false, error: error.message };
-	revalidatePath("/faq");
-	revalidatePath("/admin");
-	return { success: true };
-}
-
-export async function deleteFaqItemAction(
-	id: string
-): Promise<{ success: boolean; error?: string }> {
-	const supabase = await createClient();
-	const { error } = await supabase.from("faq_items").delete().eq("id", id);
-	if (error) return { success: false, error: error.message };
-	revalidatePath("/faq");
-	revalidatePath("/admin");
-	return { success: true };
-}
-
-export async function reorderFaqItemsAction(
-	orderedIds: string[]
-): Promise<{ success: boolean }> {
-	const supabase = await createClient();
-	await Promise.all(
-		orderedIds.map((id, index) =>
-			supabase
-				.from("faq_items")
-				.update({ sort_order: index + 1 })
-				.eq("id", id)
-		)
-	);
-	revalidatePath("/faq");
-	return { success: true };
+		await logHistory("SUBCATEGORY", id, "DELETED");
+		revalidatePath("/", "layout");
+		return { success: true };
+	} catch (error: unknown) {
+		if (error instanceof Error) return { success: false, error: error.message };
+		return { success: false, error: "Неизвестная ошибка" };
+	}
 }

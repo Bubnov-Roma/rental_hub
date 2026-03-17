@@ -15,11 +15,11 @@ import { useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 import {
 	createFaqItemAction,
+	type DbFaqItem,
 	deleteFaqItemAction,
-	type FaqItem,
 	reorderFaqItemsAction,
 	updateFaqItemAction,
-} from "@/actions/category-actions";
+} from "@/actions/faq-actions";
 import { Button, Card, Input, Label, Textarea } from "@/components/ui";
 import { cn } from "@/lib/utils";
 
@@ -29,8 +29,8 @@ function FaqRow({
 	onDelete,
 	dragHandleProps,
 }: {
-	item: FaqItem;
-	onUpdate: (id: string, data: Partial<FaqItem>) => Promise<void>;
+	item: DbFaqItem;
+	onUpdate: (id: string, data: Partial<DbFaqItem>) => Promise<void>;
 	onDelete: (id: string) => Promise<void>;
 	dragHandleProps: {
 		onDragStart: () => void;
@@ -61,7 +61,7 @@ function FaqRow({
 		<Card
 			className={cn(
 				"rounded-2xl border overflow-hidden transition-all duration-200",
-				item.is_active
+				item.isActive
 					? "border-white/8 bg-foreground/3"
 					: "border-white/4 bg-foreground/1 opacity-60"
 			)}
@@ -171,11 +171,11 @@ function FaqRow({
 								className="h-7 px-2 text-xs text-muted-foreground"
 								onClick={() =>
 									startTransition(async () => {
-										await onUpdate(item.id, { is_active: !item.is_active });
+										await onUpdate(item.id, { isActive: !item.isActive });
 									})
 								}
 							>
-								{item.is_active ? "Скрыть" : "Показать"}
+								{item.isActive ? "Скрыть" : "Показать"}
 							</Button>
 							<Button
 								size="sm"
@@ -207,7 +207,7 @@ function FaqRow({
 export default function AdminFaqClient({
 	initialItems,
 }: {
-	initialItems: FaqItem[];
+	initialItems: DbFaqItem[];
 }) {
 	const [items, setItems] = useState(initialItems);
 	const [isPending, startTransition] = useTransition();
@@ -257,7 +257,7 @@ export default function AdminFaqClient({
 		});
 	};
 
-	const handleUpdate = async (id: string, data: Partial<FaqItem>) => {
+	const handleUpdate = async (id: string, data: Partial<DbFaqItem>) => {
 		const result = await updateFaqItemAction(id, data);
 		if (!result.success) {
 			toast.error(result.error);
@@ -276,7 +276,7 @@ export default function AdminFaqClient({
 		toast.success("Вопрос удалён");
 	};
 
-	const active = items.filter((i) => i.is_active).length;
+	const active = items.filter((i) => i.isActive).length;
 
 	return (
 		<div className="space-y-6 p-6">

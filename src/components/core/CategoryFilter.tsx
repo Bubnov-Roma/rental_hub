@@ -4,7 +4,7 @@ import { ChevronRight } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useOptimistic, useState, useTransition } from "react";
 import { Button } from "@/components/ui";
-import type { DbCategory } from "@/constants/navigation";
+import type { DbCategory } from "@/core/domain/entities/Equipment";
 import { cn } from "@/lib/utils";
 
 interface CategoryFilterProps {

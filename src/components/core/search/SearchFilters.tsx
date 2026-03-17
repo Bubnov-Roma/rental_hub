@@ -1,6 +1,6 @@
 import { X } from "lucide-react";
 import { useMemo } from "react";
-import type { DbCategory } from "@/constants/navigation";
+import type { DbCategory } from "@/core/domain/entities/Equipment";
 import { cn } from "@/lib/utils";
 
 export function SearchFilters({

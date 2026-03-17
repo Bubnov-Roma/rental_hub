@@ -33,7 +33,10 @@ import {
 } from "@/actions/category-actions";
 import { InlineEditField } from "@/components/shared";
 import { Button, Card, Input, Label, Textarea } from "@/components/ui";
-import type { DbCategory, DbSubcategory } from "@/constants/navigation";
+import type {
+	DbCategory,
+	DbSubcategory,
+} from "@/core/domain/entities/Equipment";
 import { cn } from "@/lib/utils";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -41,7 +44,7 @@ import { cn } from "@/lib/utils";
 type HistoryEntry = {
 	id: string;
 	action: string;
-	changed_at: string;
+	changedAt: Date;
 	changes: Record<string, [unknown, unknown]> | null;
 	profiles: { name: string; email: string } | null;
 };
@@ -151,9 +154,9 @@ function CategoryRow({
 	const [showHistory, setShowHistory] = useState(false);
 	const [history, setHistory] = useState<HistoryEntry[]>([]);
 	const [editName, setEditName] = useState(cat.name);
-	const [editIcon, setEditIcon] = useState(cat.icon_name ?? "Package");
-	const [editNotes, setEditNotes] = useState(cat.admin_notes ?? "");
-	const [editModular, setEditModular] = useState(cat.is_modular ?? false);
+	const [editIcon, setEditIcon] = useState(cat.iconName ?? "Package");
+	const [editNotes, setEditNotes] = useState(cat.adminNotes ?? "");
+	const [editModular, setEditModular] = useState(cat.isModular ?? false);
 	const [newSubName, setNewSubName] = useState("");
 	const [isPending, startTransition] = useTransition();
 	const [localSubs, setLocalSubs] = useState(cat.subcategories);
@@ -184,9 +187,9 @@ function CategoryRow({
 		startTransition(async () => {
 			await onUpdate(cat.id, {
 				name: editName,
-				icon_name: editIcon,
-				admin_notes: editNotes || undefined,
-				is_modular: editModular,
+				iconName: editIcon,
+				adminNotes: editNotes || undefined,
+				isModular: editModular,
 			});
 			setEditing(false);
 			toast.success("Категория обновлена");
@@ -195,7 +198,7 @@ function CategoryRow({
 
 	const loadHistory = async () => {
 		const data = await getCategoryHistoryAction(cat.id);
-		setHistory(data as HistoryEntry[]);
+		setHistory(data as unknown as HistoryEntry[]);
 		setShowHistory(true);
 	};
 
@@ -241,7 +244,7 @@ function CategoryRow({
 					) : (
 						<span className="font-semibold text-sm truncate">{cat.name}</span>
 					)}
-					{cat.is_modular && (
+					{cat.isModular && (
 						<span className="shrink-0 text-[10px] font-bold uppercase tracking-widest px-1.5 rounded-md bg-violet-500/15 text-violet-400">
 							Модуль
 						</span>
@@ -385,7 +388,7 @@ function CategoryRow({
 									</span>
 									<span className="text-muted-foreground flex-1">
 										{h.profiles?.name ?? "Система"} ·{" "}
-										{new Date(h.changed_at).toLocaleString("ru-RU")}
+										{new Date(h.changedAt).toLocaleString("ru-RU")}
 										{h.changes && Object.keys(h.changes).length > 0 && (
 											<span className="ml-1 text-muted-foreground/50">
 												({Object.keys(h.changes).join(", ")})
@@ -400,10 +403,10 @@ function CategoryRow({
 			)}
 
 			{/* Admin notes display */}
-			{!editing && cat.admin_notes && (
+			{!editing && cat.adminNotes && (
 				<div className="px-4 pb-3 flex items-start gap-2">
 					<Info size={11} className="text-amber-400 mt-0.5 shrink-0" />
-					<p className="text-xs text-amber-400/80 italic">{cat.admin_notes}</p>
+					<p className="text-xs text-amber-400/80 italic">{cat.adminNotes}</p>
 				</div>
 			)}
 
@@ -467,14 +470,14 @@ function SubcategoryRow({
 }) {
 	const [editing, setEditing] = useState(false);
 	const [editName, setEditName] = useState(sub.name);
-	const [editNotes, setEditNotes] = useState(sub.admin_notes ?? "");
+	const [editNotes, setEditNotes] = useState(sub.adminNotes ?? "");
 	const [isPending, startTransition] = useTransition();
 
 	const handleSave = () => {
 		startTransition(async () => {
 			await onUpdate(sub.id, {
 				name: editName,
-				admin_notes: editNotes || undefined,
+				adminNotes: editNotes || undefined,
 			});
 			setEditing(false);
 			toast.success("Подкатегория обновлена");
@@ -523,9 +526,9 @@ function SubcategoryRow({
 				) : (
 					<div className="flex-1 min-w-0">
 						<span className="text-sm truncate">{sub.name}</span>
-						{sub.admin_notes && (
+						{sub.adminNotes && (
 							<p className="text-[11px] text-amber-400/70 truncate">
-								{sub.admin_notes}
+								{sub.adminNotes}
 							</p>
 						)}
 					</div>
@@ -630,8 +633,8 @@ export default function AdminCategoriesClient({
 		startTransition(async () => {
 			const result = await createCategoryAction({
 				name: newCatName.trim(),
-				icon_name: newCatIcon,
-				is_modular: newCatModular,
+				iconName: newCatIcon,
+				isModular: newCatModular,
 			});
 			if (!result.success) {
 				toast.error(result.error);
@@ -662,7 +665,7 @@ export default function AdminCategoriesClient({
 	};
 
 	const handleAddSub = async (catId: string, name: string) => {
-		const result = await createSubcategoryAction({ category_id: catId, name });
+		const result = await createSubcategoryAction({ categoryId: catId, name });
 		if (!result.success) {
 			toast.error(result.error);
 			return;

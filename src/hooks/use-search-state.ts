@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import type { DbCategory } from "@/constants/navigation";
+import type { DbCategory } from "@/core/domain/entities/Equipment";
 
 export interface SearchPanelState {
 	query: string;

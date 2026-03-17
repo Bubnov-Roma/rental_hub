@@ -6,12 +6,12 @@ import { Eye, Loader2, Pencil, Plus, Save, X } from "lucide-react";
 import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
 import {
-	type CreateEquipmentData,
 	createCategoryAction,
-	createEquipmentAction,
 	createSubcategoryAction,
 } from "@/actions/category-actions";
 import {
+	type CreateEquipmentData,
+	createEquipmentAction,
 	syncEquipmentByTitle,
 	updateEquipment,
 } from "@/actions/equipment-actions";
@@ -35,10 +35,14 @@ import {
 	Tooltip,
 } from "@/components/ui";
 import { SINKABLE_FIELDS } from "@/constants";
-import type { DbCategory, DbSubcategory } from "@/constants/navigation";
 import type {
+	DbCategory,
 	DbEquipment,
+	// DbEquipmentBase,
+	DbEquipmentWithImages,
+	DbSubcategory,
 	EquipmentStatus,
+	OwnershipType,
 } from "@/core/domain/entities/Equipment";
 import { cn } from "@/lib/utils";
 import { useUnsavedChanges } from "@/store";
@@ -72,7 +76,7 @@ function RelatedItemChip({
 /** Режим «редактирование» — передаём существующий equipment */
 interface EditMode {
 	mode: "edit";
-	equipment: DbEquipment;
+	equipment: DbEquipmentWithImages;
 	hasSiblings?: boolean;
 }
 
@@ -466,7 +470,10 @@ function CategorySubcategorySelector({
 			toast.error(result.error ?? "Ошибка создания категории");
 			return;
 		}
-		const newCat = result.category;
+
+		// Явно добавляем пустой массив подкатегорий, чтобы типы совпали с DbCategory
+		const newCat: DbCategory = { ...result.category, subcategories: [] };
+
 		setLocalCategories((prev) => [...prev, newCat]);
 		onCategoryChange(newCat.id);
 		onSubcategoryChange("");
@@ -478,7 +485,7 @@ function CategorySubcategorySelector({
 	const handleCreateSubcategory = async (name: string) => {
 		if (!categoryId) return;
 		const result = await createSubcategoryAction({
-			category_id: categoryId,
+			categoryId: categoryId,
 			name,
 		});
 		if (!result.success || !result.subcategory) {
@@ -598,45 +605,39 @@ function CategorySubcategorySelector({
 
 // ─── EquipmentSheet (main) ────────────────────────────────────────────────────
 
-type FormData = {
-	title: string;
-	description: string;
-	category: string;
-	subcategory: string;
-	inventory_number: string;
-	price_per_day: number | "";
-	price_4h: number | "";
-	price_8h: number | "";
-	deposit: number | "";
-	replacement_value: number | "";
-	status: string;
-	is_available: boolean;
-	ownership_type: string;
-	partner_name: string;
-	defects: string;
-	kit_description: string;
-	related_ids: string[];
+type EquipmentFormState = DbEquipment & {
+	relatedIds: string[];
 };
 
-function buildInitialForm(equipment?: DbEquipment): FormData {
+function buildInitialForm(equipment?: DbEquipment): EquipmentFormState {
 	return {
+		id: equipment?.id ?? "",
+		isPrimary: equipment?.isPrimary ?? false,
+		kit: equipment?.kit ?? "",
+		specifications: equipment?.specifications ?? {},
 		title: equipment?.title ?? "",
 		description: equipment?.description ?? "",
-		category: equipment?.category ?? "",
-		subcategory: equipment?.subcategory ?? "",
-		inventory_number: equipment?.inventory_number ?? "",
-		price_per_day: equipment?.price_per_day ?? "",
-		price_4h: equipment?.price_4h ?? "",
-		price_8h: equipment?.price_8h ?? "",
-		deposit: equipment?.deposit ?? "",
-		replacement_value: equipment?.replacement_value ?? "",
-		status: equipment?.status ?? "available",
-		is_available: equipment?.is_available ?? true,
-		ownership_type: equipment?.ownership_type ?? "internal",
-		partner_name: equipment?.partner_name ?? "",
+		categoryId: equipment?.categoryId ?? "",
+		subcategoryId: equipment?.subcategoryId ?? "",
+		inventoryNumber: equipment?.inventoryNumber ?? "",
+		pricePerDay: equipment?.pricePerDay ?? 0,
+		price4h: equipment?.price4h ?? 0,
+		price8h: equipment?.price8h ?? 0,
+		deposit: equipment?.deposit ?? 0,
+		replacementValue: equipment?.replacementValue ?? 0,
+		status: equipment?.status ?? "AVAILABLE",
+		isAvailable: equipment?.isAvailable ?? true,
+		ownershipType: equipment?.ownershipType ?? "INTERNAL",
+		partnerName: equipment?.partnerName ?? "",
 		defects: equipment?.defects ?? "",
-		kit_description: equipment?.kit_description ?? "",
-		related_ids: equipment?.related_ids ?? [],
+		kitDescription: equipment?.kitDescription ?? "",
+		comments: equipment?.comments ?? [],
+		slug: equipment?.slug ?? "",
+		createdAt: equipment?.createdAt ?? new Date(),
+		updatedAt: equipment?.updatedAt ?? new Date(),
+		// Так как мы пока не загружаем связи из EquipmentRelation при редактировании,
+		// оставляем пустой массив. Позже мы обновим getEquipmentById, чтобы он отдавал их.
+		relatedIds: [],
 	};
 }
 
@@ -656,7 +657,7 @@ export function EquipmentSheet(props: EquipmentSheetProps) {
 	const [isPending, setIsPending] = useState(false);
 	const [syncFields, setSyncFields] = useState<string[]>([]);
 	const [showSync, setShowSync] = useState(false);
-	const [formData, setFormData] = useState<FormData>(() =>
+	const [formData, setFormData] = useState<EquipmentFormState>(() =>
 		buildInitialForm(equipment)
 	);
 	const [specText, setSpecText] = useState(() =>
@@ -666,12 +667,12 @@ export function EquipmentSheet(props: EquipmentSheetProps) {
 		const c = equipment?.comments;
 		if (!c || typeof c === "string") return (c as unknown as string) ?? "";
 		if (Array.isArray(c)) {
-			type OldComment = { text?: string; author?: string; created_at?: string };
+			type OldComment = { text?: string; author?: string; createdAt?: string };
 			return (c as OldComment[])
 				.map((cm) => {
 					if (!cm.text) return "";
-					const date = cm.created_at
-						? new Date(cm.created_at).toLocaleDateString("ru")
+					const date = cm.createdAt
+						? new Date(cm.createdAt).toLocaleDateString("ru")
 						: "";
 					return `**${cm.author || "Аноним"}** (${date})\n\n${cm.text}`;
 				})
@@ -702,7 +703,7 @@ export function EquipmentSheet(props: EquipmentSheetProps) {
 		}
 	}, [open, equipment, markClean]);
 
-	const set = (patch: Partial<FormData>) =>
+	const set = (patch: Partial<EquipmentFormState>) =>
 		setFormData((prev) => ({ ...prev, ...patch }));
 
 	const handleSave = async () => {
@@ -710,11 +711,11 @@ export function EquipmentSheet(props: EquipmentSheetProps) {
 			toast.error("Укажите наименование");
 			return;
 		}
-		if (!formData.category) {
+		if (!formData.categoryId) {
 			toast.error("Выберите категорию");
 			return;
 		}
-		if (!formData.price_per_day) {
+		if (!formData.pricePerDay) {
 			toast.error("Укажите цену/сутки");
 			return;
 		}
@@ -728,7 +729,7 @@ export function EquipmentSheet(props: EquipmentSheetProps) {
 							id: crypto.randomUUID(),
 							text: commentsText,
 							author: "admin",
-							created_at: new Date().toISOString(),
+							createdAt: new Date().toISOString(),
 						},
 					]
 				: [];
@@ -736,24 +737,24 @@ export function EquipmentSheet(props: EquipmentSheetProps) {
 			if (mode === "create") {
 				const payload: CreateEquipmentData = {
 					title: formData.title.trim(),
-					category: formData.category,
-					subcategory: formData.subcategory || null,
-					inventory_number: formData.inventory_number || undefined,
-					price_per_day: Number(formData.price_per_day),
-					price_4h: formData.price_4h ? Number(formData.price_4h) : undefined,
-					price_8h: formData.price_8h ? Number(formData.price_8h) : undefined,
+					categoryId: formData.categoryId,
+					subcategoryId: formData.subcategoryId || null,
+					inventoryNumber: formData.inventoryNumber || undefined,
+					pricePerDay: Number(formData.pricePerDay),
+					price4h: formData.price4h ? Number(formData.price4h) : undefined,
+					price8h: formData.price8h ? Number(formData.price8h) : undefined,
 					deposit: formData.deposit ? Number(formData.deposit) : undefined,
-					replacement_value: formData.replacement_value
-						? Number(formData.replacement_value)
+					replacementValue: formData.replacementValue
+						? Number(formData.replacementValue)
 						: undefined,
 					description: formData.description || undefined,
-					kit_description: formData.kit_description || undefined,
+					kitDescription: formData.kitDescription || undefined,
 					defects: formData.defects || undefined,
 					status: formData.status,
-					is_available: formData.is_available,
-					ownership_type: formData.ownership_type,
-					partner_name: formData.partner_name || undefined,
-					related_ids: formData.related_ids,
+					isAvailable: formData.isAvailable,
+					ownershipType: formData.ownershipType,
+					partnerName: formData.partnerName || undefined,
+					// related_ids: formData.relatedIds,
 					specifications: specs,
 				};
 				const result = await createEquipmentAction(payload);
@@ -769,15 +770,16 @@ export function EquipmentSheet(props: EquipmentSheetProps) {
 				// edit mode
 				await updateEquipment(equipment.id, {
 					...formData,
+					ownershipType: formData.ownershipType,
 					status: formData.status as unknown as EquipmentStatus,
-					price_per_day: Number(formData.price_per_day) || 0,
-					price_4h: Number(formData.price_4h) || 0,
-					price_8h: Number(formData.price_8h) || 0,
+					pricePerDay: Number(formData.pricePerDay) || 0,
+					price4h: Number(formData.price4h) || 0,
+					price8h: Number(formData.price8h) || 0,
 					deposit: Number(formData.deposit) || 0,
-					replacement_value: Number(formData.replacement_value) || 0,
-					subcategory: formData.subcategory || null,
-					partner_name: formData.partner_name || null,
-					related_ids: formData.related_ids,
+					replacementValue: Number(formData.replacementValue) || 0,
+					subcategoryId: formData.subcategoryId || null,
+					partnerName: formData.partnerName || null,
+					// relatedIds: formData.relatedIds,
 					specifications: specs,
 					comments: commentsPayload,
 				});
@@ -807,9 +809,10 @@ export function EquipmentSheet(props: EquipmentSheetProps) {
 		!!(equipment as DbEquipment & { is_primary?: boolean }).is_primary;
 
 	const initialImages = isEdit
-		? (equipment.equipment_image_links
-				?.map((l) => ({ id: l.images?.id, url: l.images?.url }))
-				.filter((i) => i.id && i.url) ?? [])
+		? (equipment.equipmentImageLinks
+				?.map((l) => ({ id: l.image.id, url: l.image.url }))
+				.filter((i): i is { id: string; url: string } => !!(i.id && i.url)) ??
+			[])
 		: [];
 
 	const handleOpenChange = (nextOpen: boolean) => {
@@ -877,11 +880,7 @@ export function EquipmentSheet(props: EquipmentSheetProps) {
 							<Label>✅ Галерея изображений</Label>
 							<ImageCell
 								equipmentId={equipment.id}
-								initialImages={initialImages
-									.filter(
-										(i): i is { id: string; url: string } => !!(i.id && i.url)
-									)
-									.map(({ id, url }) => ({ id: id, url: url }))}
+								initialImages={initialImages}
 							/>
 						</div>
 					)}
@@ -908,10 +907,10 @@ export function EquipmentSheet(props: EquipmentSheetProps) {
 					<div className="space-y-1.5">
 						<Label>Инвентарный номер</Label>
 						<Input
-							value={formData.inventory_number}
+							value={formData.inventoryNumber ?? ""}
 							placeholder="Уникальный инв. №"
 							onChange={(e) => {
-								set({ inventory_number: e.target.value });
+								set({ inventoryNumber: e.target.value });
 							}}
 						/>
 					</div>
@@ -919,10 +918,12 @@ export function EquipmentSheet(props: EquipmentSheetProps) {
 					{/* CATEGORY / SUBCATEGORY — с inline-созданием */}
 					<CategorySubcategorySelector
 						categories={categories}
-						categoryId={formData.category}
-						subcategoryId={formData.subcategory}
-						onCategoryChange={(id) => set({ category: id, subcategory: "" })}
-						onSubcategoryChange={(id) => set({ subcategory: id })}
+						categoryId={formData.categoryId}
+						subcategoryId={formData.subcategoryId ?? ""}
+						onCategoryChange={(id) =>
+							set({ categoryId: id, subcategoryId: "" })
+						}
+						onSubcategoryChange={(id) => set({ subcategoryId: id })}
 						{...(onCategoriesChange ? { onCategoriesChange } : {})}
 					/>
 
@@ -931,7 +932,7 @@ export function EquipmentSheet(props: EquipmentSheetProps) {
 						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 							<MarkdownEditor
 								label="✅ Описание"
-								value={formData.description}
+								value={formData.description ?? ""}
 								onChange={(v) => {
 									handleCommentsChange(v);
 									set({ description: v });
@@ -961,16 +962,16 @@ export function EquipmentSheet(props: EquipmentSheetProps) {
 									— крестик удаляет, поле добавляет
 								</span>
 							</Label>
-							{formData.related_ids.length > 0 && (
+							{formData.relatedIds.length > 0 && (
 								<div className="flex flex-wrap gap-2 p-3 rounded-xl bg-foreground/4 border border-foreground/8">
-									{formData.related_ids.map((id) => (
+									{formData.relatedIds.map((id) => (
 										<RelatedItemChip
 											key={id}
 											id={id}
 											onRemove={() =>
 												set({
 													...formData,
-													related_ids: formData.related_ids.filter(
+													relatedIds: formData.relatedIds.filter(
 														(rid) => rid !== id
 													),
 												})
@@ -980,8 +981,8 @@ export function EquipmentSheet(props: EquipmentSheetProps) {
 								</div>
 							)}
 							<RelatedEquipmentPicker
-								value={formData.related_ids}
-								onChange={(ids) => set({ ...formData, related_ids: ids })}
+								value={formData.relatedIds}
+								onChange={(ids) => set({ ...formData, relatedIds: ids })}
 								{...(mode === "edit" ? { excludeId: equipment.id } : {})}
 							/>
 						</div>
@@ -990,9 +991,9 @@ export function EquipmentSheet(props: EquipmentSheetProps) {
 					{/* PRICES */}
 					<div className="grid grid-cols-3 gap-4">
 						{[
-							{ label: "✅ Цена 4ч", key: "price_4h" as const },
-							{ label: "✅ Цена 8ч", key: "price_8h" as const },
-							{ label: "✅ Цена/сутки *", key: "price_per_day" as const },
+							{ label: "✅ Цена 4ч", key: "price4h" as const },
+							{ label: "✅ Цена 8ч", key: "price8h" as const },
+							{ label: "✅ Цена/сутки *", key: "pricePerDay" as const },
 						].map(({ label, key }) => (
 							<div key={key} className="space-y-1.5">
 								<Label>{label}</Label>
@@ -1035,9 +1036,9 @@ export function EquipmentSheet(props: EquipmentSheetProps) {
 						<div className="space-y-1.5">
 							<Label>Доступность для аренды</Label>
 							<Select
-								value={String(formData.is_available)}
+								value={String(formData.isAvailable)}
 								onValueChange={(v) => {
-									set({ is_available: v === "true" });
+									set({ isAvailable: v === "true" });
 								}}
 							>
 								<SelectTrigger className="glass-input">
@@ -1052,9 +1053,9 @@ export function EquipmentSheet(props: EquipmentSheetProps) {
 						<div className="space-y-1.5">
 							<Label>Субаренда</Label>
 							<Select
-								value={formData.ownership_type}
+								value={formData.ownershipType}
 								onValueChange={(v) => {
-									set({ ownership_type: v });
+									set({ ownershipType: v as unknown as OwnershipType });
 								}}
 							>
 								<SelectTrigger className="glass-input">
@@ -1072,16 +1073,16 @@ export function EquipmentSheet(props: EquipmentSheetProps) {
 					<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 						<MarkdownEditor
 							label="Комплектация"
-							value={formData.kit_description}
+							value={formData.kitDescription ?? ""}
 							onChange={(v) => {
-								set({ kit_description: v });
+								set({ kitDescription: v });
 							}}
 							placeholder={"- Камера\n- Зарядное устройство\n- Кейс"}
 							rows={5}
 						/>
 						<MarkdownEditor
 							label="Состояние / Дефекты"
-							value={formData.defects}
+							value={formData.defects ?? ""}
 							onChange={(v) => {
 								set({ defects: v });
 							}}
@@ -1094,7 +1095,7 @@ export function EquipmentSheet(props: EquipmentSheetProps) {
 					<div className="grid grid-cols-2 gap-4">
 						{[
 							{ label: "Депозит", key: "deposit" as const },
-							{ label: "Стоимость замены", key: "replacement_value" as const },
+							{ label: "Стоимость замены", key: "replacementValue" as const },
 						].map(({ label, key }) => (
 							<div key={key} className="space-y-1.5">
 								<Label>{label}</Label>

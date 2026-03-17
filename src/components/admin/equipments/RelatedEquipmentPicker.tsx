@@ -6,14 +6,14 @@ import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { useDebounceValue } from "usehooks-ts";
 import { searchEquipmentAction } from "@/actions/equipment-actions";
 import { InputGroup, InputGroupInput } from "@/components/ui";
-import type { DbEquipment } from "@/core/domain/entities/Equipment";
+import type { DbEquipmentWithImages } from "@/core/domain/entities/Equipment";
 import { cn } from "@/lib/utils";
 
 interface RelatedItem {
 	id: string;
 	title: string;
 	imageUrl: string;
-	price_per_day: number;
+	pricePerDay: number;
 }
 
 interface RelatedEquipmentPickerProps {
@@ -29,7 +29,7 @@ export function RelatedEquipmentPicker({
 }: RelatedEquipmentPickerProps) {
 	const [query, setQuery] = useState("");
 	const [debouncedQuery] = useDebounceValue(query, 250);
-	const [results, setResults] = useState<DbEquipment[]>([]);
+	const [results, setResults] = useState<DbEquipmentWithImages[]>([]);
 	const [isSearching, startSearchTransition] = useTransition();
 	const [selectedItems, setSelectedItems] = useState<RelatedItem[]>([]);
 	const [isOpen, setIsOpen] = useState(false);
@@ -56,9 +56,9 @@ export function RelatedEquipmentPicker({
 							id: found.id,
 							title: found.title,
 							imageUrl:
-								found.equipment_image_links?.[0]?.images?.url ??
+								found.equipmentImageLinks?.[0]?.image?.url ??
 								"/placeholder-equipment.png",
-							price_per_day: found.price_per_day,
+							pricePerDay: found.pricePerDay,
 						};
 					})
 					.filter((x): x is RelatedItem => x !== null);
@@ -81,14 +81,14 @@ export function RelatedEquipmentPicker({
 		});
 	}, [debouncedQuery, excludeId, value]);
 
-	const addItem = (item: DbEquipment) => {
+	const addItem = (item: DbEquipmentWithImages) => {
 		const newItem: RelatedItem = {
 			id: item.id,
 			title: item.title,
 			imageUrl:
-				item.equipment_image_links?.[0]?.images?.url ??
+				item.equipmentImageLinks?.[0]?.image?.url ??
 				"/placeholder-equipment.png",
-			price_per_day: item.price_per_day,
+			pricePerDay: item.pricePerDay,
 		};
 		const newSelected = [...selectedItems, newItem];
 		setSelectedItems(newSelected);
@@ -172,7 +172,7 @@ export function RelatedEquipmentPicker({
 										{item.title}
 									</p>
 									<p className="text-[11px] text-muted-foreground">
-										{item.price_per_day} ₽/сут
+										{item.pricePerDay} ₽/сут
 									</p>
 								</div>
 								<span className="text-[10px] text-muted-foreground/40 font-mono shrink-0">
@@ -225,7 +225,7 @@ export function RelatedEquipmentPicker({
 								<div className="w-9 h-9 rounded-lg overflow-hidden bg-foreground/8 shrink-0">
 									<Image
 										src={
-											item.equipment_image_links?.[0]?.images?.url ??
+											item.equipmentImageLinks?.[0]?.image?.url ??
 											"/placeholder-equipment.png"
 										}
 										alt={item.title}
@@ -237,7 +237,7 @@ export function RelatedEquipmentPicker({
 								<div className="flex-1 min-w-0">
 									<p className="text-sm font-medium truncate">{item.title}</p>
 									<p className="text-[11px] text-muted-foreground">
-										{item.price_per_day} ₽/сут
+										{item.pricePerDay} ₽/сут
 									</p>
 								</div>
 								<Plus

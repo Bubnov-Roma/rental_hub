@@ -84,7 +84,7 @@ export function FavoriteSetEditor({
 				const eq = favorites.find(
 					(f) => f.equipment_id === item.equipment_id
 				)?.equipment;
-				return acc + (eq?.price_per_day ?? 0) * item.quantity;
+				return acc + (eq?.pricePerDay ?? 0) * item.quantity;
 			}, 0),
 		[selectedItems, favorites]
 	);
@@ -289,12 +289,12 @@ export function FavoriteSetEditor({
 													</p>
 												</div>
 												<p className="text-xs text-muted-foreground mt-0.5">
-													{fav.equipment?.price_per_day} ₽/сут
+													{fav.equipment?.pricePerDay} ₽/сут
 													{qty > 1 && (
 														<span className="text-primary font-bold">
 															{" "}
 															× {qty} ={" "}
-															{(fav.equipment?.price_per_day ?? 0) * qty} ₽
+															{(fav.equipment?.pricePerDay ?? 0) * qty} ₽
 														</span>
 													)}
 												</p>

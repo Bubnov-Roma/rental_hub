@@ -14,15 +14,17 @@ import {
 
 const SORTABLE_COLUMNS = [
 	{ value: "title", label: "Наименование" },
-	{ value: "category", label: "Категория" },
-	{ value: "inventory_number", label: "Инв. №" },
-	{ value: "price_per_day", label: "Цена/сутки" },
+	{ value: "categoryId", label: "Категория" },
+	{ value: "inventoryNumber", label: "Инв. №" },
+	{ value: "pricePerDay", label: "Цена/сутки" },
 	{ value: "status", label: "Статус" },
-	{ value: "created_at", label: "Дата создания" },
-	{ value: "updated_at", label: "Дата обновления" },
+	{ value: "createdAt", label: "Дата создания" },
+	{ value: "updatedAt", label: "Дата обновления" },
 	{ value: "deposit", label: "Депозит" },
-	{ value: "replacement_value", label: "Стоимость замены" },
+	{ value: "replacementValue", label: "Стоимость замены" },
 ] as const;
+
+type SortableColumnValue = (typeof SORTABLE_COLUMNS)[number]["value"];
 
 interface SortBuilderProps {
 	onSortChange: (sort: EquipmentSort[]) => void;
@@ -33,7 +35,7 @@ export function SortBuilder({ onSortChange }: SortBuilderProps) {
 
 	const addSort = () => {
 		const newSort: EquipmentSort = {
-			column: "created_at",
+			column: "createdAt",
 			ascending: false,
 		};
 		const updated = [...sorts, newSort];
@@ -51,7 +53,8 @@ export function SortBuilder({ onSortChange }: SortBuilderProps) {
 		if (!sort) return;
 
 		if (field === "column") {
-			updated[index] = { ...sort, column: value as string };
+			const colValue = value as SortableColumnValue;
+			updated[index] = { ...sort, column: colValue };
 		} else if (field === "ascending") {
 			updated[index] = { ...sort, ascending: value as boolean };
 		}
@@ -99,7 +102,7 @@ export function SortBuilder({ onSortChange }: SortBuilderProps) {
 				<div className="space-y-2 p-3 border border-white/5 rounded-lg bg-background/20">
 					{sorts.map((sort, index) => (
 						<div
-							key={`${sort}` + `${index}`}
+							key={`${sort.column}-${index}`}
 							className="flex items-center gap-2"
 						>
 							<Select

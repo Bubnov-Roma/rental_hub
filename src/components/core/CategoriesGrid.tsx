@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { DbCategory } from "@/constants/navigation";
+import type { DbCategory } from "@/core/domain/entities/Equipment";
 
 interface CategoriesGridProps {
 	categories: DbCategory[];

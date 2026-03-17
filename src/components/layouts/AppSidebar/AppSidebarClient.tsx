@@ -12,6 +12,7 @@ import {
 	LightbulbIcon,
 } from "@phosphor-icons/react";
 import {
+	CaretRightIcon,
 	MicrophoneIcon,
 	MicrophoneStageIcon,
 	SidebarSimpleIcon,
@@ -20,7 +21,6 @@ import {
 	VideoCameraIcon,
 } from "@phosphor-icons/react/dist/ssr";
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { type ForwardRefExoticComponent, useState } from "react";
@@ -43,8 +43,31 @@ import {
 	SidebarMenuSubItem,
 	useSidebar,
 } from "@/components/ui";
-import { ADMIN_NAV, type DbCategory } from "@/constants/navigation";
+import { ADMIN_NAV } from "@/constants/navigation";
+import type { DbCategory } from "@/core/domain/entities/Equipment";
 import { cn } from "@/lib/utils";
+
+// ─── Icon name → иконки ───────────────────────────────────────────────────────
+// Используем @phosphor-icons/react — 1400+ иконок, MIT лицензия.
+// Для установки: npm i @phosphor-icons/react
+//
+// Почему Phosphor, а не Lucide?
+//  • Намного богаче для фото/видео/света: Camera, VideoCamera, Aperture,
+//    Lightbulb, FilmSlate, Microphone, Drone, Tripod, Projector, SpeakerHifi…
+//  • Три веса: Regular / Bold / Fill — без сторонних пакетов
+//  • Tree-shakeable, MIT, активно развивается
+//
+// Рекомендуемые icon_name для ваших категорий:
+//   Камеры           → "Camera"
+//   Объективы        → "Aperture"
+//   Видео            → "VideoCamera"
+//   Свет             → "Lightbulb"
+//   Звук             → "SpeakerHifi" или "Microphone"
+//   Стабилизаторы    → "Drone" или "Spinner"
+//   Штативы/Стойки   → "ArrowsOutLineVertical"
+//   Прочее           → "Package"
+//
+// Fallback если icon_name не найден → "Package" (Lucide, всегда есть)
 
 const ICON_MAP: Record<string, ForwardRefExoticComponent<IconProps>> = {
 	Camera: CameraIcon,
@@ -125,7 +148,7 @@ function CategoryFlyout({
 	onMouseLeave,
 	pathname,
 }: CategoryFlyoutProps) {
-	const Icon = getCategoryIcon(category.icon_name);
+	const Icon = getCategoryIcon(category.iconName);
 	const inCat = pathname.includes(`category=${category.slug}`);
 
 	return (
@@ -275,7 +298,7 @@ function CategoryNavItem({
 	isCollapsed,
 	pathname,
 }: CategoryNavItemProps) {
-	const Icon = getCategoryIcon(category.icon_name);
+	const Icon = getCategoryIcon(category.iconName);
 	const inCat = pathname.includes(`category=${category.slug}`);
 	const catHref = `/equipment?category=${category.slug}`;
 	const hasSub = category.subcategories.length > 0;
@@ -356,7 +379,7 @@ function CategoryNavItem({
 								)}
 								onClick={(e) => e.stopPropagation()}
 							>
-								<ChevronRight
+								<CaretRightIcon
 									size={16}
 									className="transition-transform duration-300 group-data-[state=open]/collapsible:rotate-90"
 								/>
@@ -441,7 +464,7 @@ function MobileCategoryItem({
 	category: DbCategory;
 	pathname: string;
 }) {
-	const Icon = getCategoryIcon(category.icon_name);
+	const Icon = getCategoryIcon(category.iconName);
 	const inCat = pathname.includes(`category=${category.slug}`);
 	const hasSub = category.subcategories.length > 0;
 
@@ -479,7 +502,7 @@ function MobileCategoryItem({
 						<span className="font-medium text-base flex-1">
 							{category.name}
 						</span>
-						<ChevronRight
+						<CaretRightIcon
 							size={16}
 							className="mr-4 transition-transform duration-300 group-data-[state=open]/subcat:rotate-90 text-muted-foreground/50"
 						/>

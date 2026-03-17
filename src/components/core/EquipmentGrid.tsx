@@ -38,7 +38,7 @@ export function EquipmentGrid({ items, isLoading }: EquipmentGridProps) {
 		);
 	}
 
-	const visibleItems = items.filter((item) => item.is_available);
+	const visibleItems = items.filter((item) => item.isAvailable);
 
 	if (visibleItems.length === 0) {
 		return (

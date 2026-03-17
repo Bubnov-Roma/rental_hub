@@ -25,7 +25,7 @@ import {
 	BOOKING_STATUS_LABELS,
 	BOOKING_STATUS_STYLES,
 } from "@/constants/booking-status";
-import type { Equipment } from "@/core/domain/entities/Equipment";
+import type { DbEquipment } from "@/core/domain/entities/Equipment";
 import { calculateItemPrice, cn } from "@/lib/utils";
 import type {
 	BookingDetailRow,
@@ -129,7 +129,7 @@ export function EditItemsClient({ booking }: EditItemsClientProps) {
 			items.reduce(
 				(s, i) =>
 					s +
-					calculateItemPrice(i.equipment as unknown as Equipment, hours) *
+					calculateItemPrice(i.equipment as unknown as DbEquipment, hours) *
 						i.quantity,
 				0
 			),
@@ -162,7 +162,7 @@ export function EditItemsClient({ booking }: EditItemsClientProps) {
 					equipment_id: i.equipment.id,
 					quantity: i.quantity,
 					price_per_unit: calculateItemPrice(
-						i.equipment as unknown as Equipment,
+						i.equipment as unknown as DbEquipment,
 						hours
 					),
 				})),
@@ -265,7 +265,7 @@ export function EditItemsClient({ booking }: EditItemsClientProps) {
 									items.map((item) => {
 										const isBusy = busyIds.includes(item.equipment.id);
 										const unitPrice = calculateItemPrice(
-											item.equipment as unknown as Equipment,
+											item.equipment as unknown as DbEquipment,
 											hours
 										);
 

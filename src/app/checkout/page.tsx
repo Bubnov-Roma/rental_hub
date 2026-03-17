@@ -99,7 +99,7 @@ export default function CheckoutPage() {
 				0
 			),
 			totalRV: active.reduce(
-				(s, i) => s + (i.equipment.replacement_value || 0) * i.quantity,
+				(s, i) => s + (i.equipment.replacementValue || 0) * i.quantity,
 				0
 			),
 			hours,
@@ -371,7 +371,7 @@ export default function CheckoutPage() {
 														type="button"
 														onClick={() => addItem(item.equipment)}
 														disabled={
-															item.quantity >= item.equipment.available_count
+															item.quantity >= item.equipment.availableCount
 														}
 														className="w-9 h-9 flex items-center justify-center hover:bg-foreground/8 active:bg-foreground/15 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
 													>

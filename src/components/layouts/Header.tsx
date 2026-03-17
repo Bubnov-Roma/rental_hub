@@ -7,7 +7,7 @@ import { useOnClickOutside } from "usehooks-ts";
 import { SearchPanel } from "@/components/core/search/SearchPanel";
 import { Logo } from "@/components/icons/Logo";
 import { Button, useSidebar } from "@/components/ui";
-import type { DbCategory } from "@/constants";
+import type { DbCategory } from "@/core/domain/entities/Equipment";
 import { useSearchState } from "@/hooks";
 import { useSearchHistory } from "@/hooks/use-search-history";
 import { cn } from "@/lib/utils";

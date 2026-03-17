@@ -1,17 +1,17 @@
-import type { Equipment } from "@/core/domain/entities/Equipment";
+import type { DbEquipment } from "@/core/domain/entities/Equipment";
 
 export type Status =
-	| "pending"
-	| "confirmed"
-	| "active"
-	| "completed"
-	| "cancelled";
+	| "PENDING"
+	| "CONFIRMED"
+	| "ACTIVE"
+	| "COMPLETED"
+	| "CANCELED";
 
 export interface Booking {
 	readonly id: string;
 	readonly userId: string;
 	readonly equipmentId: string;
-	readonly equipment?: Equipment;
+	readonly equipment?: DbEquipment;
 	readonly startDate: Date;
 	readonly endDate: Date;
 	readonly totalAmount: number;

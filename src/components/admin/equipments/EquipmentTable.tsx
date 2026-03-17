@@ -65,8 +65,11 @@ import {
 	TooltipContent,
 	TooltipTrigger,
 } from "@/components/ui";
-import type { DbCategory } from "@/constants";
-import type { DbEquipment } from "@/core/domain/entities/Equipment";
+import type {
+	DbCategory,
+	DbEquipment,
+	DbEquipmentWithImages,
+} from "@/core/domain/entities/Equipment";
 import { cn } from "@/lib/utils";
 import { useUnsavedChanges } from "@/store/unsaved-changes-store";
 import { EquipmentSheet } from "./EquipmentSheet";
@@ -146,9 +149,8 @@ export default function EquipmentTable() {
 	const [filters, setFilters] = useState<EquipmentFilter[]>([]);
 	const [sorts, setSorts] = useState<EquipmentSort[]>([]);
 	const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-	const [activeEquipment, setActiveEquipment] = useState<DbEquipment | null>(
-		null
-	);
+	const [activeEquipment, setActiveEquipment] =
+		useState<DbEquipmentWithImages | null>(null);
 	const [searchTerm, setSearchTerm] = useState("");
 	const [debouncedSearch] = useDebounceValue(searchTerm, 150);
 	const [viewMode, setViewMode] = useState<"compact" | "extended">("compact");
@@ -484,9 +486,9 @@ export default function EquipmentTable() {
 							: items.map((item) => {
 									const siblings = countSiblings(item.title);
 									const hasSiblings = siblings > 1;
-									const categoryName = getCategoryName(item.category);
+									const categoryName = getCategoryName(item.categoryId);
 									const subcategoryName = getSubcategoryName(
-										item.subcategory ?? ""
+										item.subcategoryId ?? ""
 									);
 
 									return (
@@ -510,7 +512,7 @@ export default function EquipmentTable() {
 												<div className="relative w-10 h-10 rounded overflow-hidden border border-white/10 bg-zinc-400/15 shrink-0">
 													<Image
 														src={
-															item.equipment_image_links?.[0]?.images?.url ||
+															item.equipmentImageLinks?.[0]?.image?.url ||
 															"/placeholder-equipment.png"
 														}
 														alt=""
@@ -550,7 +552,7 @@ export default function EquipmentTable() {
 													</div>
 													{viewMode === "compact" && (
 														<span className="text-[10px] text-muted-foreground uppercase tracking-wider">
-															{item.inventory_number}
+															{item.inventoryNumber}
 														</span>
 													)}
 												</div>
@@ -576,26 +578,26 @@ export default function EquipmentTable() {
 												)}
 											</TableCell>
 											<TableCell className="text-sm">
-												{item.price_per_day} ₽
+												{item.pricePerDay} ₽
 											</TableCell>
 											<TableCell>
 												<StatusBadge
 													status={item.status}
-													isAvailable={item.is_available}
+													isAvailable={item.isAvailable}
 												/>
 											</TableCell>
 											{viewMode === "extended" && (
 												<>
 													<TableCell className="text-xs text-muted-foreground whitespace-nowrap">
-														{item.price_4h ? `${item.price_4h} ₽` : "—"} /{" "}
-														{item.price_8h ? `${item.price_8h} ₽` : "—"}
+														{item.price4h ? `${item.price4h} ₽` : "—"} /{" "}
+														{item.price8h ? `${item.price8h} ₽` : "—"}
 													</TableCell>
 													<TableCell className="text-xs text-muted-foreground">
 														{item.deposit ? `${item.deposit} ₽` : "—"}
 													</TableCell>
 													<TableCell className="text-xs text-muted-foreground">
-														{item.replacement_value
-															? `${item.replacement_value} ₽`
+														{item.replacementValue
+															? `${item.replacementValue} ₽`
 															: "—"}
 													</TableCell>
 													<TableCell>
@@ -603,18 +605,18 @@ export default function EquipmentTable() {
 															variant="outline"
 															className={cn(
 																"text-[10px] border-white/10",
-																item.ownership_type === "sublease"
+																item.ownershipType === "SUBLEASE"
 																	? "text-violet-400"
 																	: "text-muted-foreground"
 															)}
 														>
-															{item.ownership_type === "sublease"
+															{item.ownershipType === "SUBLEASE"
 																? "Субаренда"
 																: "Своё"}
 														</Badge>
 													</TableCell>
 													<TableCell className="text-[10px] text-muted-foreground font-mono">
-														{item.inventory_number ?? "—"}
+														{item.inventoryNumber ?? "—"}
 													</TableCell>
 												</>
 											)}

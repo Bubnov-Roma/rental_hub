@@ -4,7 +4,7 @@ import { Search, X } from "lucide-react";
 import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
 import { SearchFilters } from "@/components/core/search/SearchFilters";
 import { SearchPanel } from "@/components/core/search/SearchPanel";
-import type { DbCategory } from "@/constants/navigation";
+import type { DbCategory } from "@/core/domain/entities/Equipment";
 import { useSearchState } from "@/hooks";
 import { useSearchHistory } from "@/hooks/use-search-history";
 import { cn } from "@/lib/utils";

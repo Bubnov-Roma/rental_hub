@@ -1,10 +1,10 @@
-import { getFaqItemsAction } from "@/actions/category-actions";
+import { getFaqItemsAction } from "@/actions/faq-actions";
 
 export const revalidate = 3600; // cache 1 hour
 
 export default async function FaqPage() {
 	const items = await getFaqItemsAction();
-	const active = items.filter((i) => i.is_active);
+	const active = items.filter((i) => i.isActive);
 
 	const grouped = active.reduce<Record<string, typeof active>>((acc, item) => {
 		const key = item.category ?? "Общие вопросы";

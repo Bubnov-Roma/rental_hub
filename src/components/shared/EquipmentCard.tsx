@@ -154,9 +154,9 @@ export function EquipmentCard({
 					<div className="mt-auto">
 						<PriceSelector
 							prices={{
-								day: item.price_per_day,
-								h4: item.price_4h,
-								h8: item.price_8h,
+								day: item.pricePerDay,
+								h4: item.price4h,
+								h8: item.price8h,
 							}}
 							variant="catalog"
 							action={

@@ -1,7 +1,9 @@
 import { notFound } from "next/navigation";
 import { getCategoriesFromDb } from "@/actions/category-actions";
 import { getEquipmentBySlug } from "@/actions/equipment-actions";
-import EquipmentDetails from "@/components/core/EquipmentDetails";
+import EquipmentDetails, {
+	type EquipmentFormState,
+} from "@/components/core/EquipmentDetails";
 import {
 	Breadcrumb,
 	BreadcrumbItem,
@@ -10,7 +12,6 @@ import {
 	BreadcrumbPage,
 	BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import type { GroupedEquipment } from "@/core/domain/entities/Equipment";
 
 export default async function EquipmentDetailsPage({
 	params,
@@ -26,7 +27,7 @@ export default async function EquipmentDetailsPage({
 
 	if (!equipment) notFound();
 
-	const currentCategory = categories.find((c) => c.id === equipment.category);
+	const currentCategory = categories.find((c) => c.id === equipment.categoryId);
 
 	return (
 		<div className="min-h-screen bg-background text-foreground pb-20">
@@ -62,7 +63,9 @@ export default async function EquipmentDetailsPage({
 				</Breadcrumb>
 			</div>
 
-			<EquipmentDetails equipment={equipment as unknown as GroupedEquipment} />
+			<EquipmentDetails
+				equipment={equipment as unknown as EquipmentFormState}
+			/>
 		</div>
 	);
 }

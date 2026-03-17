@@ -12,8 +12,10 @@ import {
 	BreadcrumbPage,
 	BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import type { DbCategory } from "@/constants/navigation";
-import type { GroupedEquipment } from "@/core/domain/entities/Equipment";
+import type {
+	DbCategory,
+	GroupedEquipment,
+} from "@/core/domain/entities/Equipment";
 import { useEquipment } from "@/hooks";
 import { formatPlural } from "@/utils";
 

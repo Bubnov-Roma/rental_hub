@@ -1,6 +1,6 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
-import type { Equipment } from "@/core/domain/entities/Equipment";
+import type { DbEquipment } from "@/core/domain/entities/Equipment";
 
 export function cn(...inputs: ClassValue[]) {
 	return twMerge(clsx(inputs));
@@ -22,12 +22,12 @@ const WORK_DAY_HOURS = 10;
  * выдаётся и возвращается в рабочее время (10:00–20:00).
  */
 export function calculateItemPrice(
-	equipment: Equipment,
+	equipment: DbEquipment,
 	hours: number
 ): number {
-	const p4 = Number(equipment.price_4h) || 0;
-	const p8 = Number(equipment.price_8h) || 0;
-	const pDay = Number(equipment.price_per_day) || 0;
+	const p4 = Number(equipment.price4h) || 0;
+	const p8 = Number(equipment.price8h) || 0;
+	const pDay = Number(equipment.pricePerDay) || 0;
 
 	if (hours <= 0) return 0;
 

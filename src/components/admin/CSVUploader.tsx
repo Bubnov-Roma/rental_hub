@@ -48,16 +48,16 @@ export function CSVUploader() {
 					const dailyPrice = Math.round(replacementValue * 0.03);
 
 					return {
-						title: row["Название"],
-						category: CATEGORY_MAP[row["Категория"] || "Прочее"] || "other",
-						description: row["Описание"] || "",
+						title: row.Название,
+						category: CATEGORY_MAP[row.Категория || "Прочее"] || "other",
+						description: row.Описание || "",
 						inventory_number: row["Инв. номер"],
 						deposit: parseFloat(row["Сумма депозита"]) || 0,
 						replacement_value: replacementValue,
 						price_per_day: dailyPrice,
 						price_4h: Math.round(dailyPrice * 0.6),
 						price_8h: Math.round(dailyPrice * 0.8),
-						status: row["Статус"] === "Доступен" ? "available" : "reserved",
+						status: row.Статус === "Доступен" ? "available" : "reserved",
 						is_available: true,
 					};
 				});

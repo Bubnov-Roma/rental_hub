@@ -15,19 +15,19 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui";
-import type { DbCategory } from "@/constants/navigation";
+import type { DbCategory } from "@/core/domain/entities/Equipment";
 
 const COLUMNS = [
 	{ value: "title", label: "Наименование" },
-	{ value: "category", label: "Категория" },
-	{ value: "subcategory", label: "Подкатегория" },
-	{ value: "inventory_number", label: "Инв. №" },
-	{ value: "price_per_day", label: "Цена/сутки" },
+	{ value: "categoryId", label: "Категория" },
+	{ value: "subcategoryId", label: "Подкатегория" },
+	{ value: "inventoryNumber", label: "Инв. №" },
+	{ value: "pricePerDay", label: "Цена/сутки" },
 	{ value: "status", label: "Статус" },
-	{ value: "is_available", label: "Доступность" },
-	{ value: "ownership_type", label: "Тип владения" },
+	{ value: "isAvailable", label: "Доступность" },
+	{ value: "ownershipType", label: "Тип владения" },
 	{ value: "deposit", label: "Депозит" },
-	{ value: "replacement_value", label: "Стоимость замены" },
+	{ value: "replacementValue", label: "Стоимость замены" },
 ] as const;
 
 const OPERATORS: Record<string, { value: FilterOperator; label: string }[]> = {
@@ -48,23 +48,26 @@ const OPERATORS: Record<string, { value: FilterOperator; label: string }[]> = {
 		{ value: "eq", label: "равно" },
 		{ value: "neq", label: "не равно" },
 	],
-	// category/subcategory use uuid select — operator is always "eq"
 	category: [{ value: "eq", label: "равно" }],
 };
 
-const COLUMN_TYPES: Record<string, "text" | "number" | "boolean" | "category"> =
-	{
-		title: "text",
-		category: "category",
-		subcategory: "category",
-		inventory_number: "text",
-		price_per_day: "number",
-		status: "text",
-		is_available: "boolean",
-		ownership_type: "text",
-		deposit: "number",
-		replacement_value: "number",
-	};
+type ColumnValue = (typeof COLUMNS)[number]["value"];
+
+const COLUMN_TYPES: Record<
+	ColumnValue,
+	"text" | "number" | "boolean" | "category"
+> = {
+	title: "text",
+	categoryId: "category",
+	subcategoryId: "category",
+	inventoryNumber: "text",
+	pricePerDay: "number",
+	status: "text",
+	isAvailable: "boolean",
+	ownershipType: "text",
+	deposit: "number",
+	replacementValue: "number",
+};
 
 interface FilterBuilderProps {
 	onFiltersChange: (filters: EquipmentFilter[]) => void;
@@ -78,10 +81,13 @@ export function FilterBuilder({
 	const [filters, setFilters] = useState<EquipmentFilter[]>([]);
 
 	const addFilter = () => {
-		const updated = [
-			...filters,
-			{ column: "title", operator: "ilike" as FilterOperator, value: "" },
-		];
+		// ✅ Создаем новый фильтр с правильными типами
+		const newFilter: EquipmentFilter = {
+			column: "title",
+			operator: "ilike",
+			value: "",
+		};
+		const updated = [...filters, newFilter];
 		setFilters(updated);
 		onFiltersChange(updated);
 	};
@@ -96,11 +102,12 @@ export function FilterBuilder({
 		if (!filter) return;
 
 		if (field === "column") {
-			const colType = COLUMN_TYPES[value as string] ?? "text";
+			const colValue = value as ColumnValue;
+			const colType = COLUMN_TYPES[colValue] ?? "text";
 			const defaultOp = OPERATORS[colType]?.[0]?.value ?? "eq";
 			updated[index] = {
 				...filter,
-				column: value as string,
+				column: colValue,
 				operator: defaultOp,
 				value: "",
 			};
@@ -125,16 +132,13 @@ export function FilterBuilder({
 		onFiltersChange([]);
 	};
 
-	// Build subcategories list based on selected category filter value
 	const getSubcategoriesForFilter = (
 		index: number
 	): DbCategory["subcategories"] => {
-		// Find if there's a category filter before this index
 		const catFilter = filters
 			.slice(0, index)
-			.find((f) => f.column === "category");
+			.find((f) => f.column === "categoryId");
 		if (!catFilter || !catFilter.value) {
-			// Return all subcategories if no category filter
 			return categories.flatMap((c) => c.subcategories);
 		}
 		return (
@@ -164,19 +168,16 @@ export function FilterBuilder({
 			{filters.length > 0 && (
 				<div className="space-y-2 p-3 border border-white/5 rounded-lg bg-background/20">
 					{filters.map((filter, index) => {
-						const columnType = COLUMN_TYPES[filter.column] ?? "text";
+						const colValue = filter.column as ColumnValue;
+						const columnType = COLUMN_TYPES[colValue] ?? "text";
 						const operators = OPERATORS[columnType] ?? OPERATORS.text;
 						const isCategoryCol = columnType === "category";
 
 						return (
 							<div
-								key={`filter-${
-									// biome-ignore lint/suspicious/noArrayIndexKey: filter UI row
-									index
-								}`}
+								key={`${filter}` + `${index}`}
 								className="flex items-center gap-2"
 							>
-								{/* Column selector */}
 								<Select
 									value={filter.column}
 									onValueChange={(v) => updateFilter(index, "column", v)}
@@ -193,7 +194,6 @@ export function FilterBuilder({
 									</SelectContent>
 								</Select>
 
-								{/* Operator selector */}
 								<Select
 									value={filter.operator}
 									onValueChange={(v) =>
@@ -212,8 +212,7 @@ export function FilterBuilder({
 									</SelectContent>
 								</Select>
 
-								{/* Value input — special cases */}
-								{isCategoryCol && filter.column === "category" ? (
+								{isCategoryCol && filter.column === "categoryId" ? (
 									<Select
 										value={String(filter.value || "")}
 										onValueChange={(v) => updateFilter(index, "value", v)}
@@ -229,7 +228,7 @@ export function FilterBuilder({
 											))}
 										</SelectContent>
 									</Select>
-								) : isCategoryCol && filter.column === "subcategory" ? (
+								) : isCategoryCol && filter.column === "subcategoryId" ? (
 									<Select
 										value={String(filter.value || "")}
 										onValueChange={(v) => updateFilter(index, "value", v)}
@@ -274,14 +273,14 @@ export function FilterBuilder({
 											<SelectValue placeholder="Статус..." />
 										</SelectTrigger>
 										<SelectContent>
-											<SelectItem value="available">Доступно</SelectItem>
-											<SelectItem value="rented">В аренде</SelectItem>
-											<SelectItem value="reserved">Забронировано</SelectItem>
-											<SelectItem value="maintenance">Обслуживание</SelectItem>
-											<SelectItem value="broken">Неисправно</SelectItem>
+											<SelectItem value="AVAILABLE">Доступно</SelectItem>
+											<SelectItem value="RENTED">В аренде</SelectItem>
+											<SelectItem value="RESERVED">Забронировано</SelectItem>
+											<SelectItem value="MAINTENANCE">Обслуживание</SelectItem>
+											<SelectItem value="BROKEN">Неисправно</SelectItem>
 										</SelectContent>
 									</Select>
-								) : filter.column === "ownership_type" ? (
+								) : filter.column === "ownershipType" ? (
 									<Select
 										value={String(filter.value || "")}
 										onValueChange={(v) => updateFilter(index, "value", v)}
@@ -290,8 +289,8 @@ export function FilterBuilder({
 											<SelectValue placeholder="Тип..." />
 										</SelectTrigger>
 										<SelectContent>
-											<SelectItem value="internal">Собственное</SelectItem>
-											<SelectItem value="sublease">Субаренда</SelectItem>
+											<SelectItem value="INTERNAL">Собственное</SelectItem>
+											<SelectItem value="SUBLEASE">Субаренда</SelectItem>
 										</SelectContent>
 									</Select>
 								) : (

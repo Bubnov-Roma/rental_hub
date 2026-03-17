@@ -1,128 +1,126 @@
-export type EquipmentStatus =
-	| "available"
-	| "rented"
-	| "reserved"
-	| "maintenance"
-	| "broken";
+/**
+ * Equipment сущности и типы
+ *
+ * Иерархия:
+ * DbEquipmentBase — базовые поля из БД
+ * ├─ DbEquipment — для простых операций без relations
+ * └─ DbEquipmentWithImages — для edit-режима с equipmentImageLinks relation
+ *
+ * RawEquipmentRow — raw Prisma result (с flattened relations)
+ * GroupedEquipment — для каталога (с агрегацией)
+ */
 
-export type OwnershipType = "internal" | "sublease";
+export type EquipmentStatus =
+	| "AVAILABLE"
+	| "RENTED"
+	| "RESERVED"
+	| "MAINTENANCE"
+	| "BROKEN"
+	| "RETIRED";
+export type OwnershipType = "INTERNAL" | "SUBLEASE";
 
 export interface SupabaseImage {
 	id: string;
 	url: string;
 }
 
-export interface SupabaseLink {
-	images: SupabaseImage | null;
-	image_id?: string;
-}
-
-export type Filters = {
-	categorySlug?: string;
-	search?: string;
-};
-
 export interface Comment {
 	id: string;
 	text: string;
 	author: string;
-	created_at: string;
+	createdAt: string;
 }
 
-export interface Equipment {
-	readonly id: string;
-	readonly title: string;
-	readonly description: string | null;
-	readonly category: string;
-	readonly subcategory: string | null;
-	readonly inventory_number: string | null;
-	readonly price_per_day: number;
-	readonly price_4h: number;
-	readonly price_8h: number;
-	readonly deposit: number;
-	readonly replacement_value: number;
-	readonly is_available: boolean;
-	readonly status: EquipmentStatus;
-	readonly ownership_type: OwnershipType;
-	readonly partner_name: string | null;
-	readonly defects: string | null;
-	readonly kit: string | null;
-	readonly kit_description?: string | null;
-	readonly related_ids: string[];
-	readonly specifications: string | Record<string, unknown>;
-	readonly comments?: Comment[];
-	readonly slug: string;
-	imageUrl: string;
-	images: string[];
-	images_data?: SupabaseImage[];
-	rating: number;
-	reviewsCount: number;
-	readonly created_at: string;
-	readonly updated_at: string;
-}
-
-export interface GroupedEquipment extends Equipment {
-	total_count: number;
-	available_count: number;
-	images_data: SupabaseImage[];
-	all_unit_ids: string[];
-}
-
-export interface EquipmentImage {
-	readonly id: string;
-	readonly equipment_id: string;
-	readonly url: string;
-	readonly order_index: number;
-}
-
-export interface CreateEquipmentDTO {
-	readonly title: string;
-	readonly description?: string;
-	readonly category: string;
-	readonly subcategory?: string;
-	readonly inventory_number?: string;
-	readonly price_per_day: number;
-	readonly price_4h: number;
-	readonly price_8h: number;
-	readonly deposit: number;
-	readonly replacement_value: number;
-	readonly status: EquipmentStatus;
-	readonly ownership_type: OwnershipType;
-	readonly partner_name?: string;
-	readonly defects?: string;
-	readonly kit?: string;
-	readonly kit_description?: string;
-	readonly related_ids?: string[];
-	readonly specifications: Record<string, unknown>;
-	readonly comments?: Comment[];
-	readonly images?: File[];
-}
-
-export interface DbEquipment {
+export interface DbEquipmentBase {
 	id: string;
 	title: string;
 	description: string | null;
-	category: string;
-	subcategory: string | null;
-	inventory_number: string | null;
-	price_per_day: number;
-	price_4h: number;
-	price_8h: number;
+	categoryId: string;
+	subcategoryId: string | null;
+	inventoryNumber: string | null;
+	pricePerDay: number;
+	price4h: number;
+	price8h: number;
 	deposit: number;
-	replacement_value: number;
-	is_available: boolean;
+	replacementValue: number;
+	isAvailable: boolean;
+	isPrimary: boolean;
 	status: EquipmentStatus;
-	ownership_type: string;
-	partner_name: string | null;
+	ownershipType: OwnershipType;
+	partnerName: string | null;
 	defects: string | null;
 	kit: string | null;
-	kit_description: string | null;
-	related_ids: string[] | null;
-	specifications: Record<string, unknown> | null;
-	comments: Comment[] | null;
-	equipment_image_links: SupabaseLink[];
-	images_data: SupabaseImage[];
+	kitDescription: string | null;
+	specifications: Record<string, unknown>;
+	comments: Comment[];
 	slug: string;
-	created_at: string;
-	updated_at: string;
+	createdAt: Date;
+	updatedAt: Date;
 }
+
+export interface DbEquipment extends DbEquipmentBase {
+	// relatedIds хранится в другой таблице EquipmentRelation, не в Equipment
+}
+
+/** DbEquipmentWithImages — оснащен equipmentImageLinks relation для edit-режима */
+export interface DbEquipmentWithImages extends DbEquipmentBase {
+	equipmentImageLinks: EquipmentImageLinkWithImage[];
+}
+
+/** Link между Equipment и Image с полной информацией */
+export interface EquipmentImageLinkWithImage {
+	id: string;
+	equipmentId: string;
+	imageId: string;
+	image: {
+		id: string;
+		url: string;
+	};
+	orderIndex: number;
+}
+
+/**
+ * RawEquipmentRow — результат findMany из Prisma с include equipmentImageLinks
+ * Структура совпадает с DbEquipmentWithImages
+ */
+export type RawEquipmentRow = DbEquipmentWithImages;
+
+export interface GroupedEquipment
+	extends Omit<DbEquipment, "createdAt" | "updatedAt"> {
+	createdAt: Date;
+	updatedAt: Date;
+	totalCount: number;
+	availableCount: number;
+	imagesData: SupabaseImage[];
+	allUnitIds: string[];
+	imageUrl: string;
+	images: string[];
+	rating: number;
+	reviewsCount: number;
+	equipmentImageLinks: EquipmentImageLinkWithImage[];
+}
+
+// ─── DB-driven category types ─────────────────────────────────────────────────
+// Категории и подкатегории приходят из базы данных.
+// Администратор/менеджер добавляет их через admin-панель → они автоматически появляются в меню навигации без деплоя.
+//
+
+export type DbSubcategory = {
+	id: string;
+	name: string;
+	slug: string;
+	adminNotes?: string | undefined;
+	imageUrl?: string | undefined;
+};
+
+export type DbCategory = {
+	id: string;
+	name: string;
+	slug: string;
+	adminNotes?: string | undefined;
+	isModular: boolean;
+	imageUrl?: string | undefined;
+	/** Имя иконки из Phosphor Icons (строка), маппится в компоненте */
+	iconName: string;
+	subcategories: DbSubcategory[];
+};

@@ -10,8 +10,8 @@ import { searchEquipmentAction } from "@/actions/equipment-actions";
 import { AddToCartButton } from "@/components/core/AddToCartButton";
 import { SearchFilters } from "@/components/core/search/SearchFilters";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { DbCategory } from "@/constants/navigation";
 import type {
+	DbCategory,
 	DbEquipment,
 	GroupedEquipment,
 } from "@/core/domain/entities/Equipment";
@@ -99,14 +99,14 @@ export function SearchPanel({
 		const catId = categories.find((c) => c.slug === category)?.id;
 
 		return allResults.filter((item: DbEquipment) => {
-			const catMatch = catId ? item.category === catId : true;
+			const catMatch = catId ? item.categoryId === catId : true;
 			if (!subcategory) return catMatch;
 			// Найти UUID подкатегории по slug
 			const catData = categories.find((c) => c.slug === category);
 			const subId = catData?.subcategories.find(
 				(s) => s.slug === subcategory
 			)?.id;
-			return catMatch && (subId ? item.subcategory === subId : true);
+			return catMatch && (subId ? item.subcategoryId === subId : true);
 		});
 	}, [allResults, category, subcategory, categories]);
 
@@ -232,7 +232,7 @@ export function SearchPanel({
 										>
 											<Image
 												src={
-													item.equipment_image_links?.[0]?.images?.url ||
+													item.equipmentImageLinks?.[0]?.image?.url ||
 													"/placeholder-equipment.png"
 												}
 												alt={item.title}
@@ -251,7 +251,7 @@ export function SearchPanel({
 												{item.title}
 											</div>
 											<div className="text-[11px] text-muted-foreground font-bold uppercase tracking-wider mt-0.5">
-												{item.price_per_day} ₽/сут
+												{item.pricePerDay} ₽/сут
 											</div>
 										</div>
 									</button>

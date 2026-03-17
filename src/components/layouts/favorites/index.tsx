@@ -25,14 +25,14 @@ import {
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from "@/components/ui";
-import type { GroupedEquipment } from "@/core/domain/entities/Equipment";
+import type {
+	GroupedEquipment,
+	RawEquipmentRow,
+} from "@/core/domain/entities/Equipment";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { useCartStore } from "@/store/use-cart-store";
-import {
-	groupEquipmentRows,
-	type RawEquipmentRow,
-} from "@/utils/group-equipment";
+import { groupEquipmentRows } from "@/utils/group-equipment";
 import { FavoriteSetEditor } from "./FavoriteSetEditor";
 import type { EquipmentSet, FavoriteItem } from "./types";
 
@@ -83,7 +83,7 @@ async function fetchGroupedEquipmentMap(): Promise<
 
 	const map = new Map<string, GroupedEquipment>();
 	for (const group of grouped) {
-		for (const unitId of group.all_unit_ids) {
+		for (const unitId of group.allUnitIds) {
 			map.set(unitId, group);
 		}
 	}
@@ -121,11 +121,11 @@ function getFavoriteGrouped(
 		...(eq as unknown as GroupedEquipment),
 		imageUrl: imageUrls[0] ?? "/placeholder-equipment.png",
 		images: imageUrls,
-		images_data: [],
-		total_count: 1,
+		imagesData: [],
+		totalCount: 1,
 		// is_available — единственный корректный источник для одной строки
-		available_count: eq?.is_available ? 1 : 0,
-		all_unit_ids: [fav.equipment_id],
+		availableCount: eq?.isAvailable ? 1 : 0,
+		allUnitIds: [fav.equipment_id],
 	};
 }
 

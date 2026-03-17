@@ -6,7 +6,7 @@ import {
 } from "@fortawesome/free-regular-svg-icons";
 import { faHeart as faHeartSolid } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Info, Video, X, Zap } from "lucide-react";
+import { Info, Video, Zap } from "lucide-react";
 import Image from "next/image";
 import NProgress from "nprogress";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -20,6 +20,7 @@ import {
 } from "@/actions/booking-actions";
 import { getRelatedEquipmentAction } from "@/actions/equipment-actions";
 import { AddToCartButton } from "@/components/core/AddToCartButton";
+import { Lightbox } from "@/components/core/Lightbox";
 import { PriceSelector } from "@/components/core/PriceSelector";
 import { BookingSuccessScreen } from "@/components/dashboard/bookings/BookingSuccessScreen";
 import {
@@ -31,7 +32,6 @@ import {
 } from "@/components/shared";
 import { EquipmentCard } from "@/components/shared/EquipmentCard";
 import {
-	Button,
 	Card,
 	Carousel,
 	CarouselContent,
@@ -55,48 +55,6 @@ import type { GroupedEquipment } from "@/core/domain/entities/Equipment";
 import { useAuth, useFavorite } from "@/hooks";
 import { calculateItemPrice, cn, combineDateAndTime } from "@/lib/utils";
 import { useCartStore } from "@/store/use-cart-store";
-
-// ─── Lightbox ─────────────────────────────────────────────────────────────────
-function Lightbox({
-	src,
-	title,
-	onClose,
-}: {
-	src: string;
-	title: string;
-	onClose: () => void;
-}) {
-	useEffect(() => {
-		const onKey = (e: KeyboardEvent) => {
-			if (e.key === "Escape") onClose();
-		};
-		document.addEventListener("keydown", onKey);
-		return () => document.removeEventListener("keydown", onKey);
-	}, [onClose]);
-
-	return (
-		// biome-ignore lint/a11y/useKeyWithClickEvents: <thus>
-		<fieldset
-			className="fixed inset-0 z-100 flex items-center justify-center bg-background/90 backdrop-blur-sm"
-			onClick={onClose}
-		>
-			<Button
-				variant="brand"
-				onClick={onClose}
-				className="absolute bottom-8 right-8 z-10 w-10 h-10 flex items-center justify-center rounded-full transition-colors"
-			>
-				<X size={18} className="text-foreground" />
-			</Button>
-			<button
-				type="button"
-				className="relative w-full h-full max-w-5xl max-h-[90vh] m-4 cursor-default"
-				onClick={(e) => e.stopPropagation()}
-			>
-				<Image src={src} fill className="object-contain" alt={title} />
-			</button>
-		</fieldset>
-	);
-}
 
 // ─── Markdown ─────────────────────────────────────────────────────────────────
 const mdComponents: Components = {
@@ -176,7 +134,10 @@ function RelatedSlider({ ids }: { ids: string[] }) {
 		setLoading(true);
 		getRelatedEquipmentAction(ids).then((data) => {
 			if (!cancelled) {
-				setItems(data);
+				const filteredData = data.filter(
+					(item): item is GroupedEquipment => item !== undefined
+				);
+				setItems(filteredData);
 				setLoading(false);
 			}
 		});
@@ -211,11 +172,14 @@ function RelatedSlider({ ids }: { ids: string[] }) {
 	);
 }
 
-// ─── Main ─────────────────────────────────────────────────────────────────────
+export type EquipmentFormState = GroupedEquipment & {
+	relatedIds: string[];
+};
+
 export default function EquipmentDetails({
 	equipment,
 }: {
-	equipment: GroupedEquipment;
+	equipment: EquipmentFormState;
 }) {
 	const { user } = useAuth();
 	const { items: cartItems } = useCartStore();
@@ -264,7 +228,7 @@ export default function EquipmentDetails({
 			startFull: start,
 			endFull: end,
 			totalRental: linePrice * quantity,
-			totalRV: (equipment.replacement_value || 0) * quantity,
+			totalRV: (equipment.replacementValue || 0) * quantity,
 		};
 	}, [period, equipment, quantity]);
 
@@ -367,7 +331,7 @@ export default function EquipmentDetails({
 	});
 
 	const hasRelated = !!(
-		equipment.related_ids && equipment.related_ids.length > 0
+		equipment.relatedIds && equipment.relatedIds.length > 0
 	);
 
 	if (bookingId) return <BookingSuccessScreen bookingId={bookingId} />;
@@ -509,9 +473,9 @@ export default function EquipmentDetails({
 						{/* Price + cart */}
 						<PriceSelector
 							prices={{
-								day: equipment.price_per_day,
-								h4: equipment.price_4h,
-								h8: equipment.price_8h,
+								day: equipment.pricePerDay,
+								h4: equipment.price4h,
+								h8: equipment.price8h,
 							}}
 							variant="details"
 							action={
@@ -611,7 +575,9 @@ export default function EquipmentDetails({
 								Вместе с этим арендуют
 							</h3>
 						</div>
-						<RelatedSlider ids={equipment.related_ids} />
+						{equipment.relatedIds && (
+							<RelatedSlider ids={equipment.relatedIds} />
+						)}
 					</>
 				)}
 			</div>
