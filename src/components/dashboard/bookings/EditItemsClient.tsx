@@ -49,7 +49,7 @@ export function EditItemsClient({ booking }: EditItemsClientProps) {
 
 	const initialItems = useMemo<LocalItem[]>(() => {
 		const countMap = new Map<string, number>();
-		for (const item of booking.booking_items) {
+		for (const item of booking.bookingItems) {
 			if (!item.equipment) continue;
 			countMap.set(
 				item.equipment.id,
@@ -57,13 +57,13 @@ export function EditItemsClient({ booking }: EditItemsClientProps) {
 			);
 		}
 		const map = new Map<string, LocalItem>();
-		for (const item of booking.booking_items) {
+		for (const item of booking.bookingItems) {
 			if (!item.equipment) continue;
 			if (!map.has(item.equipment.id)) {
 				map.set(item.equipment.id, {
 					equipment: item.equipment,
 					quantity: 1,
-					originalPrice: item.price_at_booking,
+					originalPrice: item.priceAtBooking,
 					maxQuantity: countMap.get(item.equipment.id) ?? 1,
 				});
 			} else {
@@ -72,15 +72,15 @@ export function EditItemsClient({ booking }: EditItemsClientProps) {
 			}
 		}
 		return Array.from(map.values());
-	}, [booking.booking_items]);
+	}, [booking.bookingItems]);
 
 	const [items, setItems] = useState<LocalItem[]>(initialItems);
 	const [isChecking, setIsChecking] = useState(false);
 	const [busyIds, setBusyIds] = useState<string[]>([]);
 	const [isSubmitting, setIsSubmitting] = useState(false);
 
-	const startDate = new Date(booking.start_date);
-	const endDate = new Date(booking.end_date);
+	const startDate = new Date(booking.startDate);
+	const endDate = new Date(booking.endDate);
 	const hours = Math.max(
 		0,
 		(endDate.getTime() - startDate.getTime()) / 3_600_000
@@ -101,8 +101,8 @@ export function EditItemsClient({ booking }: EditItemsClientProps) {
 			try {
 				const r = await checkAvailabilityAction(
 					allIds,
-					booking.start_date,
-					booking.end_date,
+					booking.startDate,
+					booking.endDate,
 					booking.id
 				);
 				if (!cancelled) setBusyIds(r.busyIds ?? []);
@@ -119,8 +119,8 @@ export function EditItemsClient({ booking }: EditItemsClientProps) {
 		};
 	}, [
 		items.map((i) => `${i.equipment.id}:${i.quantity}`).join(","),
-		booking.start_date,
-		booking.end_date,
+		booking.startDate,
+		booking.endDate,
 		booking.id,
 	]);
 

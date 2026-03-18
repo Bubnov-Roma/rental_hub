@@ -9,8 +9,8 @@ export function ApplicationInitializer({
 	initialData,
 	children,
 }: {
-	userId: string;
-	initialData: ClientApplication;
+	userId: string | null;
+	initialData: ClientApplication | null;
 	children: React.ReactNode;
 }) {
 	const { setInitialState, subscribe } = useApplicationStore();
@@ -18,8 +18,8 @@ export function ApplicationInitializer({
 
 	if (!isInitialized.current) {
 		setInitialState(
-			initialData?.status || "no_application",
-			initialData?.application_data || null
+			initialData?.status || "NO_APPLICATION",
+			initialData?.applicationData || null
 		);
 		isInitialized.current = true;
 	}

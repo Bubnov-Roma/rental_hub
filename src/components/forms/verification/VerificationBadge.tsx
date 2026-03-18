@@ -110,7 +110,7 @@ export const VerificationBadge: React.FC<Props> = ({
 						<div
 							className={cn(
 								"z-10 flex items-center justify-center",
-								status !== "loading" && glowColor,
+								status !== "LOADING" && glowColor,
 								color
 							)}
 							style={{ willChange: "filter" }}
@@ -119,7 +119,7 @@ export const VerificationBadge: React.FC<Props> = ({
 						</div>
 
 						{/* Форма уточнения — только при статусе clarification */}
-						{status === "clarification" && (
+						{status === "CLARIFICATION" && (
 							<>
 								<ValidatedTextarea label="Поле для ответа" className="w-full" />
 								<DialogFooter className="flex justify-between w-full">

@@ -90,8 +90,7 @@ model User {
   email         String?   @unique
   emailVerified DateTime?
   image         String?
-  
-  // Кастомные поля
+
   role                Role        @default(USER)
   entityType          EntityType? @default(INDIVIDUAL)
   companyName         String?
@@ -319,6 +318,7 @@ model CartItem {
 
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   equipment Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+  @@unique([userId, equipmentId])
 }
 
 model Favorite {

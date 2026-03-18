@@ -1,4 +1,4 @@
-rental_hub/
+linza/
 ├── src/
 │   ├── app/                        # Next.js App Router
 │   │   ├── (admin)/                # Admin-panel ( private page )

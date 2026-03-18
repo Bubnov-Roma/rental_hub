@@ -2,17 +2,18 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { useEffect } from "react";
 import { SuccessView } from "@/components/auth/forms/SuccessView";
 import { UpdatePasswordForm } from "@/components/auth/forms/UpdatePasswordForm";
-import { useAuth } from "@/hooks/use-auth";
 import { ForgotPasswordForm } from "./forms/ForgotPasswordForm";
 import { LoginForm } from "./forms/LoginForm";
 import { OtpForm } from "./forms/OtpForm";
 import { UniversalAuthForm } from "./forms/UniversalAuthForm";
 
 export function AuthFormController({ view }: { view: string }) {
-	const { user } = useAuth();
+	const { data: session } = useSession();
+	const user = session?.user ?? null;
 	const router = useRouter();
 	const searchParams = useSearchParams();
 

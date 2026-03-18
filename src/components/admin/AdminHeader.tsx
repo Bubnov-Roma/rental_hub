@@ -51,7 +51,7 @@ export function AdminHeader() {
 										width={48}
 										height={48}
 										src={user.user_metadata.avatar_url}
-										alt={user.user_metadata.name}
+										alt={user.user_metadata.name || "user name"}
 										className="h-full w-full rounded-full object-cover"
 									/>
 								) : (

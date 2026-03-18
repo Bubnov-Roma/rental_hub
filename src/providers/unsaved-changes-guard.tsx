@@ -1,15 +1,16 @@
 "use client";
 
+import { useSession } from "next-auth/react";
 import { useEffect } from "react";
-import { useAuth } from "@/hooks/use-auth";
 import { useUnsavedChanges } from "@/store";
 
 export function UnsavedChangesGuard() {
-	const { user } = useAuth();
+	const { data: session } = useSession();
+	const user = session?.user ?? null;
 	const isDirty = useUnsavedChanges((state) => state.isDirty);
 
 	useEffect(() => {
-		if (!user) return;
+		if (user) return;
 		const handleBeforeUnload = (e: BeforeUnloadEvent) => {
 			if (isDirty) {
 				e.preventDefault();

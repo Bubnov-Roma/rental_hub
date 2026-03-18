@@ -45,11 +45,11 @@ export function BookingPreviewList({ bookings }: Props) {
 
 // ─── Single row ───────────────────────────────────────────────────────────────
 function BookingPreviewRow({ booking }: { booking: DashboardBooking }) {
-	const firstItem = booking.booking_items[0];
-	const extraCount = booking.booking_items.length - 1;
+	const firstItem = booking.bookingItems[0];
+	const extraCount = booking.bookingItems.length - 1;
 
 	const hours = Math.ceil(
-		differenceInHours(new Date(booking.end_date), new Date(booking.start_date))
+		differenceInHours(new Date(booking.endDate), new Date(booking.startDate))
 	);
 
 	const statusLabel =
@@ -110,15 +110,15 @@ function BookingPreviewRow({ booking }: { booking: DashboardBooking }) {
 
 				{/* Dates */}
 				<div className="flex items-center gap-1.5 mt-1 text-[11px] text-muted-foreground">
-					<ClientTime iso={booking.start_date} fmt="date" fallback="..." />
+					<ClientTime iso={booking.startDate} fmt="date" fallback="..." />
 					<span className="opacity-40">→</span>
-					<ClientTime iso={booking.end_date} fmt="date" fallback="..." />
+					<ClientTime iso={booking.endDate} fmt="date" fallback="..." />
 					{/* Desktop: show exact times */}
 					<span className="hidden sm:inline opacity-40">·</span>
 					<span className="hidden sm:inline">
-						{<ClientTime iso={booking.start_date} fmt="time" fallback="..." />}
+						{<ClientTime iso={booking.startDate} fmt="time" fallback="..." />}
 						{" — "}
-						<ClientTime iso={booking.end_date} fmt="time" fallback="..." />
+						<ClientTime iso={booking.endDate} fmt="time" fallback="..." />
 					</span>
 					{/* Mobile: just hours */}
 					<span className="sm:hidden opacity-40">·</span>

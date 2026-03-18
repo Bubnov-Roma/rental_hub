@@ -33,7 +33,7 @@ export interface StatusConfig {
 }
 
 export const VERIFICATION_CONFIG: Record<ApplicationStatus, StatusConfig> = {
-	loading: {
+	LOADING: {
 		label: "Загрузка данных",
 		description: "Получаем статус анкеты...",
 		Icon: Clock,
@@ -42,7 +42,7 @@ export const VERIFICATION_CONFIG: Record<ApplicationStatus, StatusConfig> = {
 		borderColor: "border-muted/30",
 		glowColor: "shadow-muted/20",
 	},
-	no_application: {
+	NO_APPLICATION: {
 		label: "Нет анкеты",
 		description: "Заполните анкету чтобы арендовать технику без залога",
 		Icon: Search,
@@ -52,7 +52,7 @@ export const VERIFICATION_CONFIG: Record<ApplicationStatus, StatusConfig> = {
 		glowColor: "shadow-foreground/10",
 		action: { href: "/dashboard/profile", label: "Заполнить анкету" },
 	},
-	draft: {
+	DRAFT: {
 		label: "Анкета в процессе заполнения",
 		description:
 			"Завершите заполнение анкеты. Обноаление статуса произойдет автоматически",
@@ -66,7 +66,7 @@ export const VERIFICATION_CONFIG: Record<ApplicationStatus, StatusConfig> = {
 			label: "Завершить заполнение анкеты",
 		},
 	},
-	pending: {
+	PENDING: {
 		label: "Анкета отправлена",
 		description: "Ожидает начала проверки модератором",
 		Icon: SendHorizontal,
@@ -76,7 +76,7 @@ export const VERIFICATION_CONFIG: Record<ApplicationStatus, StatusConfig> = {
 		glowColor: "shadow-pink-400/20",
 		action: { href: "/dashboard/profile", label: "Открыть профиль" },
 	},
-	reviewing: {
+	REVIEWING: {
 		label: "На проверке",
 		description: "Модератор изучает вашу анкету",
 		Icon: FileSearch2,
@@ -86,7 +86,7 @@ export const VERIFICATION_CONFIG: Record<ApplicationStatus, StatusConfig> = {
 		glowColor: "shadow-blue-400/20",
 		action: { href: "/dashboard/profile", label: "Открыть профиль" },
 	},
-	clarification: {
+	CLARIFICATION: {
 		label: "Требуются уточнения",
 		description:
 			"Пожалуйста ответьте на вопрос модератора, эти данные помогут завершить проверку анкеты.",
@@ -97,7 +97,7 @@ export const VERIFICATION_CONFIG: Record<ApplicationStatus, StatusConfig> = {
 		glowColor: "shadow-orange-400/20",
 		action: { href: "/dashboard/profile", label: "Уточнить данные" },
 	},
-	standard: {
+	STANDARD: {
 		label: "Стандартные условия",
 		description:
 			"На данный момент вам доступна аренда под залог. Позднее условия аренды могут быть пересмотрены.",
@@ -108,7 +108,7 @@ export const VERIFICATION_CONFIG: Record<ApplicationStatus, StatusConfig> = {
 		glowColor: "shadow-emerald-400/20",
 		action: { href: "/dashboard/profile", label: "Подать заявку" },
 	},
-	approved: {
+	APPROVED: {
 		label: "Профиль верифицирован",
 		description:
 			"Ваша анкета успешно проверена. Вам доступна аренда без залога. Благодарим за доверие!",
@@ -119,7 +119,7 @@ export const VERIFICATION_CONFIG: Record<ApplicationStatus, StatusConfig> = {
 		glowColor: "shadow-green-400/30",
 		action: { href: "/equipment", label: "Перейти в каталог" },
 	},
-	rejected: {
+	REJECTED: {
 		label: "Запрос отклонён",
 		description: `К сожалению ваша анкета не прошла проверку. Если у вас возникли вопросы пожалуйста свяжитесь с нами по телфону ${SUPPORT_PHONE_DEFAULT} либо в telegram`,
 		Icon: AlertCircle,
@@ -132,7 +132,7 @@ export const VERIFICATION_CONFIG: Record<ApplicationStatus, StatusConfig> = {
 			label: "Написать в telegram",
 		},
 	},
-	blocked: {
+	BLOCKED: {
 		label: "Профиль заблокирован",
 		description:
 			"Ваш профиль был заблокирован по требованию службы безопасности",

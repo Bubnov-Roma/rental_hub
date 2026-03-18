@@ -48,30 +48,30 @@ import type { BookingStatus } from "@/types";
 export interface AdminBookingRow {
 	id: string;
 	status: BookingStatus;
-	total_amount: number;
-	created_at: string;
-	start_date: string;
-	end_date: string;
-	insurance_included: boolean | null;
-	total_replacement_value: number | null;
-	cancellation_reason: string | null;
-	cancelled_at: string | null;
+	totalAmount: number;
+	createdAt: string;
+	startDate: string;
+	endDate: string;
+	insuranceIncluded: boolean | null;
+	totalReplacementValue: number | null;
+	cancellationReason: string | null;
+	cancelledAt: string | null;
 	// Joined
-	client_name: string | null;
-	client_email: string | null;
-	equipment_titles: string[];
-	item_count: number;
+	clientName: string | null;
+	clientEmail: string | null;
+	equipmentTitles: string[];
+	itemCount: number;
 }
 
 // Allowed status transitions for admin
 const NEXT_STATUSES: Record<BookingStatus, BookingStatus[]> = {
-	pending_review: ["wait_payment", "ready_to_rent", "cancelled"],
-	wait_payment: ["ready_to_rent", "cancelled"],
-	ready_to_rent: ["active", "cancelled"],
-	active: ["completed"],
-	completed: [],
-	cancelled: [],
-	expired: ["pending_review", "cancelled"],
+	PENDING_REVIEW: ["WAIT_PAYMENT", "READY_TO_RENT", "CANCELLED"],
+	WAIT_PAYMENT: ["READY_TO_RENT", "CANCELLED"],
+	READY_TO_RENT: ["ACTIVE", "CANCELLED"],
+	ACTIVE: ["COMPLETED"],
+	COMPLETED: [],
+	CANCELLED: [],
+	EXPIRED: ["PENDING_REVIEW", "CANCELLED"],
 };
 
 function StatusBadge({ status }: { status: BookingStatus }) {
@@ -93,7 +93,7 @@ function StatusBadge({ status }: { status: BookingStatus }) {
 
 // ─── Sort ─────────────────────────────────────────────────────────────────────
 
-type SortField = "created_at" | "start_date" | "total_amount" | "status";
+type SortField = "createdAt" | "startDate" | "totalAmount" | "status";
 type SortDir = "asc" | "desc";
 
 function SortIcon({
@@ -140,12 +140,12 @@ function BookingDetailPanel({
 		});
 	};
 
-	const startDate = new Date(booking.start_date).toLocaleDateString("ru-RU", {
+	const startDate = new Date(booking.startDate).toLocaleDateString("ru-RU", {
 		day: "numeric",
 		month: "short",
 		year: "numeric",
 	});
-	const endDate = new Date(booking.end_date).toLocaleDateString("ru-RU", {
+	const endDate = new Date(booking.endDate).toLocaleDateString("ru-RU", {
 		day: "numeric",
 		month: "short",
 		year: "numeric",
@@ -207,10 +207,10 @@ function BookingDetailPanel({
 						Клиент
 					</p>
 					<p className="font-semibold text-sm">
-						{booking.client_name || "Без имени"}
+						{booking.clientName || "Без имени"}
 					</p>
 					<p className="text-xs text-muted-foreground">
-						{booking.client_email || "—"}
+						{booking.clientEmail || "—"}
 					</p>
 				</div>
 
@@ -228,10 +228,10 @@ function BookingDetailPanel({
 				{/* Equipment */}
 				<div className="p-4 space-y-2">
 					<p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-						Техника ({booking.item_count} позиций)
+						Техника ({booking.itemCount} позиций)
 					</p>
 					<div className="space-y-1">
-						{booking.equipment_titles.map((title, i) => (
+						{booking.equipmentTitles.map((title, i) => (
 							// biome-ignore lint/suspicious/noArrayIndexKey: static list
 							<p key={i} className="text-sm text-foreground/80 truncate">
 								{title}
@@ -249,16 +249,16 @@ function BookingDetailPanel({
 						<div className="flex justify-between text-sm">
 							<span className="text-muted-foreground">Сумма аренды</span>
 							<span className="font-bold">
-								{booking.total_amount.toLocaleString("ru-RU")} ₽
+								{booking.totalAmount.toLocaleString("ru-RU")} ₽
 							</span>
 						</div>
-						{booking.total_replacement_value ? (
+						{booking.totalReplacementValue ? (
 							<div className="flex justify-between text-sm">
 								<span className="text-muted-foreground">
 									Залог (стоимость замены)
 								</span>
 								<span className="font-bold">
-									{booking.total_replacement_value.toLocaleString("ru-RU")} ₽
+									{booking.totalReplacementValue.toLocaleString("ru-RU")} ₽
 								</span>
 							</div>
 						) : null}
@@ -267,25 +267,25 @@ function BookingDetailPanel({
 							<span
 								className={cn(
 									"font-bold text-xs",
-									booking.insurance_included
+									booking.insuranceIncluded
 										? "text-green-400"
 										: "text-muted-foreground"
 								)}
 							>
-								{booking.insurance_included ? "Включена" : "Нет"}
+								{booking.insuranceIncluded ? "Включена" : "Нет"}
 							</span>
 						</div>
 					</div>
 				</div>
 
 				{/* Cancellation */}
-				{booking.cancellation_reason && (
+				{booking.cancellationReason && (
 					<div className="p-4 space-y-1">
 						<p className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
 							<Ban size={10} /> Причина отмены
 						</p>
 						<p className="text-sm text-foreground/70">
-							{booking.cancellation_reason}
+							{booking.cancellationReason}
 						</p>
 					</div>
 				)}
@@ -296,7 +296,7 @@ function BookingDetailPanel({
 						<Clock size={10} /> Создан
 					</p>
 					<p className="text-xs text-muted-foreground">
-						{new Date(booking.created_at).toLocaleString("ru-RU")}
+						{new Date(booking.createdAt).toLocaleString("ru-RU")}
 					</p>
 				</div>
 			</div>
@@ -316,7 +316,7 @@ export default function AdminBookingsTable({
 	const [statusFilter, setStatusFilter] = useState<"all" | BookingStatus>(
 		"all"
 	);
-	const [sortField, setSortField] = useState<SortField>("created_at");
+	const [sortField, setSortField] = useState<SortField>("createdAt");
 	const [sortDir, setSortDir] = useState<SortDir>("desc");
 	const [activeBooking, setActiveBooking] = useState<AdminBookingRow | null>(
 		null
@@ -360,13 +360,13 @@ export default function AdminBookingsTable({
 			],
 			...filtered.map((b) => [
 				b.id,
-				b.client_name ?? "",
-				b.client_email ?? "",
+				b.clientName ?? "",
+				b.clientEmail ?? "",
 				BOOKING_STATUS_CONFIG[b.status]?.label ?? b.status,
-				b.total_amount,
-				b.start_date,
-				b.end_date,
-				b.equipment_titles.join("; "),
+				b.totalAmount,
+				b.startDate,
+				b.endDate,
+				b.equipmentTitles.join("; "),
 			]),
 		];
 		const csv = rows.map((r) => r.join(",")).join("\n");
@@ -387,22 +387,22 @@ export default function AdminBookingsTable({
 			if (search) {
 				const q = search.toLowerCase();
 				const matchesClient =
-					b.client_name?.toLowerCase().includes(q) ||
-					b.client_email?.toLowerCase().includes(q);
-				const matchesEquipment = b.equipment_titles.some((t) =>
+					b.clientName?.toLowerCase().includes(q) ||
+					b.clientEmail?.toLowerCase().includes(q);
+				const matchesEquipment = b.equipmentTitles.some((t) =>
 					t.toLowerCase().includes(q)
 				);
 				const matchesId = b.id.toLowerCase().includes(q);
 				if (!matchesClient && !matchesEquipment && !matchesId) return false;
 			}
-			if (dateFrom && new Date(b.start_date) < new Date(dateFrom)) return false;
-			if (dateTo && new Date(b.end_date) > new Date(dateTo)) return false;
+			if (dateFrom && new Date(b.startDate) < new Date(dateFrom)) return false;
+			if (dateTo && new Date(b.endDate) > new Date(dateTo)) return false;
 			return true;
 		})
 		.sort((a, b) => {
 			let cmp = 0;
-			if (sortField === "total_amount") {
-				cmp = a.total_amount - b.total_amount;
+			if (sortField === "totalAmount") {
+				cmp = a.totalAmount - b.totalAmount;
 			} else if (sortField === "status") {
 				cmp = a.status.localeCompare(b.status);
 			} else {
@@ -412,9 +412,9 @@ export default function AdminBookingsTable({
 			return sortDir === "asc" ? cmp : -cmp;
 		});
 
-	const totalAmount = filtered.reduce((s, b) => s + b.total_amount, 0);
+	const totalAmount = filtered.reduce((s, b) => s + b.totalAmount, 0);
 	const pendingCount = filtered.filter(
-		(b) => b.status === "pending_review"
+		(b) => b.status === "PENDING_REVIEW"
 	).length;
 
 	return (
@@ -546,12 +546,12 @@ export default function AdminBookingsTable({
 						<TableRow className="border-foreground/5">
 							<TableHead
 								className="cursor-pointer select-none hover:text-foreground transition-colors"
-								onClick={() => handleSort("created_at")}
+								onClick={() => handleSort("createdAt")}
 							>
 								<span className="flex items-center gap-1">
 									Дата{" "}
 									<SortIcon
-										field="created_at"
+										field="createdAt"
 										active={sortField}
 										dir={sortDir}
 									/>
@@ -561,12 +561,12 @@ export default function AdminBookingsTable({
 							<TableHead>Техника</TableHead>
 							<TableHead
 								className="cursor-pointer select-none hover:text-foreground transition-colors"
-								onClick={() => handleSort("start_date")}
+								onClick={() => handleSort("startDate")}
 							>
 								<span className="flex items-center gap-1">
 									Период{" "}
 									<SortIcon
-										field="start_date"
+										field="startDate"
 										active={sortField}
 										dir={sortDir}
 									/>
@@ -574,12 +574,12 @@ export default function AdminBookingsTable({
 							</TableHead>
 							<TableHead
 								className="cursor-pointer select-none hover:text-foreground transition-colors"
-								onClick={() => handleSort("total_amount")}
+								onClick={() => handleSort("totalAmount")}
 							>
 								<span className="flex items-center gap-1">
 									Сумма{" "}
 									<SortIcon
-										field="total_amount"
+										field="totalAmount"
 										active={sortField}
 										dir={sortDir}
 									/>
@@ -600,13 +600,13 @@ export default function AdminBookingsTable({
 					<TableBody>
 						{filtered.map((booking) => {
 							const createdDate = new Date(
-								booking.created_at
+								booking.createdAt
 							).toLocaleDateString("ru-RU", { day: "numeric", month: "short" });
-							const startDate = new Date(booking.start_date).toLocaleDateString(
+							const startDate = new Date(booking.startDate).toLocaleDateString(
 								"ru-RU",
 								{ day: "numeric", month: "short" }
 							);
-							const endDate = new Date(booking.end_date).toLocaleDateString(
+							const endDate = new Date(booking.endDate).toLocaleDateString(
 								"ru-RU",
 								{
 									day: "numeric",
@@ -628,19 +628,19 @@ export default function AdminBookingsTable({
 									</TableCell>
 									<TableCell>
 										<p className="text-sm font-medium truncate max-w-32">
-											{booking.client_name || "Без имени"}
+											{booking.clientName || "Без имени"}
 										</p>
 										<p className="text-[11px] text-muted-foreground truncate max-w-32">
-											{booking.client_email || "—"}
+											{booking.clientEmail || "—"}
 										</p>
 									</TableCell>
 									<TableCell>
 										<p className="text-sm truncate max-w-36 text-muted-foreground">
-											{booking.equipment_titles[0] ?? "—"}
+											{booking.equipmentTitles[0] ?? "—"}
 										</p>
-										{booking.item_count > 1 && (
+										{booking.itemCount > 1 && (
 											<p className="text-[10px] text-muted-foreground/60">
-												+{booking.item_count - 1} поз.
+												+{booking.itemCount - 1} поз.
 											</p>
 										)}
 									</TableCell>
@@ -648,7 +648,7 @@ export default function AdminBookingsTable({
 										{startDate} — {endDate}
 									</TableCell>
 									<TableCell className="font-bold text-sm whitespace-nowrap">
-										{booking.total_amount.toLocaleString("ru-RU")} ₽
+										{booking.totalAmount.toLocaleString("ru-RU")} ₽
 									</TableCell>
 									<TableCell>
 										<StatusBadge status={booking.status} />
@@ -690,10 +690,10 @@ export default function AdminBookingsTable({
 																	}
 																}}
 																className={
-																	s === "cancelled" ? "text-red-500" : ""
+																	s === "CANCELLED" ? "text-red-500" : ""
 																}
 															>
-																{s === "cancelled" ? (
+																{s === "CANCELLED" ? (
 																	<Ban className="w-4 h-4 mr-2" />
 																) : (
 																	<RefreshCw className="w-4 h-4 mr-2" />

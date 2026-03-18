@@ -1,7 +1,8 @@
 import { notFound, redirect } from "next/navigation";
 import { getSupportInfo } from "@/actions/support-actions";
+import { auth } from "@/auth";
 import { BookingDetailClient } from "@/components/dashboard/bookings/BookingDetailClient";
-import { createClient } from "@/lib/supabase/server";
+import { prisma } from "@/lib/prisma";
 import { toBookingDetailRow } from "@/types";
 
 interface Props {
@@ -9,48 +10,31 @@ interface Props {
 }
 
 export default async function BookingDetailPage({ params }: Props) {
-	const supabase = await createClient();
+	const session = await auth();
 	const { id } = await params;
 
-	const {
-		data: { user },
-	} = await supabase.auth.getUser();
-	if (!user) redirect("/auth");
+	if (!session?.user?.id) redirect("/auth");
 
-	const { data: raw } = await supabase
-		.from("bookings")
-		.select(`
-			id,
-			user_id,
-			start_date,
-			end_date,
-			total_amount,
-			status,
-			created_at,
-			updated_at,
-			total_replacement_value,
-			insurance_included,
-			cancellation_reason,
-			cancelled_at,
-			booking_items (
-				id,
-				price_at_booking,
-				deposit_at_booking,
-				replacement_value_at_booking,
-				equipment (
-					id,
-					title,
-					category,
-					price_4h,
-					price_8h,
-					price_per_day,
-					deposit
-				)
-			)
-		`)
-		.eq("id", id)
-		.eq("user_id", user.id)
-		.single();
+	const raw = await prisma.booking.findUnique({
+		where: { id, userId: session.user.id },
+		include: {
+			bookingItems: {
+				include: {
+					equipment: {
+						select: {
+							id: true,
+							title: true,
+							categoryId: true,
+							price4h: true,
+							price8h: true,
+							pricePerDay: true,
+							deposit: true,
+						},
+					},
+				},
+			},
+		},
+	});
 
 	if (!raw) notFound();
 

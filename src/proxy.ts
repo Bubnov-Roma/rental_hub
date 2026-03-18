@@ -1,13 +1,40 @@
-import type { NextRequest } from "next/server";
-import { updateSession } from "@/lib/supabase/middleware";
+import { NextResponse } from "next/server";
+import { auth } from "@/auth";
 
-export async function proxy(request: NextRequest) {
-	const { supabaseResponse } = await updateSession(request);
-	return supabaseResponse;
-}
+export default auth((req) => {
+	const isLoggedIn = !!req.auth;
+	const { pathname } = req.nextUrl;
+	const role = req.auth?.user?.role;
+
+	const isAuthRoute = pathname.startsWith("/auth");
+	const isAdminRoute = pathname.startsWith("/admin");
+	const isProtectedRoute =
+		pathname.startsWith("/dashboard") || pathname.startsWith("/booking");
+
+	// 1. Редирект неавторизованных из защищенных зон
+	if (!isLoggedIn && (isProtectedRoute || isAdminRoute)) {
+		const url = req.nextUrl.clone();
+		url.pathname = "/auth";
+		url.searchParams.set("view", "otp-login");
+		url.searchParams.set("redirect", pathname);
+		return NextResponse.redirect(url);
+	}
+
+	// 2. Проверка ролей для админки
+	if (isLoggedIn && isAdminRoute) {
+		if (role !== "ADMIN" && role !== "MANAGER") {
+			return NextResponse.redirect(new URL("/dashboard", req.nextUrl));
+		}
+	}
+
+	// 3. Редирект авторизованных со страницы логина
+	if (isLoggedIn && isAuthRoute) {
+		return NextResponse.redirect(new URL("/dashboard", req.nextUrl));
+	}
+
+	return NextResponse.next();
+});
 
 export const config = {
-	matcher: [
-		"/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
-	],
+	matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
 };

@@ -98,9 +98,13 @@ export function UserMenu() {
 		);
 	}
 
-	// avatar_url may include ?t= cache-bust from uploadAvatarImage
-	const avatarUrl = user.user_metadata?.avatar_url as string | undefined;
-	const isAdmin = profile?.role === "admin" || profile?.role === "manager";
+	// Используем user_metadata из SessionProvider
+	const avatarUrl = user.user_metadata?.avatar_url || user.image;
+	const isAdmin =
+		profile?.role === "admin" ||
+		profile?.role === "manager" ||
+		profile?.role === "ADMIN" ||
+		profile?.role === "MANAGER";
 	const isOffline = !isOnline;
 	const initial = displayName.charAt(0).toUpperCase();
 

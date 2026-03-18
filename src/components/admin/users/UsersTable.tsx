@@ -1,5 +1,6 @@
 "use client";
 
+import type { Role } from "@prisma/client";
 import {
 	BadgePercent,
 	Ban,
@@ -21,7 +22,7 @@ import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import {
 	addUserAdminNoteAction,
-	createUserDiscountAction,
+	// createUserDiscountAction,
 	toggleUserBlockAction,
 	updateUserRoleAction,
 } from "@/actions/client-application-actions";
@@ -69,50 +70,50 @@ const PERMISSIONS = [
 // ─── Application status config ────────────────────────────────────────────────
 
 const APP_STATUS_CONFIG: Record<string, { label: string; color: string }> = {
-	loading: {
+	LOADING: {
 		label: "...",
 		color: "bg-foreground/8 text-foreground/40 border-foreground/10",
 	},
-	no_application: {
+	NO_APPLICATION: {
 		label: "Нет анкеты",
 		color: "bg-foreground/8 text-foreground/40 border-foreground/10",
 	},
-	draft: {
+	DRAFT: {
 		label: "Черновик",
 		color: "bg-foreground/8 text-foreground/50 border-foreground/10",
 	},
-	pending: {
+	PENDING: {
 		label: "На проверке",
 		color: "bg-amber-500/15 text-amber-400 border-amber-500/20",
 	},
-	reviewing: {
+	REVIEWING: {
 		label: "Изучается",
 		color: "bg-blue-500/15 text-blue-400 border-blue-500/20",
 	},
-	clarification: {
+	CLARIFICATION: {
 		label: "Уточнение",
 		color: "bg-orange-500/15 text-orange-400 border-orange-500/20",
 	},
-	standard: {
+	STANDARD: {
 		label: "Стандарт",
 		color: "bg-teal-500/15 text-teal-400 border-teal-500/20",
 	},
-	approved: {
+	APPROVED: {
 		label: "Одобрено",
 		color: "bg-green-500/15 text-green-400 border-green-500/20",
 	},
-	rejected: {
+	REJECTED: {
 		label: "Отклонено",
 		color: "bg-red-500/15 text-red-400 border-red-500/20",
 	},
-	blocked: {
+	BLOCKED: {
 		label: "Заблокирован",
 		color: "bg-red-500/15 text-red-400 border-red-500/20",
 	},
 };
 
 function AppStatusBadge({ status }: { status?: string | undefined }) {
-	const s = status ?? "no_application";
+	const s = status ?? "NO_APPLICATION";
 	const cfg = APP_STATUS_CONFIG[s] ?? APP_STATUS_CONFIG.no_application;
 	return (
 		<Badge
@@ -152,12 +153,12 @@ function RoleBadge({ role }: { role: string }) {
 // ─── Application status changer ───────────────────────────────────────────────
 
 const APP_STATUSES_CHANGEABLE = [
-	"pending",
-	"reviewing",
-	"clarification",
-	"approved",
-	"standard",
-	"rejected",
+	"PENDING",
+	"REVIEWING",
+	"CLARIFICATION",
+	"APPROVED",
+	"STANDARD",
+	"REJECTED",
 ] as const;
 
 function AdminApplicationStatusChanger({
@@ -267,31 +268,31 @@ function UserDetailPanel({
 		});
 	};
 
-	const handleAddDiscount = () => {
-		if (!discountValue) return;
-		startTransition(async () => {
-			const r = await createUserDiscountAction({
-				user_id: user.id,
-				type: discountType,
-				value: Number(discountValue),
-				description: discountDesc || undefined,
-				promo_code: promoCode || undefined,
-			});
-			if (!r.success) toast.error(r.error);
-			else {
-				toast.success("Скидка добавлена");
-				setDiscountValue("");
-				setDiscountDesc("");
-				setPromoCode("");
-			}
-		});
-	};
+	// const handleAddDiscount = () => {
+	// 	if (!discountValue) return;
+	// 	startTransition(async () => {
+	// 		const r = await createUserDiscountAction({
+	// 			userId: user.id,
+	// 			type: discountType,
+	// 			value: Number(discountValue),
+	// 			description: discountDesc || undefined,
+	// 			promoCode: promoCode || undefined,
+	// 		});
+	// 		if (!r.success) toast.error(r.error);
+	// 		else {
+	// 			toast.success("Скидка добавлена");
+	// 			setDiscountValue("");
+	// 			setDiscountDesc("");
+	// 			setPromoCode("");
+	// 		}
+	// 	});
+	// };
 
 	const handlePermissionSave = () => {
 		startTransition(async () => {
 			const r = await updateUserRoleAction(
 				user.id,
-				user.role ?? "user",
+				user.role ?? "USER",
 				permissions
 			);
 			if (!r.success) toast.error(r.error);
@@ -303,17 +304,17 @@ function UserDetailPanel({
 	};
 
 	const handleBlock = () => {
-		const reason = user.is_blocked
+		const reason = user.isBlocked
 			? undefined
 			: (window.prompt("Причина блокировки:") ?? "");
 		startTransition(async () => {
-			const r = await toggleUserBlockAction(user.id, !user.is_blocked, reason);
+			const r = await toggleUserBlockAction(user.id, !user.isBlocked, reason);
 			if (!r.success) toast.error(r.error);
 			else {
-				toast.success(user.is_blocked ? "Разблокирован" : "Заблокирован");
+				toast.success(user.isBlocked ? "Разблокирован" : "Заблокирован");
 				onUpdate({
-					is_blocked: !user.is_blocked,
-					blocked_reason: reason ?? null,
+					isBlocked: !user.isBlocked,
+					blockedReason: reason ?? null,
 				});
 			}
 		});
@@ -325,9 +326,9 @@ function UserDetailPanel({
 			<div className="flex items-center justify-between px-5 py-4 border-b border-foreground/8 shrink-0">
 				<div className="flex items-center gap-3">
 					<div className="w-10 h-10 rounded-full bg-foreground/8 overflow-hidden flex items-center justify-center shrink-0">
-						{user.avatar_url ? (
+						{user.avatarUrl ? (
 							<Image
-								src={user.avatar_url}
+								src={user.avatarUrl}
 								alt=""
 								width={40}
 								height={40}
@@ -380,14 +381,12 @@ function UserDetailPanel({
 						<div className="p-4 grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
 							<div>
 								<p className="text-muted-foreground mb-0.5">Роль</p>
-								<RoleBadge role={user.role ?? "user"} />
+								<RoleBadge role={user.role ?? "USER"} />
 							</div>
 							<div>
 								<p className="text-muted-foreground mb-0.5">Тип лица</p>
 								<p className="font-medium">
-									{user.entity_type === "legal_entity"
-										? "Юр. лицо"
-										: "Физ. лицо"}
+									{user.entityType === "LEGAL" ? "Юр. лицо" : "Физ. лицо"}
 								</p>
 							</div>
 							{user.phone && (
@@ -399,17 +398,17 @@ function UserDetailPanel({
 							<div className="col-span-2">
 								<p className="text-muted-foreground mb-0.5">Зарегистрирован</p>
 								<p className="font-medium">
-									{new Date(user.created_at).toLocaleDateString("ru-RU", {
+									{new Date(user.createdAt).toLocaleDateString("ru-RU", {
 										day: "numeric",
 										month: "long",
 										year: "numeric",
 									})}
 								</p>
 							</div>
-							{user.is_blocked && user.blocked_reason && (
+							{user.isBlocked && user.blockedReason && (
 								<div className="col-span-2 p-2 rounded-lg bg-red-500/10 text-red-400 text-[11px]">
 									<span className="font-bold">Причина блокировки: </span>
-									{user.blocked_reason}
+									{user.blockedReason}
 								</div>
 							)}
 						</div>
@@ -484,7 +483,7 @@ function UserDetailPanel({
 								size="sm"
 								variant="outline"
 								className="w-full"
-								onClick={handleAddDiscount}
+								// onClick={handleAddDiscount}
 								disabled={!discountValue || isPending}
 							>
 								<Plus size={12} className="mr-1" /> Назначить
@@ -492,7 +491,7 @@ function UserDetailPanel({
 						</div>
 
 						{/* Manager permissions */}
-						{user.role === "manager" && (
+						{user.role === "MANAGER" && (
 							<div className="p-4 space-y-2">
 								<p className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
 									<Shield size={11} /> Права менеджера
@@ -556,31 +555,31 @@ function UserDetailPanel({
 										<p>
 											Тип:{" "}
 											<span className="font-medium text-foreground">
-												{app.client_type}
+												{app.clientType}
 											</span>
 										</p>
 										<p>
 											Создана:{" "}
 											<span className="font-medium text-foreground">
-												{new Date(app.created_at).toLocaleDateString("ru-RU")}
+												{new Date(app.createdAt).toLocaleDateString("ru-RU")}
 											</span>
 										</p>
 										<p>
 											Обновлена:{" "}
 											<span className="font-medium text-foreground">
-												{new Date(app.updated_at).toLocaleDateString("ru-RU")}
+												{new Date(app.updatedAt).toLocaleDateString("ru-RU")}
 											</span>
 										</p>
 									</div>
 								</div>
 
-								{app.rejection_reason && (
+								{app.rejectionReason && (
 									<div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20">
 										<p className="text-xs font-bold text-red-400 mb-1">
 											Причина отклонения
 										</p>
 										<p className="text-xs text-foreground/70">
-											{app.rejection_reason}
+											{app.rejectionReason}
 										</p>
 									</div>
 								)}
@@ -610,7 +609,7 @@ function UserDetailPanel({
 					size="sm"
 					className={cn(
 						"flex-1 text-xs gap-1",
-						user.is_blocked
+						user.isBlocked
 							? "text-green-500 border-green-500/30 hover:bg-green-500/10"
 							: "text-red-500 border-red-500/30 hover:bg-red-500/10"
 					)}
@@ -618,7 +617,7 @@ function UserDetailPanel({
 					disabled={isPending}
 				>
 					<Ban size={12} />
-					{user.is_blocked ? "Разблокировать" : "Заблокировать"}
+					{user.isBlocked ? "Разблокировать" : "Заблокировать"}
 				</Button>
 			</div>
 		</div>
@@ -639,7 +638,7 @@ export default function UsersTable({
 	const [activeUser, setActiveUser] = useState<UserProfile | null>(null);
 	const [_isPending, startTransition] = useTransition();
 
-	const handleRoleChange = (userId: string, newRole: string) => {
+	const handleRoleChange = (userId: string, newRole: Role) => {
 		startTransition(async () => {
 			const r = await updateUserRoleAction(userId, newRole);
 			if (r.success) {
@@ -663,7 +662,7 @@ export default function UsersTable({
 	};
 
 	const pendingCount = users.filter(
-		(u) => u.application?.status === "pending"
+		(u) => u.application?.status === "PENDING"
 	).length;
 
 	const filtered = users.filter((u) => {
@@ -759,7 +758,7 @@ export default function UsersTable({
 								key={user.id}
 								className={cn(
 									"border-foreground/5 cursor-pointer hover:bg-foreground/3 transition-colors",
-									user.is_blocked && "opacity-50",
+									user.isBlocked && "opacity-50",
 									activeUser?.id === user.id && "bg-foreground/5"
 								)}
 								onClick={() => setActiveUser(user)}
@@ -767,9 +766,9 @@ export default function UsersTable({
 								<TableCell>
 									<div className="flex items-center gap-3">
 										<div className="h-9 w-9 rounded-full bg-foreground/8 flex items-center justify-center overflow-hidden shrink-0">
-											{user.avatar_url ? (
+											{user.avatarUrl ? (
 												<Image
-													src={user.avatar_url}
+													src={user.avatarUrl}
 													alt=""
 													width={36}
 													height={36}
@@ -805,15 +804,17 @@ export default function UsersTable({
 											</button>
 										</DropdownMenuTrigger>
 										<DropdownMenuContent>
-											{["user", "partner", "manager", "admin"].map((r) => (
-												<DropdownMenuItem
-													key={r}
-													onClick={() => handleRoleChange(user.id, r)}
-													className={user.role === r ? "font-bold" : ""}
-												>
-													{r}
-												</DropdownMenuItem>
-											))}
+											{(["USER", "PARTNER", "MANAGER", "ADMIN"] as Role[]).map(
+												(r) => (
+													<DropdownMenuItem
+														key={r}
+														onClick={() => handleRoleChange(user.id, r)}
+														className={user.role === r ? "font-bold" : ""}
+													>
+														{r}
+													</DropdownMenuItem>
+												)
+											)}
 										</DropdownMenuContent>
 									</DropdownMenu>
 								</TableCell>
@@ -823,7 +824,7 @@ export default function UsersTable({
 								</TableCell>
 
 								<TableCell>
-									{user.is_blocked ? (
+									{user.isBlocked ? (
 										<Badge
 											variant="outline"
 											className="text-[10px] bg-red-500/10 text-red-400 border-red-500/20"
@@ -841,7 +842,7 @@ export default function UsersTable({
 								</TableCell>
 
 								<TableCell className="text-xs text-muted-foreground">
-									{new Date(user.created_at).toLocaleDateString("ru-RU")}
+									{new Date(user.createdAt).toLocaleDateString("ru-RU")}
 								</TableCell>
 
 								<TableCell
@@ -861,30 +862,30 @@ export default function UsersTable({
 											<DropdownMenuSeparator />
 											<DropdownMenuItem
 												className={
-													user.is_blocked ? "text-green-500" : "text-red-500"
+													user.isBlocked ? "text-green-500" : "text-red-500"
 												}
 												onClick={async () => {
-													const reason = user.is_blocked
+													const reason = user.isBlocked
 														? undefined
 														: (window.prompt("Причина блокировки:") ?? "");
 													const r = await toggleUserBlockAction(
 														user.id,
-														!user.is_blocked,
+														!user.isBlocked,
 														reason
 													);
 													if (r.success) {
 														handleUserUpdate(user.id, {
-															is_blocked: !user.is_blocked,
-															blocked_reason: reason ?? null,
+															isBlocked: !user.isBlocked,
+															blockedReason: reason ?? null,
 														});
 														toast.success(
-															user.is_blocked ? "Разблокирован" : "Заблокирован"
+															user.isBlocked ? "Разблокирован" : "Заблокирован"
 														);
 													} else toast.error(r.error);
 												}}
 											>
 												<Ban className="w-4 h-4 mr-2" />
-												{user.is_blocked ? "Разблокировать" : "Заблокировать"}
+												{user.isBlocked ? "Разблокировать" : "Заблокировать"}
 											</DropdownMenuItem>
 										</DropdownMenuContent>
 									</DropdownMenu>

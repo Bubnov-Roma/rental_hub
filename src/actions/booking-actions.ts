@@ -1,16 +1,18 @@
 "use server";
 
+import { BookingStatus, type Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { auth } from "@/auth";
+import { prisma } from "@/lib/prisma";
 
-// ── Submit booking (replaces createBookingAction) ─────────────────────────────
+// ── Submit booking ────────────────────────────────────────────────────────────
 
 export async function submitBookingAction(formData: {
 	items: {
 		id: string;
-		price_to_pay: number;
+		priceToPay: number;
 		deposit?: number;
-		replacement_value?: number;
+		replacementValue?: number;
 	}[];
 	startDate: string;
 	endDate: string;
@@ -18,53 +20,37 @@ export async function submitBookingAction(formData: {
 	hasInsurance: boolean;
 	totalReplacementValue: number;
 }): Promise<{ success: boolean; bookingId?: string; error?: string }> {
-	const supabase = await createClient();
+	try {
+		const session = await auth();
+		if (!session?.user?.id) return { success: false, error: "Не авторизован" };
 
-	const {
-		data: { user },
-		error: authError,
-	} = await supabase.auth.getUser();
-	if (authError || !user) return { success: false, error: "Не авторизован" };
+		// Prisma позволяет создать запись и все связанные элементы (items) за одну транзакцию!
+		const booking = await prisma.booking.create({
+			data: {
+				userId: session.user.id,
+				startDate: new Date(formData.startDate),
+				endDate: new Date(formData.endDate),
+				totalAmount: formData.totalPrice,
+				insuranceIncluded: formData.hasInsurance,
+				totalReplacementValue: formData.totalReplacementValue,
+				status: BookingStatus.PENDING_REVIEW,
+				bookingItems: {
+					create: formData.items.map((item) => ({
+						equipmentId: item.id,
+						priceAtBooking: item.priceToPay,
+						depositAtBooking: item.deposit ?? 0,
+						replacementValueAtBooking: item.replacementValue ?? 0,
+					})),
+				},
+			},
+		});
 
-	const { data: booking, error: bookingError } = await supabase
-		.from("bookings")
-		.insert({
-			user_id: user.id,
-			start_date: formData.startDate,
-			end_date: formData.endDate,
-			total_amount: formData.totalPrice,
-			insurance_included: formData.hasInsurance,
-			total_replacement_value: formData.totalReplacementValue,
-			status: "pending_review", // ← new status name
-		})
-		.select("id")
-		.single();
-
-	if (bookingError) return { success: false, error: bookingError.message };
-
-	const itemsToInsert = formData.items.map((item) => ({
-		booking_id: booking.id,
-		equipment_id: item.id,
-		price_at_booking: item.price_to_pay,
-		deposit_at_booking: item.deposit ?? 0,
-		replacement_value_at_booking: item.replacement_value ?? 0,
-	}));
-
-	const { error: itemsError } = await supabase
-		.from("booking_items")
-		.insert(itemsToInsert);
-
-	if (itemsError) {
-		// Rollback the header row so we don't leave orphans
-		await supabase.from("bookings").delete().eq("id", booking.id);
-		return {
-			success: false,
-			error: `Ошибка записи позиций: ${itemsError.message}`,
-		};
+		revalidatePath("/dashboard/bookings");
+		return { success: true, bookingId: booking.id };
+	} catch (error: unknown) {
+		if (error instanceof Error) return { success: false, error: error.message };
+		return { success: false, error: "Ошибка создания брони" };
 	}
-
-	revalidatePath("/dashboard/bookings");
-	return { success: true, bookingId: booking.id };
 }
 
 // ── Cancel booking ────────────────────────────────────────────────────────────
@@ -73,53 +59,56 @@ export async function cancelBookingAction(
 	bookingId: string,
 	reason: string
 ): Promise<{ success: boolean; error?: string }> {
-	const supabase = await createClient();
+	try {
+		const session = await auth();
+		if (!session?.user?.id) return { success: false, error: "Не авторизован" };
 
-	const {
-		data: { user },
-		error: authError,
-	} = await supabase.auth.getUser();
-	if (authError || !user) return { success: false, error: "Не авторизован" };
+		const booking = await prisma.booking.findUnique({
+			where: { id: bookingId },
+			select: { userId: true, status: true },
+		});
 
-	// Verify ownership
-	const { data: booking } = await supabase
-		.from("bookings")
-		.select("id, user_id, status")
-		.eq("id", bookingId)
-		.single();
+		if (!booking || booking.userId !== session.user.id) {
+			return { success: false, error: "Заказ не найден" };
+		}
+		if (
+			booking.status === BookingStatus.ACTIVE ||
+			booking.status === BookingStatus.COMPLETED ||
+			booking.status === BookingStatus.CANCELLED ||
+			booking.status === BookingStatus.EXPIRED
+		) {
+			return {
+				success: false,
+				error: "Нельзя отменить активный или завершённый заказ",
+			};
+		}
 
-	if (!booking || booking.user_id !== user.id) {
-		return { success: false, error: "Заказ не найден" };
+		// Транзакция: обновляем статус и создаем уведомление
+		await prisma.$transaction([
+			prisma.booking.update({
+				where: { id: bookingId },
+				data: {
+					status: BookingStatus.CANCELLED,
+					cancellationReason: reason,
+					cancelledAt: new Date(),
+				},
+			}),
+			prisma.adminNotification.create({
+				data: {
+					type: "booking_cancelled",
+					userId: session.user.id,
+					payload: { booking_id: bookingId, reason } as Prisma.InputJsonValue,
+				},
+			}),
+		]);
+
+		revalidatePath(`/dashboard/bookings/${bookingId}`);
+		revalidatePath("/dashboard/bookings");
+		return { success: true };
+	} catch (error: unknown) {
+		if (error instanceof Error) return { success: false, error: error.message };
+		return { success: false, error: "Ошибка отмены" };
 	}
-	if (booking.status === "active" || booking.status === "completed") {
-		return {
-			success: false,
-			error: "Нельзя отменить активный или завершённый заказ",
-		};
-	}
-
-	const { error } = await supabase
-		.from("bookings")
-		.update({
-			status: "cancelled",
-			cancellation_reason: reason,
-			cancelled_at: new Date().toISOString(),
-		})
-		.eq("id", bookingId);
-
-	if (error) return { success: false, error: error.message };
-
-	// Notify admins
-	await supabase.from("admin_notifications").insert({
-		type: "booking_cancelled",
-		user_id: user.id,
-		payload: { booking_id: bookingId, reason },
-		is_read: false,
-	});
-
-	revalidatePath(`/dashboard/bookings/${bookingId}`);
-	revalidatePath("/dashboard/bookings");
-	return { success: true };
 }
 
 // ── Update booking dates ──────────────────────────────────────────────────────
@@ -129,84 +118,85 @@ export async function updateBookingDatesAction(
 	startDate: string,
 	endDate: string
 ): Promise<{ success: boolean; error?: string }> {
-	const supabase = await createClient();
+	try {
+		const session = await auth();
+		if (!session?.user?.id) return { success: false, error: "Не авторизован" };
 
-	const {
-		data: { user },
-		error: authError,
-	} = await supabase.auth.getUser();
-	if (authError || !user) return { success: false, error: "Не авторизован" };
+		const booking = await prisma.booking.findUnique({
+			where: { id: bookingId },
+			select: { userId: true, status: true },
+		});
 
-	const { data: booking } = await supabase
-		.from("bookings")
-		.select("id, user_id, status")
-		.eq("id", bookingId)
-		.single();
+		if (!booking || booking.userId !== session.user.id) {
+			return { success: false, error: "Заказ не найден" };
+		}
+		if (
+			booking.status !== BookingStatus.PENDING_REVIEW &&
+			booking.status !== BookingStatus.READY_TO_RENT
+		) {
+			return { success: false, error: "Нельзя изменить даты на данном этапе" };
+		}
 
-	if (!booking || booking.user_id !== user.id) {
-		return { success: false, error: "Заказ не найден" };
+		await prisma.$transaction([
+			prisma.booking.update({
+				where: { id: bookingId },
+				data: {
+					startDate: new Date(startDate),
+					endDate: new Date(endDate),
+					status: BookingStatus.PENDING_REVIEW,
+				},
+			}),
+			prisma.adminNotification.create({
+				data: {
+					type: "booking_dates_changed",
+					userId: session.user.id,
+					payload: {
+						booking_id: bookingId,
+						start_date: startDate,
+						end_date: endDate,
+					} as Prisma.InputJsonValue,
+				},
+			}),
+		]);
+
+		revalidatePath(`/dashboard/bookings/${bookingId}`);
+		return { success: true };
+	} catch (error: unknown) {
+		if (error instanceof Error) return { success: false, error: error.message };
+		return { success: false, error: "Ошибка обновления дат" };
 	}
-	if (!["pending_review", "ready_to_rent"].includes(booking.status)) {
-		return { success: false, error: "Нельзя изменить даты на данном этапе" };
-	}
-
-	const { error } = await supabase
-		.from("bookings")
-		.update({
-			start_date: startDate,
-			end_date: endDate,
-			// Changing dates resets approval — manager must re-confirm
-			status: "pending_review",
-			updated_at: new Date().toISOString(),
-		})
-		.eq("id", bookingId);
-
-	if (error) return { success: false, error: error.message };
-
-	await supabase.from("admin_notifications").insert({
-		type: "booking_dates_changed",
-		user_id: user.id,
-		payload: {
-			booking_id: bookingId,
-			start_date: startDate,
-			end_date: endDate,
-		},
-		is_read: false,
-	});
-
-	revalidatePath(`/dashboard/bookings/${bookingId}`);
-	return { success: true };
 }
 
 // ── Check availability ────────────────────────────────────────────────────────
-// excludeBookingId — исключает текущий заказ из проверки конфликтов
-// (нужно при редактировании существующего заказа)
 
 export async function checkAvailabilityAction(
 	equipmentIds: string[],
-	startDate: string,
-	endDate: string,
+	startDate: Date,
+	endDate: Date,
 	excludeBookingId?: string
 ): Promise<{ busyIds: string[]; error?: string }> {
-	const supabase = await createClient();
+	try {
+		const overlappingItems = await prisma.bookingItem.findMany({
+			where: {
+				equipmentId: { in: equipmentIds },
+				booking: {
+					status: { not: BookingStatus.CANCELLED },
+					startDate: { lte: new Date(endDate) },
+					endDate: { gte: new Date(startDate) },
+					...(excludeBookingId ? { id: { not: excludeBookingId } } : {}),
+				},
+			},
+			select: { equipmentId: true },
+		});
 
-	let query = supabase
-		.from("booking_items")
-		.select("equipment_id, bookings!inner(id, start_date, end_date, status)")
-		.in("equipment_id", equipmentIds)
-		.filter("bookings.start_date", "lte", endDate)
-		.filter("bookings.end_date", "gte", startDate)
-		.not("bookings.status", "eq", "cancelled");
-
-	if (excludeBookingId) {
-		query = query.not("bookings.id", "eq", excludeBookingId);
+		const busyIds = [
+			...new Set(overlappingItems.map((item) => item.equipmentId)),
+		];
+		return { busyIds };
+	} catch (error: unknown) {
+		if (error instanceof Error) return { busyIds: [], error: error.message };
+		return { busyIds: [], error: "Ошибка проверки доступности" };
 	}
-
-	const { data, error } = await query;
-	if (error) return { busyIds: [], error: error.message };
-
-	const busyIds = [...new Set(data.map((item) => item.equipment_id as string))];
-	return { busyIds };
 }
 
 // ── Update booking items ──────────────────────────────────────────────────────
@@ -219,129 +209,126 @@ export async function updateBookingItemsAction(
 		totalReplacementValue: number;
 	}
 ): Promise<{ success: boolean; error?: string }> {
-	const supabase = await createClient();
+	try {
+		const session = await auth();
+		if (!session?.user?.id) return { success: false, error: "Не авторизован" };
 
-	const {
-		data: { user },
-		error: authError,
-	} = await supabase.auth.getUser();
-	if (authError || !user) return { success: false, error: "Не авторизован" };
+		const nonEditableStatuses: BookingStatus[] = [
+			BookingStatus.ACTIVE,
+			BookingStatus.COMPLETED,
+			BookingStatus.CANCELLED,
+			BookingStatus.EXPIRED,
+		];
 
-	const { data: booking } = await supabase
-		.from("bookings")
-		.select("id, user_id, status")
-		.eq("id", bookingId)
-		.single();
+		const booking = await prisma.booking.findUnique({
+			where: { id: bookingId },
+			select: { userId: true, status: true },
+		});
 
-	if (!booking || booking.user_id !== user.id) {
-		return { success: false, error: "Заказ не найден" };
+		if (!booking || booking.userId !== session.user.id) {
+			return { success: false, error: "Заказ не найден" };
+		}
+		if (nonEditableStatuses.includes(booking.status)) {
+			return {
+				success: false,
+				error: "Нельзя изменить комплектацию на данном этапе",
+			};
+		}
+		if (payload.items.length === 0) {
+			return { success: false, error: "Нельзя сохранить пустой заказ" };
+		}
+
+		const newRows = payload.items.flatMap((item) =>
+			Array.from({ length: item.quantity }, () => ({
+				equipmentId: item.equipment_id,
+				priceAtBooking: item.price_per_unit,
+			}))
+		);
+
+		// Транзакция: удаляем старые items, создаем новые, обновляем сам заказ
+		await prisma.$transaction([
+			prisma.bookingItem.deleteMany({ where: { bookingId } }),
+			prisma.booking.update({
+				where: { id: bookingId },
+				data: {
+					totalAmount: payload.totalAmount,
+					totalReplacementValue: payload.totalReplacementValue,
+					status: BookingStatus.PENDING_REVIEW,
+					bookingItems: {
+						create: newRows,
+					},
+				},
+			}),
+			prisma.adminNotification.create({
+				data: {
+					type: "booking_items_changed",
+					userId: session.user.id,
+					payload: {
+						booking_id: bookingId,
+						item_count: newRows.length,
+					} as Prisma.InputJsonValue,
+				},
+			}),
+		]);
+
+		revalidatePath(`/dashboard/bookings/${bookingId}`);
+		revalidatePath("/dashboard/bookings");
+		return { success: true };
+	} catch (error: unknown) {
+		if (error instanceof Error) return { success: false, error: error.message };
+		return { success: false, error: "Ошибка обновления комплектации" };
 	}
-	if (["active", "completed", "cancelled"].includes(booking.status)) {
-		return {
-			success: false,
-			error: "Нельзя изменить комплектацию на данном этапе",
-		};
-	}
-	if (payload.items.length === 0) {
-		return { success: false, error: "Нельзя сохранить пустой заказ" };
-	}
-
-	// Delete old items, re-insert new
-	const { error: deleteError } = await supabase
-		.from("booking_items")
-		.delete()
-		.eq("booking_id", bookingId);
-
-	if (deleteError) return { success: false, error: deleteError.message };
-
-	// Expand quantity into individual rows
-	const rows = payload.items.flatMap((item) =>
-		Array.from({ length: item.quantity }, () => ({
-			booking_id: bookingId,
-			equipment_id: item.equipment_id,
-			price_at_booking: item.price_per_unit,
-		}))
-	);
-
-	const { error: insertError } = await supabase
-		.from("booking_items")
-		.insert(rows);
-	if (insertError) return { success: false, error: insertError.message };
-
-	// Update total and reset status for re-approval
-	const { error: updateError } = await supabase
-		.from("bookings")
-		.update({
-			total_amount: payload.totalAmount,
-			total_replacement_value: payload.totalReplacementValue,
-			status: "pending_review",
-			updated_at: new Date().toISOString(),
-		})
-		.eq("id", bookingId);
-
-	if (updateError) return { success: false, error: updateError.message };
-
-	await supabase.from("admin_notifications").insert({
-		type: "booking_items_changed",
-		user_id: user.id,
-		payload: { booking_id: bookingId, item_count: rows.length },
-		is_read: false,
-	});
-
-	revalidatePath(`/dashboard/bookings/${bookingId}`);
-	revalidatePath("/dashboard/bookings");
-	return { success: true };
 }
 
 // ── Admin: update booking status ──────────────────────────────────────────────
 
 export async function updateBookingStatusAction(
 	bookingId: string,
-	newStatus: string
+	newStatus: BookingStatus
 ): Promise<{ success: boolean; error?: string }> {
-	const supabase = await createClient();
+	try {
+		const session = await auth();
+		if (!session?.user?.id) return { success: false, error: "Не авторизован" };
 
-	// Verify caller is admin or manager (skip for now — add RLS or role-check here)
-	const {
-		data: { user },
-	} = await supabase.auth.getUser();
-	if (!user) return { success: false, error: "Не авторизован" };
+		const booking = await prisma.booking.update({
+			where: { id: bookingId },
+			data: {
+				status: newStatus,
+				...(newStatus === BookingStatus.CANCELLED
+					? { cancelledAt: new Date() }
+					: {}),
+			},
+			select: { userId: true },
+		});
 
-	const { error } = await supabase
-		.from("bookings")
-		.update({
-			status: newStatus,
-			updated_at: new Date().toISOString(),
-			// If cancelling, record the timestamp
-			...(newStatus === "cancelled"
-				? { cancelled_at: new Date().toISOString() }
-				: {}),
-		})
-		.eq("id", bookingId);
+		const notifyStatuses = [
+			BookingStatus.PENDING_REVIEW,
+			BookingStatus.WAIT_PAYMENT,
+			BookingStatus.READY_TO_RENT,
+			BookingStatus.ACTIVE,
+			BookingStatus.COMPLETED,
+			BookingStatus.CANCELLED,
+			BookingStatus.EXPIRED,
+		];
 
-	if (error) return { success: false, error: error.message };
-
-	// Notify the client via admin_notifications if moving to a meaningful status
-	const notifyStatuses = ["ready_to_rent", "wait_payment", "cancelled"];
-	if (notifyStatuses.includes(newStatus)) {
-		// Get the booking's user_id to attach notification
-		const { data: booking } = await supabase
-			.from("bookings")
-			.select("user_id")
-			.eq("id", bookingId)
-			.single();
-
-		if (booking) {
-			await supabase.from("admin_notifications").insert({
-				type: "booking_status_changed",
-				user_id: booking.user_id,
-				payload: { booking_id: bookingId, new_status: newStatus },
-				is_read: false,
+		if (notifyStatuses.includes(newStatus)) {
+			await prisma.adminNotification.create({
+				data: {
+					type: "booking_status_changed",
+					userId: booking.userId,
+					payload: {
+						booking_id: bookingId,
+						new_status: newStatus,
+					} as Prisma.InputJsonValue,
+				},
 			});
 		}
-	}
 
-	revalidatePath("/admin/bookings");
-	revalidatePath(`/dashboard/bookings/${bookingId}`);
-	return { success: true };
+		revalidatePath("/admin/bookings");
+		revalidatePath(`/dashboard/bookings/${bookingId}`);
+		return { success: true };
+	} catch (error: unknown) {
+		if (error instanceof Error) return { success: false, error: error.message };
+		return { success: false, error: "Ошибка обновления статуса" };
+	}
 }

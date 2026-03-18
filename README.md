@@ -11,8 +11,8 @@
 
 ```bash
 # Клонировать репозиторий
-git clone https://github.com/yourusername/rental_hub.git
-cd rental_hub
+git clone https://github.com/yourusername/linza.git
+cd linza
 
 # Установить зависимости
 npm install

@@ -58,7 +58,7 @@ export function BookingDetailDialog({
 							№ {booking.id.split("-")[0]?.toUpperCase()}
 						</DialogTitle>
 						<span className="text-[11px] text-muted-foreground">
-							<ClientTime iso={booking.created_at} fmt="full" fallback="-" />
+							<ClientTime iso={booking.createdAt} fmt="full" fallback="-" />
 						</span>
 					</div>
 					<DialogDescription
@@ -85,14 +85,14 @@ export function BookingDetailDialog({
 									</p>
 									<p className="text-sm font-bold leading-snug">
 										<ClientTime
-											iso={booking.start_date}
+											iso={booking.startDate}
 											fmt="date-numeric"
 											fallback="-"
 										/>
 									</p>
 									<p className="text-xs text-muted-foreground">
 										<ClientTime
-											iso={booking.start_date}
+											iso={booking.startDate}
 											fmt="time"
 											fallback="-"
 										/>
@@ -104,17 +104,13 @@ export function BookingDetailDialog({
 									</p>
 									<p className="text-sm font-bold leading-snug">
 										<ClientTime
-											iso={booking.end_date}
+											iso={booking.endDate}
 											fmt="date-numeric"
 											fallback="-"
 										/>
 									</p>
 									<p className="text-xs text-muted-foreground">
-										<ClientTime
-											iso={booking.end_date}
-											fmt="time"
-											fallback="-"
-										/>
+										<ClientTime iso={booking.endDate} fmt="time" fallback="-" />
 									</p>
 								</div>
 								<div>
@@ -128,7 +124,7 @@ export function BookingDetailDialog({
 										Позиции
 									</p>
 									<p className="text-sm font-bold">
-										{booking.booking_items.length} шт.
+										{booking.bookingItems.length} шт.
 									</p>
 								</div>
 								<div>
@@ -136,12 +132,12 @@ export function BookingDetailDialog({
 										Итого
 									</p>
 									<p className="text-xs font-black italic text-right">
-										{booking.total_amount.toLocaleString()}
+										{booking.totalAmount.toLocaleString()}
 									</p>
 								</div>
 							</div>
 							<div className="space-y-2 relative">
-								{booking.booking_items.map((item, idx) => (
+								{booking.bookingItems.map((item, idx) => (
 									<div
 										key={`${item}` + `${idx}`}
 										className="flex items-center gap-3 p-3 hover:bg-muted-foreground/15 transition-colors"
@@ -172,7 +168,7 @@ export function BookingDetailDialog({
 												{item.equipment.title}
 											</p>
 											<p className="text-[11px] text-muted-foreground mt-0.5 font-mono">
-												{(item.price_at_booking || 0).toLocaleString()} ₽
+												{(item.priceAtBooking || 0).toLocaleString()} ₽
 											</p>
 										</div>
 									</div>

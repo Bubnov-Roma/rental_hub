@@ -1,25 +1,25 @@
-export type UserRole = "user" | "partner" | "manager" | "admin";
-export type EntityType = "individual" | "legal_entity";
+export type UserRole = "USER" | "PARTNER" | "MANAGER" | "ADMIN";
+export type EntityType = "INDIVIDUAL" | "LEGAL";
 
 export type ApplicationStatus =
-	| "loading"
-	| "no_application"
-	| "draft"
-	| "pending"
-	| "reviewing"
-	| "clarification"
-	| "standard"
-	| "approved"
-	| "rejected"
-	| "blocked";
+	| "LOADING"
+	| "NO_APPLICATION"
+	| "DRAFT"
+	| "PENDING"
+	| "REVIEWING"
+	| "CLARIFICATION"
+	| "STANDARD"
+	| "APPROVED"
+	| "REJECTED"
+	| "BLOCKED";
 
 export interface UserApplication {
 	id: string;
 	status: ApplicationStatus;
-	client_type: string;
-	created_at: string;
-	updated_at: string;
-	rejection_reason: string | null;
+	clientType: string;
+	createdAt: string;
+	updatedAt: string;
+	rejectionReason: string | null;
 }
 
 export interface UserProfile {
@@ -27,16 +27,16 @@ export interface UserProfile {
 	email: string | null;
 	name: string | null;
 	phone: string | null;
-	avatar_url: string | null;
+	avatarUrl: string | null;
 	role: UserRole;
-	entity_type: EntityType | null;
-	company_name: string | null;
+	entityType: EntityType | null;
+	companyName: string | null;
 	tin: string | null;
-	created_at: string;
-	is_blocked: boolean;
-	blocked_reason: string | null;
+	createdAt: string;
+	isBlocked: boolean;
+	blockedReason: string | null;
 	permissions: Record<string, boolean>;
-	is_verified: boolean | null;
+	isVerified: boolean | null;
 	// Enriched by admin page — not in DB
 	application?: UserApplication | null;
 }

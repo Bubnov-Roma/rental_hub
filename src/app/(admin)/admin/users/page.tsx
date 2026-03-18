@@ -1,38 +1,41 @@
 import UsersTable from "@/components/admin/users/UsersTable";
 import type { UserProfile } from "@/core/domain/entities/User";
-import { createClient } from "@/lib/supabase/server";
+import { prisma } from "@/lib/prisma";
 
 export default async function AdminUsersPage() {
-	const supabase = await createClient();
+	const users = await prisma.user.findMany({
+		orderBy: { createdAt: "desc" },
+		include: {
+			clientApplication: true,
+		},
+	});
 
-	// ── Fetch all profiles ──────────────────────────────────────────────────
-	// Requires RLS policy "Admins can view all profiles" from migration_admin_access_v3.sql
-	const { data: profiles, error } = await supabase
-		.from("profiles")
-		.select(
-			"id, name, email, phone, avatar_url, role, entity_type, company_name, tin, created_at, is_blocked, blocked_reason, permissions, is_verified"
-		)
-		.order("created_at", { ascending: false });
-
-	if (error) {
-		console.error("[AdminUsersPage] profiles query error:", error.message);
-	}
-
-	// ── Fetch all client_applications for enrichment ────────────────────────
-	const { data: applications } = await supabase
-		.from("client_applications")
-		.select(
-			"id, user_id, status, client_type, created_at, updated_at, rejection_reason"
-		);
-
-	const appByUserId = Object.fromEntries(
-		(applications ?? []).map((a) => [a.user_id, a])
-	);
-
-	const enriched: UserProfile[] = (profiles ?? []).map((p) => ({
-		...p,
-		permissions: (p.permissions ?? {}) as Record<string, boolean>,
-		application: appByUserId[p.id] ?? null,
+	const enriched: UserProfile[] = users.map((u) => ({
+		id: u.id,
+		name: u.name,
+		email: u.email,
+		phone: u.phone,
+		avatarUrl: u.image, // В NextAuth аватарка хранится в поле image
+		role: u.role as UserProfile["role"],
+		entityType: u.entityType as UserProfile["entityType"],
+		companyName: u.companyName,
+		tin: u.tin,
+		createdAt: u.createdAt.toISOString(),
+		isBlocked: u.isBlocked,
+		blockedReason: u.blockedReason,
+		permissions: (u.permissions ?? {}) as Record<string, boolean>,
+		isVerified: u.isVerified,
+		application: u.clientApplication
+			? {
+					id: u.clientApplication.id,
+					userId: u.clientApplication.userId,
+					status: u.clientApplication.status,
+					clientType: u.clientApplication.clientType,
+					createdAt: u.clientApplication.createdAt.toISOString(),
+					updatedAt: u.clientApplication.updatedAt.toISOString(),
+					rejectionReason: u.clientApplication.rejectionReason,
+				}
+			: null,
 	}));
 
 	return (

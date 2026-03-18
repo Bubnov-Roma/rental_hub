@@ -12,6 +12,7 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import NProgress from "nprogress";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -29,7 +30,6 @@ import {
 } from "@/components/shared";
 import { Button } from "@/components/ui";
 import { SUPPORT_PHONE_DEFAULT } from "@/constants";
-import { useAuth } from "@/hooks";
 import { useApplicationStatus } from "@/hooks/use-application-status";
 import { calculateItemPrice, cn, combineDateAndTime } from "@/lib/utils";
 import { useCartStore } from "@/store/use-cart-store";
@@ -41,7 +41,8 @@ import { formatPlural } from "@/utils";
 export default function CheckoutPage() {
 	const router = useRouter();
 	const { items, addItem, removeOne, clearCart } = useCartStore();
-	const { user } = useAuth();
+	const { data: session } = useSession();
+	const user = session?.user ?? null;
 	const { status } = useApplicationStatus();
 
 	// Hydration guard
@@ -124,8 +125,8 @@ export default function CheckoutPage() {
 			try {
 				const r = await checkAvailabilityAction(
 					ids,
-					math.startFull.toISOString(),
-					math.endFull.toISOString()
+					math.startFull,
+					math.endFull
 				);
 				if (!cancelled) setBusyIds(r.busyIds ?? []);
 			} finally {
@@ -143,7 +144,7 @@ export default function CheckoutPage() {
 
 	const activeItems = items.filter((i) => i.quantity > 0);
 	const hasAnyBusy = busyIds.length > 0;
-	const isBookingBlocked = status === "rejected" || status === "blocked";
+	const isBookingBlocked = status === "REJECTED" || status === "BLOCKED";
 	const isCanBook =
 		!isBookingBlocked &&
 		math.totalRental > 0 &&
@@ -160,7 +161,7 @@ export default function CheckoutPage() {
 			const result = await submitBookingAction({
 				items: activeItems.map((i) => ({
 					id: i.equipment.id,
-					price_to_pay: calculateItemPrice(i.equipment, math.hours),
+					priceToPay: calculateItemPrice(i.equipment, math.hours),
 				})),
 				startDate: math.startFull.toISOString(),
 				endDate: math.endFull.toISOString(),
@@ -189,7 +190,7 @@ export default function CheckoutPage() {
 			setShowAuth(true);
 			return;
 		}
-		if (status === "approved") {
+		if (status === "APPROVED") {
 			doCreateBooking();
 			return;
 		}
@@ -477,7 +478,7 @@ function CheckoutSkeleton() {
 
 // ─── BlockedBanner ────────────────────────────────────────────────────────────
 function BlockedBanner({ status }: { status: ApplicationStatus }) {
-	const isBlocked = status === "blocked";
+	const isBlocked = status === "BLOCKED";
 	return (
 		<div
 			className={cn(

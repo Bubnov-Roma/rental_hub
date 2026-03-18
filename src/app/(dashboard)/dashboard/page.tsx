@@ -1,3 +1,4 @@
+import { ApplicationStatus, BookingStatus } from "@prisma/client";
 import {
 	Boxes,
 	Calendar,
@@ -9,141 +10,113 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { auth } from "@/auth";
 import { BookingPreviewList } from "@/components/dashboard/bookings/BookingPreviewList";
 import { VerificationBanner } from "@/components/forms/verification/VerificationBanner";
 import { ClientTime } from "@/components/shared";
 import { QuickActionLink } from "@/components/shared/QuickActionLink";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
-import { createClient } from "@/lib/supabase/server";
+import { prisma } from "@/lib/prisma";
 import type { DashboardBooking } from "@/types";
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
 export default async function DashboardPage() {
-	const supabase = await createClient();
+	const session = await auth();
+	const user = session?.user;
 
-	const {
-		data: { user },
-	} = await supabase.auth.getUser();
-
-	if (!user) redirect("/auth/login");
-
-	const { data: application } = await supabase
-		.from("client_applications")
-		.select("status")
-		.eq("user_id", user.id)
-		.maybeSingle();
-
-	const showBanner =
-		application?.status === "no_application" || application?.status === "draft";
+	if (!user?.id) redirect("/auth");
 
 	const [
-		{ data: bookingsRaw },
-		{ count: totalBookings },
-		{ count: activeBookings },
-		{ count: completedBookings },
-		{ count: cancelledBookings },
-		{ data: spendingData },
+		application,
+		bookingsRaw,
+		totalBookings,
+		activeBookings,
+		completedBookings,
+		cancelledBookings,
+		spendingData,
 	] = await Promise.all([
-		supabase
-			.from("bookings")
-			.select(`
-            id, start_date, end_date, total_amount, status, created_at,
-            booking_items (
-                price_at_booking,
-                equipment ( title, equipment_image_links ( images ( url ) ) )
-            )
-        `)
-			.eq("user_id", user.id)
-			.order("created_at", { ascending: false })
-			.limit(10),
-
-		supabase
-			.from("bookings")
-			.select("id", { count: "exact", head: true })
-			.eq("user_id", user.id),
-
-		supabase
-			.from("bookings")
-			.select("id", { count: "exact", head: true })
-			.eq("user_id", user.id)
-			.in("status", ["pending", "confirmed", "active"]),
-
-		supabase
-			.from("bookings")
-			.select("id", { count: "exact", head: true })
-			.eq("user_id", user.id)
-			.eq("status", "completed"),
-
-		supabase
-			.from("bookings")
-			.select("id", { count: "exact", head: true })
-			.eq("user_id", user.id)
-			.eq("status", "cancelled"),
-
-		supabase
-			.from("bookings")
-			.select("total_amount")
-			.eq("user_id", user.id)
-			.eq("status", "completed"),
+		prisma.clientApplication.findUnique({
+			where: { userId: user.id },
+			select: { status: true },
+		}),
+		prisma.booking.findMany({
+			where: { userId: user.id },
+			orderBy: { createdAt: "desc" },
+			take: 10,
+			include: {
+				bookingItems: {
+					include: {
+						equipment: {
+							select: {
+								title: true,
+								equipmentImageLinks: {
+									include: { image: { select: { url: true } } },
+									take: 1,
+								},
+							},
+						},
+					},
+				},
+			},
+		}),
+		prisma.booking.count({ where: { userId: user.id } }),
+		prisma.booking.count({
+			where: {
+				userId: user.id,
+				status: {
+					in: [
+						BookingStatus.PENDING_REVIEW,
+						BookingStatus.READY_TO_RENT,
+						BookingStatus.ACTIVE,
+					],
+				},
+			},
+		}),
+		prisma.booking.count({
+			where: { userId: user.id, status: BookingStatus.COMPLETED },
+		}),
+		prisma.booking.count({
+			where: { userId: user.id, status: BookingStatus.CANCELLED },
+		}),
+		prisma.booking.aggregate({
+			where: { userId: user.id, status: BookingStatus.COMPLETED },
+			_sum: { totalAmount: true },
+		}),
 	]);
 
-	const totalSpent =
-		(spendingData as Array<{ total_amount: number }> | null)?.reduce(
-			(acc, item) => acc + (item.total_amount || 0),
-			0
-		) ?? 0;
+	const showBanner =
+		!application ||
+		application.status === ApplicationStatus.NO_APPLICATION ||
+		application.status === ApplicationStatus.DRAFT;
 
-	// ── Normalize raw Supabase data into our strict types ─────────────────────
-	// Supabase returns deeply nested objects. We flatten imageUrl here
-	// so components don't need to navigate the join tree.
-	const bookings: DashboardBooking[] = (bookingsRaw ?? []).map((b) => ({
-		id: b.id,
-		start_date: b.start_date,
-		end_date: b.end_date,
-		total_amount: b.total_amount,
-		status: b.status,
-		created_at: b.created_at,
-		booking_items: (
-			b.booking_items as unknown as Array<{
-				price_at_booking: number;
-				equipment: {
-					title: string;
-					equipment_image_links: Array<{
-						images: { url: string } | null;
-					}> | null;
-				} | null;
-			}>
-		).map((item) => ({
-			price_at_booking: item.price_at_booking,
+	const totalSpent = spendingData._sum.totalAmount ?? 0;
+
+	const bookings: DashboardBooking[] = bookingsRaw.map((booking) => ({
+		...booking,
+		bookingItems: booking.bookingItems.map((item) => ({
+			priceAtBooking: item.priceAtBooking,
 			equipment: {
-				title: item.equipment?.title ?? "—",
+				title: item.equipment.title,
 			},
-			imageUrl: item.equipment?.equipment_image_links?.[0]?.images?.url ?? null,
+			imageUrl: item.equipment.equipmentImageLinks[0]?.image?.url ?? null,
 		})),
 	}));
 
 	const stats = {
-		totalBookings: totalBookings ?? 0,
-		activeBookings: activeBookings ?? 0,
-		completedBookings: completedBookings ?? 0,
-		cancelledBookings: cancelledBookings ?? 0,
+		totalBookings,
+		activeBookings,
+		completedBookings,
+		cancelledBookings,
 		totalSpent,
 	};
 
 	const upcoming = bookings
-		.filter(
-			(b) => new Date(b.end_date) > new Date() && b.status !== "cancelled"
-		)
+		.filter((b) => new Date(b.endDate) > new Date() && b.status !== "CANCELLED")
 		.slice(0, 2);
 
-	const nickname = user?.user_metadata?.nickname as string | undefined;
-	const fullName = user.user_metadata?.full_name as string | undefined;
-
-	// Приоритет: nickname → полное имя (первое слово) → email-prefix → fallback
 	const firstName =
-		nickname ||
-		fullName?.trim().split(/\s+/)[0] || // Берем первое слово из ФИО
-		user?.email?.split("@")[0] ||
+		user.nickname ||
+		user.name?.trim().split(/\s+/)[0] ||
+		user.email?.split("@")[0] ||
 		"Пользователь";
 
 	return (
@@ -216,22 +189,22 @@ export default async function DashboardPage() {
 									<Link
 										href={`/dashboard/bookings/${booking.id}`}
 										key={booking.id}
-										className="rounded-xl bg-card/40 w-full  block p-3 hover:bg-muted-foreground/20 transition-colors"
+										className="rounded-xl bg-card/40 w-full block p-3 hover:bg-muted-foreground/20 transition-colors"
 									>
 										<div className="flex items-start justify-between gap-2">
 											<div className="min-w-0">
 												<p className="font-bold text-sm truncate">
-													{booking.booking_items[0]?.equipment.title ?? "Заказ"}
+													{booking.bookingItems[0]?.equipment.title ?? "Заказ"}
 												</p>
 												<div className="flex text-[11px] text-muted-foreground mt-0.5 gap-1">
 													<ClientTime
-														iso={booking.start_date}
+														iso={booking.startDate}
 														fmt="datetime"
 														fallback="---"
 													/>
 													<span className="opacity-40">{" → "}</span>
 													<ClientTime
-														iso={booking.end_date}
+														iso={booking.endDate}
 														fmt="datetime"
 														fallback="---"
 													/>
@@ -276,7 +249,6 @@ export default async function DashboardPage() {
 	);
 }
 
-// ─── StatCard ─────────────────────────────────────────────────────────────────
 function StatCard({
 	title,
 	value,

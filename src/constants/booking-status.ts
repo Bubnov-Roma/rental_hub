@@ -1,13 +1,13 @@
 import type { BookingStatus } from "@/types";
 
 export const BOOKING_STATUS_LABELS: Record<BookingStatus, string> = {
-	pending_review: "Проверка техники",
-	wait_payment: "Ожидает оплаты",
-	ready_to_rent: "Готов к выдаче",
-	active: "В аренде",
-	completed: "Завершён",
-	cancelled: "Отменён",
-	expired: "Просрочен",
+	PENDING_REVIEW: "Проверка техники",
+	WAIT_PAYMENT: "Ожидает оплаты",
+	READY_TO_RENT: "Готов к выдаче",
+	ACTIVE: "В аренде",
+	COMPLETED: "Завершён",
+	CANCELLED: "Отменён",
+	EXPIRED: "Просрочен",
 };
 
 export const STATUS_STEPS: {
@@ -16,36 +16,36 @@ export const STATUS_STEPS: {
 	desc: string;
 }[] = [
 	{
-		key: "pending_review",
+		key: "PENDING_REVIEW",
 		label: "Проверка",
 		desc: "Менеджер проверяет наличие техники",
 	},
 	{
-		key: "wait_payment",
+		key: "WAIT_PAYMENT",
 		label: "Оплата",
 		desc: "Заказ собран, ожидается внесение предоплаты",
 	},
 	{
-		key: "ready_to_rent",
+		key: "READY_TO_RENT",
 		label: "Выдача",
 		desc: "Заказ подтверждён, техника готова к выдаче",
 	},
 	{
-		key: "active",
+		key: "ACTIVE",
 		label: "Аренда",
 		desc: "Техника находится в аренде",
 	},
-	{ key: "completed", label: "Завершён", desc: "Заказ успешно завершён" },
+	{ key: "COMPLETED", label: "Завершён", desc: "Заказ успешно завершён" },
 ];
 
 export const BOOKING_STATUS_STYLES: Record<BookingStatus, string> = {
-	pending_review: "bg-amber-500/10 text-amber-400 border-amber-500/20",
-	wait_payment: "bg-green-500/10 text-green-400 border-green-500/20",
-	ready_to_rent: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
-	active: "bg-blue-500/10 text-blue-400 border-blue-500/20",
-	completed: "bg-foreground/5 text-muted-foreground border-foreground/10",
-	cancelled: "bg-red-500/10 text-red-400 border-red-500/20",
-	expired: "bg-gray-500/10 text-gray-400 border-gray-500/20",
+	PENDING_REVIEW: "bg-amber-500/10 text-amber-400 border-amber-500/20",
+	WAIT_PAYMENT: "bg-green-500/10 text-green-400 border-green-500/20",
+	READY_TO_RENT: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+	ACTIVE: "bg-blue-500/10 text-blue-400 border-blue-500/20",
+	COMPLETED: "bg-foreground/5 text-muted-foreground border-foreground/10",
+	CANCELLED: "bg-red-500/10 text-red-400 border-red-500/20",
+	EXPIRED: "bg-gray-500/10 text-gray-400 border-gray-500/20",
 };
 
 // ─── Status config ────────────────────────────────────────────────────────────
@@ -54,37 +54,37 @@ export const BOOKING_STATUS_CONFIG: Record<
 	BookingStatus,
 	{ label: string; color: string; dot: string }
 > = {
-	pending_review: {
+	PENDING_REVIEW: {
 		label: "Ожидает проверки",
 		color: "bg-amber-500/15 text-amber-400 border-amber-500/20",
 		dot: "bg-amber-400",
 	},
-	wait_payment: {
+	WAIT_PAYMENT: {
 		label: "Ждёт оплаты",
 		color: "bg-blue-500/15 text-blue-400 border-blue-500/20",
 		dot: "bg-blue-400",
 	},
-	ready_to_rent: {
+	READY_TO_RENT: {
 		label: "Готов к выдаче",
 		color: "bg-green-500/15 text-green-400 border-green-500/20",
 		dot: "bg-green-400",
 	},
-	active: {
+	ACTIVE: {
 		label: "В аренде",
 		color: "bg-emerald-500/15 text-emerald-400 border-emerald-500/20",
 		dot: "bg-emerald-400",
 	},
-	completed: {
+	COMPLETED: {
 		label: "Завершён",
 		color: "bg-foreground/8 text-foreground/50 border-foreground/10",
 		dot: "bg-foreground/30",
 	},
-	cancelled: {
+	CANCELLED: {
 		label: "Отменён",
 		color: "bg-red-500/15 text-red-400 border-red-500/20",
 		dot: "bg-red-400",
 	},
-	expired: {
+	EXPIRED: {
 		label: "Истёк",
 		color: "bg-orange-500/15 text-orange-400 border-orange-500/20",
 		dot: "bg-orange-400",

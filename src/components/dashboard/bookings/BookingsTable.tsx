@@ -32,7 +32,7 @@ function getStatusStyle(status: string): string {
 function asDashboardBooking(row: BookingRow): DashboardBooking {
 	return {
 		...row,
-		booking_items: row.booking_items.map((item) => ({
+		bookingItems: row.bookingItems.map((item) => ({
 			...item,
 			imageUrl: item.imageUrl ?? null,
 		})),
@@ -92,7 +92,7 @@ export function BookingsTable({ bookings }: { bookings: BookingRow[] }) {
 			if (filters.search) {
 				const q = filters.search.toLowerCase();
 				const idMatch = b.id.split("-")[0]?.toLowerCase().includes(q);
-				const titleMatch = b.booking_items.some((item) =>
+				const titleMatch = b.bookingItems.some((item) =>
 					item.equipment.title.toLowerCase().includes(q)
 				);
 				if (!idMatch && !titleMatch) return false;
@@ -103,7 +103,7 @@ export function BookingsTable({ bookings }: { bookings: BookingRow[] }) {
 
 			// Date range: booking start_date must fall within the selected range
 			if (filters.dateFrom || filters.dateTo) {
-				const start = parseISO(b.start_date);
+				const start = b.startDate;
 				const from = filters.dateFrom
 					? parseISO(filters.dateFrom)
 					: new Date(0);
@@ -272,8 +272,8 @@ export function BookingsTable({ bookings }: { bookings: BookingRow[] }) {
 							const isSelected = selectedIds.has(booking.id);
 							const hours = Math.ceil(
 								differenceInHours(
-									new Date(booking.end_date),
-									new Date(booking.start_date)
+									new Date(booking.endDate),
+									new Date(booking.startDate)
 								)
 							);
 
@@ -311,7 +311,7 @@ export function BookingsTable({ bookings }: { bookings: BookingRow[] }) {
 											</div>
 											<div className="text-[11px] text-muted-foreground mt-0.5">
 												<ClientTime
-													iso={booking.created_at}
+													iso={booking.createdAt}
 													fmt="full"
 													fallback="-"
 												/>
@@ -323,7 +323,7 @@ export function BookingsTable({ bookings }: { bookings: BookingRow[] }) {
 											<div className="text-sm font-medium">
 												{
 													<ClientTime
-														iso={booking.start_date}
+														iso={booking.startDate}
 														fmt="datetime"
 														fallback="---"
 													/>
@@ -331,7 +331,7 @@ export function BookingsTable({ bookings }: { bookings: BookingRow[] }) {
 												{" — "}
 												{
 													<ClientTime
-														iso={booking.end_date}
+														iso={booking.endDate}
 														fmt="datetime"
 														fallback="---"
 													/>
@@ -345,12 +345,12 @@ export function BookingsTable({ bookings }: { bookings: BookingRow[] }) {
 										{/* Items */}
 										<TableCell className="py-4 table-cell">
 											<div className="text-sm">
-												{booking.booking_items.length} поз.
+												{booking.bookingItems.length} поз.
 											</div>
 											<div className="text-[11px] text-muted-foreground mt-0.5 truncate max-w-40">
-												{booking.booking_items[0]?.equipment.title}
-												{booking.booking_items.length > 1 &&
-													` +${booking.booking_items.length - 1}`}
+												{booking.bookingItems[0]?.equipment.title}
+												{booking.bookingItems.length > 1 &&
+													` +${booking.bookingItems.length - 1}`}
 											</div>
 										</TableCell>
 
@@ -369,7 +369,7 @@ export function BookingsTable({ bookings }: { bookings: BookingRow[] }) {
 										{/* Amount */}
 										<TableCell className="py-4">
 											<div className="font-black text-sm tabular-nums">
-												{booking.total_amount.toLocaleString()} ₽
+												{booking.totalAmount.toLocaleString()} ₽
 											</div>
 										</TableCell>
 									</TableRow>

@@ -1,16 +1,16 @@
 import type { ClientFormValues } from "@/schemas";
 
 export type ApplicationStatus =
-	| "loading"
-	| "no_application"
-	| "draft"
-	| "pending"
-	| "reviewing"
-	| "clarification"
-	| "standard"
-	| "approved"
-	| "rejected"
-	| "blocked";
+	| "LOADING"
+	| "NO_APPLICATION"
+	| "DRAFT"
+	| "PENDING"
+	| "REVIEWING"
+	| "CLARIFICATION"
+	| "STANDARD"
+	| "APPROVED"
+	| "REJECTED"
+	| "BLOCKED";
 
 export type ClientVariants =
 	| "individual"
@@ -28,15 +28,15 @@ export type AllowedUpdateField =
 	| "applicationData.addresses.actual"
 	| "applicationData.addresses.isSame";
 
-export type UserRole = "guest" | "user" | "admin" | "manager";
+export type UserRole = "GUEST" | "USER" | "ADMIN" | "MANAGER";
 
 export interface ClientApplication {
 	id: string;
-	user_id: string;
-	client_type: ClientFormValues;
-	application_data: ClientFormValues;
+	userId: string;
+	clientType: string;
+	applicationData: ClientFormValues;
 	status: ApplicationStatus;
-	rejection_reason?: string;
-	created_at: string;
-	updated_at: string;
+	rejectionReason?: string | null;
+	createdAt: Date;
+	updatedAt: Date;
 }

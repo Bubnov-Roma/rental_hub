@@ -7,6 +7,7 @@ interface QuickActionLinkProps {
 	icon: React.ReactNode;
 	label: string;
 	description?: string;
+	badge?: number;
 	className?: string;
 }
 
@@ -15,34 +16,43 @@ export function QuickActionLink({
 	icon,
 	label,
 	description,
+	badge,
 	className,
 }: QuickActionLinkProps) {
 	return (
 		<Link
 			href={href}
 			className={cn(
-				"group relative flex items-center justify-between p-4 rounded-2xl transition-all duration-300",
-				"bg-foreground/5 border border-foreground/5 hover:bg-white/10 hover:border-foreground/10 hover:shadow-lg",
+				"group relative flex items-center justify-between gap-3 p-3 rounded-2xl transition-all duration-300",
+				"bg-foreground/5 border border-foreground/5 hover:bg-foreground/10 hover:border-foreground/10 hover:shadow-lg",
 				className
 			)}
 		>
-			<div className="flex items-center gap-4">
-				{/* Иконка с мягким свечением */}
-				<div className="flex items-center justify-center w-10 h-10 rounded-xl bg-white/5 text-muted-foreground/70 group-hover:text-blue-400 group-hover:bg-blue-500/10 transition-all duration-300">
-					{icon}
-				</div>
+			{/* <div className="flex items-center gap-4"> */}
+			{/* Иконка с мягким свечением */}
+			{/* <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/15 transition-colors"> */}
+			{icon}
+			{/* </div> */}
 
-				<div className="flex flex-col">
-					<span className="text-sm font-semibold text-foreground/60 group-hover:text-foreground/80">
+			{/* <div className="flex flex-col"> */}
+			{/* <span className="text-sm font-semibold text-foreground/60 group-hover:text-foreground/80">
 						{label}
-					</span>
-					{description && (
-						<span className="text-xs text-foreground/40 group-hover:text-foreground/60">
-							{description}
-						</span>
-					)}
-				</div>
+					</span> */}
+			<div className="flex-1 min-w-0">
+				<p className="text-sm font-semibold truncate">{label}</p>
+				{description && (
+					<p className="text-xs text-muted-foreground truncate">
+						{description}
+					</p>
+				)}
 			</div>
+			{badge !== undefined && badge > 0 && (
+				<span className="shrink-0 min-w-5 h-5 rounded-full bg-primary/15 text-primary text-[10px] font-bold flex items-center justify-center px-1.5">
+					{badge}
+				</span>
+			)}
+			{/* </div> */}
+			{/* </div> */}
 
 			<ChevronRight
 				size={18}

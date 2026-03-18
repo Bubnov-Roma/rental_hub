@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useSession } from "next-auth/react";
 import { useQueryState } from "nuqs";
 import { useCallback, useEffect, useRef } from "react";
 import { FormProvider, useForm } from "react-hook-form";
@@ -12,14 +13,15 @@ import {
 } from "@/actions/client-application-actions";
 import { UniversalClientForm } from "@/components/forms/client-forms/client-types/UniversalClientForm";
 import { Card } from "@/components/ui/card";
-import { useAuth } from "@/hooks/use-auth";
 import { type ClientFormValues, clientFormSchema } from "@/schemas";
 import { useApplicationStore } from "@/store";
 
 export const ClientForm = () => {
 	const submitSuccess = useApplicationStore((s) => s.submitSuccess);
 	const clearFormDraft = useApplicationStore((s) => s.clearFormDraft);
-	const { user } = useAuth();
+
+	const { data: session } = useSession();
+	const user = session?.user ?? null;
 
 	const [step, setStep] = useQueryState("step", {
 		defaultValue: 0,
@@ -48,7 +50,7 @@ export const ClientForm = () => {
 		const registrationEmail = user?.email ?? "";
 
 		loadDraftAction().then(({ data, status }) => {
-			if (data && status === "draft") {
+			if (data && status === "DRAFT") {
 				// Merge draft into a full IndividualClient shape.
 				// Since clientFormSchema = individualClientSchema (no discriminated union),
 				// ClientFormValues IS IndividualClient — no cast needed.

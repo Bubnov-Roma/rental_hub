@@ -1,94 +1,40 @@
-import { createServerClient } from "@supabase/ssr";
-import { type NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
+import { auth } from "@/auth";
 
-export async function updateSession(request: NextRequest) {
-	let supabaseResponse = NextResponse.next({ request });
+export default auth((req) => {
+	const isLoggedIn = !!req.auth;
+	const { pathname } = req.nextUrl;
+	const role = req.auth?.user?.role;
 
-	const supabase = createServerClient(
-		process.env.NEXT_PUBLIC_SUPABASE_URL || "",
-		process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "",
-		{
-			cookies: {
-				getAll() {
-					return request.cookies.getAll();
-				},
-				setAll(cookiesToSet) {
-					/* Устанавливаем куки в объект запроса */
-					cookiesToSet.forEach(({ name, value }) => {
-						request.cookies.set(name, value);
-					});
-					/* Создаем ответ Supabase */
-					supabaseResponse = NextResponse.next({ request });
-					/* Устанавливаем куки в ответ Supabase */
-					cookiesToSet.forEach(({ name, value, options }) => {
-						supabaseResponse.cookies.set(name, value, options);
-					});
-				},
-			},
-		}
-	);
+	const isAuthRoute = pathname.startsWith("/auth");
+	const isAdminRoute = pathname.startsWith("/admin");
+	const isProtectedRoute =
+		pathname.startsWith("/dashboard") || pathname.startsWith("/booking");
 
-	try {
-		const {
-			data: { user },
-			error: userError,
-		} = await supabase.auth.getUser();
-
-		// Игнорируем сетевые ошибки в dev-режиме
-		if (userError?.message.includes("fetch")) {
-			return { supabaseResponse, user: null };
-		}
-		const url = request.nextUrl.clone();
-		const { pathname, searchParams } = url;
-
-		/* Paths */
-		const isAuthRoute = pathname.startsWith("/auth");
-		const isAdminRoute = pathname.startsWith("/admin");
-		const isProtectedRoute =
-			pathname.startsWith("/dashboard") || pathname.startsWith("/booking");
-		// /favorites страница показывает UnauthenticatedFavorites для незалогиненных
-
-		/* check network */
-		if (userError?.message.includes("fetch")) {
-			return { supabaseResponse, user: null };
-		}
-		/* Redirect unauthorized */
-		// 1. Если нет юзера и он лезет в защищенные маршруты -> на вход
-		if (!user && (isProtectedRoute || isAdminRoute)) {
-			url.pathname = "/auth";
-			url.searchParams.set("view", "contact");
-			url.searchParams.set("redirect", pathname);
-			return { supabaseResponse: NextResponse.redirect(url), user: null };
-		}
-		/* Checking roles in the database for the admin panel */
-		if (user && isAdminRoute) {
-			const { data: profile } = await supabase
-				.from("profiles")
-				.select("role")
-				.eq("id", user.id)
-				.single();
-
-			if (profile?.role !== "admin" && profile?.role !== "manager") {
-				url.pathname = "/dashboard";
-				return { supabaseResponse: NextResponse.redirect(url), user };
-			}
-		}
-
-		/*  Redirect authorized users from login pages */
-		// Редиректим авторизованных со страниц входа, ТОЛЬКО ЕСЛИ это не смена пароля
-		if (user && isAuthRoute) {
-			const isUpdatePassword = searchParams.get("view") === "update-password";
-			if (
-				!pathname.startsWith("/auth/callback") &&
-				!pathname.startsWith("/auth/confirm") &&
-				!isUpdatePassword
-			) {
-				url.pathname = "/dashboard";
-				return { supabaseResponse: NextResponse.redirect(url), user };
-			}
-		}
-		return { supabase, user, supabaseResponse };
-	} catch {
-		return { supabaseResponse, user: null };
+	// 1. Редирект неавторизованных из защищенных зон
+	if (!isLoggedIn && (isProtectedRoute || isAdminRoute)) {
+		const url = req.nextUrl.clone();
+		url.pathname = "/auth";
+		url.searchParams.set("view", "otp-login");
+		url.searchParams.set("redirect", pathname);
+		return NextResponse.redirect(url);
 	}
-}
+
+	// 2. Проверка ролей для админки
+	if (isLoggedIn && isAdminRoute) {
+		if (role !== "ADMIN" && role !== "MANAGER") {
+			return NextResponse.redirect(new URL("/dashboard", req.nextUrl));
+		}
+	}
+
+	// 3. Редирект авторизованных со страницы логина
+	if (isLoggedIn && isAuthRoute) {
+		return NextResponse.redirect(new URL("/dashboard", req.nextUrl));
+	}
+
+	return NextResponse.next();
+});
+
+export const config = {
+	matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
+};

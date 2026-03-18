@@ -8,12 +8,12 @@ import { faHeart as faHeartSolid } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Info, Video, Zap } from "lucide-react";
 import Image from "next/image";
+import { useSession } from "next-auth/react";
 import NProgress from "nprogress";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Components } from "react-markdown";
 import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
-
 import {
 	checkAvailabilityAction,
 	submitBookingAction,
@@ -52,7 +52,7 @@ import {
 	SheetTitle,
 } from "@/components/ui";
 import type { GroupedEquipment } from "@/core/domain/entities/Equipment";
-import { useAuth, useFavorite } from "@/hooks";
+import { useFavorite } from "@/hooks";
 import { calculateItemPrice, cn, combineDateAndTime } from "@/lib/utils";
 import { useCartStore } from "@/store/use-cart-store";
 
@@ -181,7 +181,8 @@ export default function EquipmentDetails({
 }: {
 	equipment: EquipmentFormState;
 }) {
-	const { user } = useAuth();
+	const { data: session } = useSession();
+	const user = session?.user ?? null;
 	const { items: cartItems } = useCartStore();
 	const [isDesktop, setIsDesktop] = useState(true);
 	useEffect(() => {
@@ -245,8 +246,8 @@ export default function EquipmentDetails({
 			try {
 				const r = await checkAvailabilityAction(
 					[equipment.id],
-					math.startFull.toISOString(),
-					math.endFull.toISOString()
+					math.startFull,
+					math.endFull
 				);
 				if (!cancelled) setBusyIds(r.busyIds ?? []);
 			} finally {
@@ -283,7 +284,7 @@ export default function EquipmentDetails({
 				items: [
 					{
 						id: equipment.id,
-						price_to_pay: calculateItemPrice(equipment, math.hours),
+						priceToPay: calculateItemPrice(equipment, math.hours),
 					},
 				],
 				startDate: math.startFull.toISOString(),

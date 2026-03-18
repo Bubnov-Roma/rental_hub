@@ -5,11 +5,14 @@ import { Footer } from "@/components/layouts/Footer";
 import { Header } from "@/components/layouts/Header";
 import { MobileNavBar } from "@/components/layouts/MobileNavBar";
 import { SidebarInset } from "@/components/ui/sidebar";
-import { createClient } from "@/lib/supabase/server";
 import { ApplicationInitializer } from "@/providers/application-initializer";
 import { RootProvider } from "@/providers/root-provider";
 import "./globals.css";
 import { getCategoriesFromDb } from "@/actions/category-actions";
+import { auth } from "@/auth";
+import { prisma } from "@/lib/prisma";
+import type { ClientFormValues } from "@/schemas";
+import type { ClientApplication } from "@/types";
 
 export const viewport = {
 	themeColor: [
@@ -27,31 +30,24 @@ export default async function RootLayout({
 }: {
 	children: React.ReactNode;
 }) {
-	const supabase = await createClient();
+	const session = await auth();
+	const user = session?.user;
 
-	const [
-		{
-			data: { user },
-		},
-		categories,
-	] = await Promise.all([supabase.auth.getUser(), getCategoriesFromDb()]);
-
-	const [profileResult, appResult] = await Promise.all([
-		user
-			? supabase.from("profiles").select("role").eq("id", user.id).single()
-			: Promise.resolve({ data: null }),
-		user
-			? supabase
-					.from("client_applications")
-					.select("*")
-					.eq("user_id", user.id)
-					.maybeSingle()
-			: Promise.resolve({ data: null }),
+	const [categories, initialApp] = await Promise.all([
+		getCategoriesFromDb(),
+		user?.id
+			? prisma.clientApplication.findFirst({ where: { userId: user.id } })
+			: Promise.resolve(null),
 	]);
 
-	const role = profileResult.data?.role ?? null;
-	const isAdmin = role === "admin" || role === "manager";
-	const initialApp = appResult.data;
+	const typedInitialApp: ClientApplication | null = initialApp
+		? {
+				...initialApp,
+				applicationData: initialApp.applicationData as ClientFormValues,
+			}
+		: null;
+
+	const isAdmin = user?.role === "ADMIN" || user?.role === "MANAGER";
 
 	return (
 		<html lang="ru" suppressHydrationWarning>
@@ -62,9 +58,12 @@ export default async function RootLayout({
 			</head>
 			<body>
 				<NextTopLoader color="#3b82f6" showSpinner={false} />
-				<RootProvider initialUser={user}>
+				<RootProvider session={session}>
 					{user ? (
-						<ApplicationInitializer userId={user.id} initialData={initialApp}>
+						<ApplicationInitializer
+							userId={user.id}
+							initialData={typedInitialApp}
+						>
 							<AppSidebar isAdmin={isAdmin} />
 							<SidebarInset className="flex flex-col min-h-screen">
 								<Header categories={categories} />

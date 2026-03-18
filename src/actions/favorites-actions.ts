@@ -1,57 +1,55 @@
 "use server";
 
+import type { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { auth } from "@/auth";
+import { prisma } from "@/lib/prisma";
 
 export async function toggleFavoriteAction(
 	equipmentId: string
 ): Promise<{ isFavorite: boolean; error?: string }> {
-	const supabase = await createClient();
-	const {
-		data: { user },
-	} = await supabase.auth.getUser();
-	if (!user) return { isFavorite: false, error: "Unauthorized" };
+	try {
+		const session = await auth();
+		if (!session?.user?.id) return { isFavorite: false, error: "Unauthorized" };
 
-	const { data: existing } = await supabase
-		.from("favorites")
-		.select("id")
-		.eq("user_id", user.id)
-		.eq("equipment_id", equipmentId)
-		.maybeSingle();
+		const existing = await prisma.favorite.findFirst({
+			where: { userId: session.user.id, equipmentId },
+		});
 
-	if (existing) {
-		await supabase.from("favorites").delete().eq("id", existing.id);
+		if (existing) {
+			await prisma.favorite.delete({ where: { id: existing.id } });
+			revalidatePath("/favorites");
+			return { isFavorite: false };
+		}
+
+		await prisma.favorite.create({
+			data: { userId: session.user.id, equipmentId },
+		});
+
 		revalidatePath("/favorites");
-		return { isFavorite: false };
+		return { isFavorite: true };
+	} catch (error: unknown) {
+		if (error instanceof Error)
+			return { isFavorite: false, error: error.message };
+		return { isFavorite: false, error: "Ошибка" };
 	}
-
-	const { error } = await supabase.from("favorites").insert({
-		user_id: user.id,
-		equipment_id: equipmentId,
-	});
-
-	if (error) return { isFavorite: false, error: error.message };
-	revalidatePath("/favorites");
-	return { isFavorite: true };
 }
 
 export async function checkFavoriteAction(
 	equipmentId: string
 ): Promise<boolean> {
-	const supabase = await createClient();
-	const {
-		data: { user },
-	} = await supabase.auth.getUser();
-	if (!user) return false;
+	try {
+		const session = await auth();
+		if (!session?.user?.id) return false;
 
-	const { data } = await supabase
-		.from("favorites")
-		.select("id")
-		.eq("user_id", user.id)
-		.eq("equipment_id", equipmentId)
-		.maybeSingle();
+		const existing = await prisma.favorite.findFirst({
+			where: { userId: session.user.id, equipmentId },
+		});
 
-	return !!data;
+		return !!existing;
+	} catch {
+		return false;
+	}
 }
 
 // ─── Equipment Sets ───────────────────────────────────────────────────────────
@@ -72,45 +70,36 @@ interface SaveSetInput {
 export async function saveSetAction(
 	data: SaveSetInput
 ): Promise<{ success: boolean; error?: string }> {
-	const supabase = await createClient();
-	const {
-		data: { user },
-	} = await supabase.auth.getUser();
+	try {
+		const session = await auth();
+		if (!session?.user?.id) return { success: false, error: "Unauthorized" };
 
-	if (!user) return { success: false, error: "Unauthorized" };
-
-	if (data.id) {
-		const { error } = await supabase
-			.from("equipment_sets")
-			.update({
-				name: data.name,
-				description: data.description,
-				items: data.items,
-				total_price_per_day: data.total_price_per_day,
-				updated_at: new Date().toISOString(),
-			})
-			.eq("id", data.id)
-			.eq("user_id", user.id);
-
-		if (error) {
-			console.error("[saveSetAction] update error:", error);
-			return { success: false, error: error.message };
+		if (data.id) {
+			await prisma.equipmentSet.updateMany({
+				where: { id: data.id, userId: session.user.id },
+				data: {
+					name: data.name,
+					description: data.description,
+					items: data.items as unknown as Prisma.InputJsonArray,
+					totalPricePerDay: data.total_price_per_day,
+				},
+			});
+		} else {
+			await prisma.equipmentSet.create({
+				data: {
+					userId: session.user.id,
+					name: data.name,
+					description: data.description,
+					items: data.items as unknown as Prisma.InputJsonArray,
+					totalPricePerDay: data.total_price_per_day,
+				},
+			});
 		}
-	} else {
-		const { error } = await supabase.from("equipment_sets").insert({
-			user_id: user.id,
-			name: data.name,
-			description: data.description,
-			items: data.items,
-			total_price_per_day: data.total_price_per_day,
-		});
 
-		if (error) {
-			console.error("[saveSetAction] insert error:", error);
-			return { success: false, error: error.message };
-		}
+		revalidatePath("/favorites");
+		return { success: true };
+	} catch (error: unknown) {
+		if (error instanceof Error) return { success: false, error: error.message };
+		return { success: false, error: "Ошибка сохранения сета" };
 	}
-
-	revalidatePath("/favorites");
-	return { success: true };
 }

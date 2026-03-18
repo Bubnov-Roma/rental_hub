@@ -58,14 +58,14 @@ export function BookingDetailClient({
 	const status = booking.status as BookingStatus;
 	const shortId = booking.id.split("-")[0]?.toUpperCase();
 	const hours = Math.ceil(
-		differenceInHours(new Date(booking.end_date), new Date(booking.start_date))
+		differenceInHours(new Date(booking.endDate), new Date(booking.startDate))
 	);
 
 	const canCancel = !["active", "completed", "cancelled"].includes(status);
 
 	// Определяем индекс текущего шага
 	const currentStepIndex = STATUS_STEPS.findIndex((s) => s.key === status);
-	const isCancelled = status === "cancelled";
+	const isCancelled = status === "CANCELLED";
 
 	return (
 		<div className="max-w-6xl mx-auto px-4 py-6 space-y-8 animate-in fade-in duration-500 pb-20">
@@ -152,7 +152,7 @@ export function BookingDetailClient({
 										<div className="relative space-y-6 before:absolute before:left-2.75 before:top-2 before:bottom-2 before:w-0.5 before:bg-foreground/5">
 											{STATUS_STEPS.map((step, idx) => {
 												const isDone =
-													idx < currentStepIndex || status === "completed";
+													idx < currentStepIndex || status === "COMPLETED";
 												const isCurrent = idx === currentStepIndex;
 												return (
 													<div
@@ -210,7 +210,7 @@ export function BookingDetailClient({
 									<span className="text-xs uppercase font-bold">Выдача</span>
 								</div>
 								<p className="text-lg font-black">
-									<ClientTime iso={booking.start_date} fmt="full-datetime" />
+									<ClientTime iso={booking.startDate} fmt="full-datetime" />
 								</p>
 							</div>
 							<div className="space-y-1">
@@ -219,7 +219,7 @@ export function BookingDetailClient({
 									<span className="text-xs uppercase font-bold">Возврат</span>
 								</div>
 								<p className="text-lg font-black">
-									<ClientTime iso={booking.end_date} fmt="full-datetime" />
+									<ClientTime iso={booking.endDate} fmt="full-datetime" />
 								</p>
 							</div>
 						</div>
@@ -316,7 +316,7 @@ export function BookingDetailClient({
 							<div className="flex gap-2">
 								<p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
 									Состав заказа: (
-									{formatPlural(booking.booking_items.length, "equipment")})
+									{formatPlural(booking.bookingItems.length, "equipment")})
 								</p>
 							</div>
 							<ChevronDown
@@ -337,7 +337,7 @@ export function BookingDetailClient({
 									transition={{ duration: 0.3, ease: "easeInOut" }}
 								>
 									<div className="border-t border-foreground/5">
-										{booking.booking_items.map((item) => {
+										{booking.bookingItems.map((item) => {
 											return (
 												<div
 													key={item.id}
@@ -350,11 +350,11 @@ export function BookingDetailClient({
 															{item.equipment?.title}
 														</p>
 														<p className="text-[10px] uppercase text-muted-foreground font-bold tracking-tighter">
-															{item.equipment?.category}
+															{item.equipment?.categoryId}
 														</p>
 													</div>
 													<p className="text-sm font-mono font-bold">
-														{item.price_at_booking.toLocaleString()} ₽
+														{item.priceAtBooking.toLocaleString()} ₽
 													</p>
 												</div>
 											);
@@ -363,7 +363,7 @@ export function BookingDetailClient({
 											<div className="flex justify-between items-center text-sm">
 												<span className="text-muted-foreground">Итого</span>
 												<span className="font-bold text-lg">
-													{booking.total_amount.toLocaleString()} ₽
+													{booking.totalAmount.toLocaleString()} ₽
 												</span>
 											</div>
 										</div>

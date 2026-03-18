@@ -25,7 +25,7 @@ const supabase = createClient();
 export const useApplicationStore = create<ApplicationState>()(
 	persist(
 		(set) => ({
-			status: "loading",
+			status: "LOADING",
 			applicationData: null,
 			formDraft: null,
 
@@ -37,7 +37,7 @@ export const useApplicationStore = create<ApplicationState>()(
 
 			submitSuccess: (data: ClientFormValues) =>
 				set({
-					status: "pending",
+					status: "PENDING",
 					applicationData: data,
 					formDraft: null,
 				}),

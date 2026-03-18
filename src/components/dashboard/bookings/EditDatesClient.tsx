@@ -36,8 +36,8 @@ export function EditDatesClient({ booking }: EditDatesClientProps) {
 
 	// Init period from existing booking dates
 	const [period, setPeriod] = useState<RentalPeriodValue>(() => {
-		const start = new Date(booking.start_date);
-		const end = new Date(booking.end_date);
+		const start = new Date(booking.startDate);
+		const end = new Date(booking.endDate);
 		return {
 			startDate: start,
 			endDate: end,
@@ -52,10 +52,10 @@ export function EditDatesClient({ booking }: EditDatesClientProps) {
 
 	const equipmentIds = useMemo(
 		() =>
-			booking.booking_items
+			booking.bookingItems
 				.map((i) => i.equipment?.id)
 				.filter(Boolean) as string[],
-		[booking.booking_items]
+		[booking.bookingItems]
 	);
 
 	const math = useMemo(() => {
@@ -73,9 +73,9 @@ export function EditDatesClient({ booking }: EditDatesClientProps) {
 			hours,
 			startFull: start,
 			endFull: end,
-			totalRental: booking.total_amount,
+			totalRental: booking.totalAmount,
 		};
-	}, [period, booking.total_amount]);
+	}, [period, booking.totalAmount]);
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: react-hooks/exhaustive-deps
 	useEffect(() => {
@@ -90,8 +90,8 @@ export function EditDatesClient({ booking }: EditDatesClientProps) {
 			try {
 				const r = await checkAvailabilityAction(
 					equipmentIds,
-					math.startFull.toISOString(),
-					math.endFull.toISOString(),
+					math.startFull,
+					math.endFull,
 					booking.id
 				);
 				if (!cancelled) setBusyIds(r.busyIds ?? []);
@@ -120,17 +120,17 @@ export function EditDatesClient({ booking }: EditDatesClientProps) {
 		if (!math.startFull || !math.endFull) return false;
 
 		const originalStartMs = Math.floor(
-			new Date(booking.start_date).getTime() / 60000
+			new Date(booking.startDate).getTime() / 60000
 		);
 		const originalEndMs = Math.floor(
-			new Date(booking.end_date).getTime() / 60000
+			new Date(booking.endDate).getTime() / 60000
 		);
 
 		const newStartMs = Math.floor(math.startFull.getTime() / 60000);
 		const newEndMs = Math.floor(math.endFull.getTime() / 60000);
 
 		return newStartMs !== originalStartMs || newEndMs !== originalEndMs;
-	}, [math.startFull, math.endFull, booking.start_date, booking.end_date]);
+	}, [math.startFull, math.endFull, booking.startDate, booking.endDate]);
 
 	const handleSave = async () => {
 		if (!canSave || !math.startFull || !math.endFull) return;
@@ -205,9 +205,9 @@ export function EditDatesClient({ booking }: EditDatesClientProps) {
 							Текущий период
 						</p>
 						<div className="flex items-center gap-3 text-sm font-medium text-muted-foreground/60">
-							<ClientTime iso={booking.start_date} fmt="datetime" />
+							<ClientTime iso={booking.startDate} fmt="datetime" />
 							<span className="opacity-30">→</span>
-							<ClientTime iso={booking.end_date} fmt="datetime" />
+							<ClientTime iso={booking.endDate} fmt="datetime" />
 						</div>
 
 						<Separator className="my-6 bg-muted-foreground/10" />
@@ -281,8 +281,8 @@ export function EditDatesClient({ booking }: EditDatesClientProps) {
 									Состав заказа
 								</p>
 								<p className="text-xs font-semibold mt-0.5">
-									{booking.booking_items.length} поз. на{" "}
-									{booking.total_amount.toLocaleString()} ₽
+									{booking.bookingItems.length} поз. на{" "}
+									{booking.totalAmount.toLocaleString()} ₽
 								</p>
 							</div>
 							<ChevronDown
@@ -303,7 +303,7 @@ export function EditDatesClient({ booking }: EditDatesClientProps) {
 									transition={{ duration: 0.3, ease: "easeInOut" }}
 								>
 									<div className="border-t border-foreground/5">
-										{booking.booking_items.map((item) => {
+										{booking.bookingItems.map((item) => {
 											const isBusy = item.equipment?.id
 												? busyIds.includes(item.equipment.id)
 												: false;
@@ -331,7 +331,7 @@ export function EditDatesClient({ booking }: EditDatesClientProps) {
 														)}
 													</div>
 													<span className="text-xs text-muted-foreground/40 font-mono shrink-0">
-														{item.price_at_booking.toLocaleString("ru")} ₽
+														{item.priceAtBooking.toLocaleString("ru")} ₽
 													</span>
 												</div>
 											);

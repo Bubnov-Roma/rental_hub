@@ -1,9 +1,9 @@
 "use client";
 
 import { LogOut } from "lucide-react";
+import { signOut } from "next-auth/react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { signOutAction } from "@/actions/auth";
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -30,26 +30,28 @@ export function SignOutButton({
 }: SignOutButtonProps) {
 	const [isPending, setIsPending] = useState(false);
 	const [isOpen, setIsOpen] = useState(false);
-	const { isDirty, markDirty, markClean } = useUnsavedChanges();
+	const { isDirty, markClean } = useUnsavedChanges(); // Убрали markDirty
 
 	const handleSignOut = async () => {
 		setIsOpen(false);
 		setIsPending(true);
+
 		try {
-			const result = await signOutAction();
-			if (result?.success) {
-				markDirty();
-				window.location.href = "/";
-			} else {
-				toast.error(result?.error || "Ошибка при выходе");
-				setIsPending(false);
-			}
-		} catch (error) {
-			console.error(error);
-			setIsPending(false);
+			await signOut({
+				redirect: false,
+				callbackUrl: "/",
+			});
+
 			markClean();
-			toast.success("Вы успешно разлогинились");
-		} finally {
+
+			// Показываем успешное сообщение
+			toast.success("Вы успешно вышли из аккаунта");
+
+			// Редирект на главную
+			window.location.href = "/";
+		} catch (error) {
+			console.error("Ошибка при выходе:", error);
+			toast.error("Не удалось выйти из аккаунта");
 			setIsPending(false);
 		}
 	};
@@ -80,13 +82,13 @@ export function SignOutButton({
 							"w-12 h-12 rounded-2xl flex items-center justify-center mb-2 mx-auto sm:mx-0",
 							isDirty
 								? "bg-orange-500/20 text-orange-400"
-								: "bg-red-600/60 text-white-400"
+								: "bg-red-500/20 text-red-400" // Исправил цвет
 						)}
 					>
 						<LogOut size={24} />
 					</div>
 					<AlertDialogTitle className="text-2xl font-bold">
-						{isDirty ? "Есть изменения" : "Уже уходите?"}
+						{isDirty ? "Есть несохраненные изменения" : "Уже уходите?"}
 					</AlertDialogTitle>
 					<AlertDialogDescription className="text-base leading-relaxed">
 						{isDirty
@@ -104,16 +106,14 @@ export function SignOutButton({
 
 					<AlertDialogAction asChild>
 						<Button
-							variant="ghost"
+							variant={isDirty ? "destructive" : "ghost"} // Используем стандартные варианты
 							onClick={(e) => {
 								e.preventDefault();
 								handleSignOut();
 							}}
 							className={cn(
 								"rounded-2xl px-6 h-10 transition-all",
-								isDirty
-									? "bg-red-500 hover:bg-orange-600 shadow-[0_0_20px_rgba(249,115,22,0.3)]"
-									: "hover:bg-red-600/60 hover:shadow-[0_0_-20px_rgba(239,8,8,3)] hover:text-white"
+								!isDirty && "hover:bg-red-500/20 hover:text-red-400"
 							)}
 							disabled={isPending}
 						>
