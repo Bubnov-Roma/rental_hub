@@ -21,7 +21,7 @@ import { cn } from "@/lib/utils";
 import type { EquipmentSet, FavoriteItem } from "./types";
 
 interface SetItem {
-	equipment_id: string;
+	equipmentId: string;
 	quantity: number;
 }
 
@@ -82,7 +82,7 @@ export function FavoriteSetEditor({
 		() =>
 			selectedItems.reduce((acc, item) => {
 				const eq = favorites.find(
-					(f) => f.equipment_id === item.equipment_id
+					(f) => f.equipmentId === item.equipmentId
 				)?.equipment;
 				return acc + (eq?.pricePerDay ?? 0) * item.quantity;
 			}, 0),
@@ -90,19 +90,19 @@ export function FavoriteSetEditor({
 	);
 
 	const getQty = (id: string) =>
-		selectedItems.find((i) => i.equipment_id === id)?.quantity ?? 0;
+		selectedItems.find((i) => i.equipmentId === id)?.quantity ?? 0;
 
 	const setQty = (id: string, qty: number) => {
 		if (qty <= 0) {
-			setSelectedItems((p) => p.filter((i) => i.equipment_id !== id));
+			setSelectedItems((p) => p.filter((i) => i.equipmentId !== id));
 		} else {
 			setSelectedItems((p) => {
-				const ex = p.find((i) => i.equipment_id === id);
+				const ex = p.find((i) => i.equipmentId === id);
 				if (ex)
 					return p.map((i) =>
-						i.equipment_id === id ? { ...i, quantity: qty } : i
+						i.equipmentId === id ? { ...i, quantity: qty } : i
 					);
-				return [...p, { equipment_id: id, quantity: qty }];
+				return [...p, { equipmentId: id, quantity: qty }];
 			});
 		}
 	};
@@ -118,12 +118,11 @@ export function FavoriteSetEditor({
 		}
 
 		saveMutation.mutate({
-			// Pass undefined for new sets so server knows to INSERT
 			id: existingSet?.id || "",
 			name: name.trim(),
 			description: description.trim(),
 			items: selectedItems,
-			total_price_per_day: totalPrice,
+			totalPricePerDay: totalPrice,
 		});
 	};
 
@@ -243,15 +242,15 @@ export function FavoriteSetEditor({
 								</div>
 							) : (
 								filteredFavs.map((fav) => {
-									const qty = getQty(fav.equipment_id);
+									const qty = getQty(fav.equipmentId);
 									const selected = qty > 0;
 									const imgUrl =
-										fav.equipment?.equipment_image_links?.[0]?.images?.url ??
+										fav.equipment?.equipmentImageLinks?.[0]?.image?.url ??
 										"/placeholder-equipment.png";
 
 									return (
 										<div
-											key={fav.equipment_id}
+											key={fav.equipmentId}
 											className={cn(
 												"flex items-center gap-3 p-2.5 rounded-xl transition-all",
 												selected
@@ -273,9 +272,7 @@ export function FavoriteSetEditor({
 											<button
 												type="button"
 												className="flex-1 min-w-0 text-left"
-												onClick={() =>
-													setQty(fav.equipment_id, qty > 0 ? 0 : 1)
-												}
+												onClick={() => setQty(fav.equipmentId, qty > 0 ? 0 : 1)}
 											>
 												<div className="flex items-center gap-1.5">
 													{selected && (
@@ -304,7 +301,7 @@ export function FavoriteSetEditor({
 												<div className="flex items-center gap-1 shrink-0">
 													<button
 														type="button"
-														onClick={() => setQty(fav.equipment_id, qty - 1)}
+														onClick={() => setQty(fav.equipmentId, qty - 1)}
 														className="w-7 h-7 flex items-center justify-center rounded-lg bg-foreground/10 hover:bg-foreground/20 transition-colors"
 													>
 														<Minus size={12} />
@@ -314,7 +311,7 @@ export function FavoriteSetEditor({
 													</span>
 													<button
 														type="button"
-														onClick={() => setQty(fav.equipment_id, qty + 1)}
+														onClick={() => setQty(fav.equipmentId, qty + 1)}
 														className="w-7 h-7 flex items-center justify-center rounded-lg bg-foreground/10 hover:bg-foreground/20 transition-colors"
 													>
 														<Plus size={12} />
@@ -323,7 +320,7 @@ export function FavoriteSetEditor({
 											) : (
 												<button
 													type="button"
-													onClick={() => setQty(fav.equipment_id, 1)}
+													onClick={() => setQty(fav.equipmentId, 1)}
 													className="w-7 h-7 flex items-center justify-center rounded-lg bg-foreground/5 hover:bg-primary/20 hover:text-primary transition-all text-muted-foreground shrink-0"
 												>
 													<Plus size={12} />

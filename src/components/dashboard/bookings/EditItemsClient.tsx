@@ -159,9 +159,9 @@ export function EditItemsClient({ booking }: EditItemsClientProps) {
 		try {
 			const result = await updateBookingItemsAction(booking.id, {
 				items: items.map((i) => ({
-					equipment_id: i.equipment.id,
+					equipmentId: i.equipment.id,
 					quantity: i.quantity,
-					price_per_unit: calculateItemPrice(
+					pricePerUnit: calculateItemPrice(
 						i.equipment as unknown as DbEquipment,
 						hours
 					),

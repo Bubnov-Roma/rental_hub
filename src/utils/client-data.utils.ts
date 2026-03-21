@@ -2,12 +2,7 @@
 
 import type { ClientFormValues, IndividualClient } from "@/schemas";
 
-// ── Type guard ────────────────────────────────────────────────────────────────
-// ClientFormValues = IndividualClient (schema is not a union anymore),
-// but the guard is kept so future types (legal, partner) can be added back
-// without touching every call-site.
-
-export function isIndividualClient(
+function isIndividualClient(
 	data: ClientFormValues | null
 ): data is IndividualClient {
 	return data?.clientType === "individual";

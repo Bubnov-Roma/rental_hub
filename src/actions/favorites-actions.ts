@@ -3,7 +3,13 @@
 import type { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
+import type { FavoriteItem } from "@/components/layouts/favorites/types";
+import type {
+	DbEquipmentWithImages,
+	GroupedEquipment,
+} from "@/core/domain/entities/Equipment";
 import { prisma } from "@/lib/prisma";
+import { groupEquipmentRows } from "@/utils/group-equipment";
 
 export async function toggleFavoriteAction(
 	equipmentId: string
@@ -55,7 +61,7 @@ export async function checkFavoriteAction(
 // ─── Equipment Sets ───────────────────────────────────────────────────────────
 
 interface SetItem {
-	equipment_id: string;
+	equipmentId: string;
 	quantity: number;
 }
 
@@ -64,7 +70,7 @@ interface SaveSetInput {
 	name: string;
 	description: string;
 	items: SetItem[];
-	total_price_per_day: number;
+	totalPricePerDay: number;
 }
 
 export async function saveSetAction(
@@ -81,7 +87,7 @@ export async function saveSetAction(
 					name: data.name,
 					description: data.description,
 					items: data.items as unknown as Prisma.InputJsonArray,
-					totalPricePerDay: data.total_price_per_day,
+					totalPricePerDay: data.totalPricePerDay,
 				},
 			});
 		} else {
@@ -91,7 +97,7 @@ export async function saveSetAction(
 					name: data.name,
 					description: data.description,
 					items: data.items as unknown as Prisma.InputJsonArray,
-					totalPricePerDay: data.total_price_per_day,
+					totalPricePerDay: data.totalPricePerDay,
 				},
 			});
 		}
@@ -102,4 +108,98 @@ export async function saveSetAction(
 		if (error instanceof Error) return { success: false, error: error.message };
 		return { success: false, error: "Ошибка сохранения сета" };
 	}
+}
+
+// ── Для хука use-favorite.ts ──
+export async function getUserFavoriteIdsAction(): Promise<string[]> {
+	try {
+		const session = await auth();
+		if (!session?.user?.id) return [];
+
+		const favs = await prisma.favorite.findMany({
+			where: { userId: session.user.id },
+			select: { equipmentId: true },
+		});
+		return favs.map((f) => f.equipmentId);
+	} catch {
+		return [];
+	}
+}
+
+export async function removeFavoriteAction(favId: string): Promise<void> {
+	const session = await auth();
+	if (!session?.user?.id) throw new Error("Unauthorized");
+
+	await prisma.favorite.delete({
+		where: { id: favId },
+	});
+}
+
+export async function fetchFavoritesAction() {
+	const session = await auth();
+	if (!session?.user?.id) return [];
+
+	const data = await prisma.favorite.findMany({
+		where: { userId: session.user.id },
+		orderBy: { createdAt: "desc" },
+		include: {
+			equipment: {
+				include: { equipmentImageLinks: { include: { image: true } } },
+			},
+		},
+	});
+	return data as unknown as FavoriteItem[];
+}
+
+export async function fetchSetsAction() {
+	const session = await auth();
+	if (!session?.user?.id) return [];
+
+	const sets = await prisma.equipmentSet.findMany({
+		where: { userId: session.user.id },
+		orderBy: { createdAt: "desc" },
+	});
+
+	return sets.map((set) => ({
+		id: set.id,
+		name: set.name,
+		description: set.description,
+		items: set.items as unknown as Array<{
+			equipmentId: string;
+			quantity: number;
+		}>,
+		totalPricePerDay: set.totalPricePerDay,
+		createdAt: set.createdAt,
+		updatedAt: set.updatedAt,
+	}));
+}
+
+export async function deleteSetAction(setId: string): Promise<void> {
+	const session = await auth();
+	if (!session?.user?.id) throw new Error("Unauthorized");
+
+	await prisma.equipmentSet.delete({
+		where: { id: setId },
+	});
+}
+
+// ── Группировка для корректных счетчиков ──
+export async function fetchGroupedEquipmentMapAction(): Promise<
+	[string, GroupedEquipment][]
+> {
+	const data = await prisma.equipment.findMany({
+		include: { equipmentImageLinks: { include: { image: true } } },
+	});
+
+	const grouped = groupEquipmentRows(
+		data as unknown as DbEquipmentWithImages[]
+	);
+	const entries: [string, GroupedEquipment][] = [];
+
+	for (const group of grouped) {
+		for (const unitId of group.allUnitIds) {
+			entries.push([unitId, group]);
+		}
+	}
+	return entries;
 }

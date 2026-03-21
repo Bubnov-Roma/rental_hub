@@ -1,6 +1,11 @@
 "use server";
 
-import { ApplicationStatus, type Prisma, type Role } from "@prisma/client";
+import {
+	ApplicationStatus,
+	DiscountType,
+	type Prisma,
+	type Role,
+} from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
@@ -44,7 +49,6 @@ export async function submitClientApplicationAction(
 		if (!session?.user?.id)
 			return { success: false, message: "Не авторизован" };
 
-		// Убеждаемся, что профиль существует
 		await prisma.user.upsert({
 			where: { id: session.user.id },
 			update: {},
@@ -310,4 +314,74 @@ export async function getUserAdminNotesAction(userId: string) {
 		orderBy: { createdAt: "desc" },
 	});
 	return notes;
+}
+
+export async function updateApplicationStatusAction(
+	applicationId: string,
+	status: string,
+	rejectionReason?: string
+): Promise<{ success: boolean; error?: string }> {
+	try {
+		const session = await auth();
+		if (session?.user?.role !== "ADMIN" && session?.user?.role !== "MANAGER") {
+			return { success: false, error: "Нет прав доступа" };
+		}
+
+		await prisma.clientApplication.update({
+			where: { id: applicationId },
+			data: {
+				status: status as ApplicationStatus,
+				rejectionReason: status === "REJECTED" ? rejectionReason || null : null,
+			},
+		});
+
+		revalidatePath("/admin/users");
+		return { success: true };
+	} catch (error: unknown) {
+		if (error instanceof Error) return { success: false, error: error.message };
+		return { success: false, error: "Ошибка обновления статуса" };
+	}
+}
+
+export async function createUserDiscountAction(data: {
+	userId: string;
+	type: "percent" | "fixed" | "promo";
+	value: number;
+	promoCode?: string;
+	description?: string;
+}): Promise<{ success: boolean; error?: string }> {
+	try {
+		const session = await auth();
+		if (session?.user?.role !== "ADMIN" && session?.user?.role !== "MANAGER") {
+			return { success: false, error: "Нет прав" };
+		}
+
+		const typeMap: Record<string, DiscountType> = {
+			percent: DiscountType.PERCENT,
+			fixed: DiscountType.FIXED,
+			promo: DiscountType.PROMO,
+		};
+
+		const discountType = typeMap[data.type];
+		if (!discountType) {
+			return { success: false, error: "Некорректный тип скидки" };
+		}
+
+		await prisma.userDiscount.create({
+			data: {
+				userId: data.userId,
+				type: discountType,
+				value: data.value,
+				promoCode: data.type === "promo" ? (data.promoCode ?? null) : null,
+				description: data.description ?? null,
+				createdBy: session.user.id,
+			},
+		});
+
+		revalidatePath("/admin/users");
+		return { success: true };
+	} catch (error: unknown) {
+		if (error instanceof Error) return { success: false, error: error.message };
+		return { success: false, error: "Ошибка при добавлении скидки" };
+	}
 }

@@ -1,11 +1,7 @@
 import { Suspense } from "react";
+import { auth } from "@/auth";
 import ClientFavoritesPage from "@/components/layouts/favorites";
-import type {
-	EquipmentSet,
-	FavoriteItem,
-} from "@/components/layouts/favorites/types";
 import UnauthenticatedFavorites from "@/components/layouts/favorites/UnauthFavorites";
-import { createClient } from "@/lib/supabase/server";
 
 // Skeleton shown during Suspense / while streaming
 function FavoritesPageSkeleton() {
@@ -16,7 +12,6 @@ function FavoritesPageSkeleton() {
 			<div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
 				{Array.from({ length: 8 }).map((_, i) => (
 					<div
-						// biome-ignore lint/suspicious/noArrayIndexKey: skeleton
 						key={i}
 						className="rounded-2xl border border-foreground/5 overflow-hidden"
 					>
@@ -34,38 +29,9 @@ function FavoritesPageSkeleton() {
 }
 
 async function FavoritesContent() {
-	const supabase = await createClient();
-
-	const {
-		data: { user },
-	} = await supabase.auth.getUser();
-
-	if (!user) {
-		return <UnauthenticatedFavorites />;
-	}
-
-	const [favResult, setsResult] = await Promise.all([
-		supabase
-			.from("favorites")
-			.select(
-				`id, equipment_id, equipment (*, equipment_image_links(images(id, url)))`
-			)
-			.order("created_at", { ascending: false }),
-		supabase
-			.from("equipment_sets")
-			.select("*")
-			.order("created_at", { ascending: false }),
-	]);
-
-	const initialFavorites = (favResult.data ?? []) as unknown as FavoriteItem[];
-	const initialSets = (setsResult.data ?? []) as EquipmentSet[];
-
-	return (
-		<ClientFavoritesPage
-			initialFavorites={initialFavorites}
-			initialSets={initialSets}
-		/>
-	);
+	const session = await auth();
+	if (!session?.user?.id) return <UnauthenticatedFavorites />;
+	return <ClientFavoritesPage />;
 }
 
 export default function FavoritesPage() {

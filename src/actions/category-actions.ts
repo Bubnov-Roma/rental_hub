@@ -17,36 +17,40 @@ import { slugify } from "@/utils";
 // ─── Read ─────────────────────────────────────────────────────────────────────
 
 export const getCategoriesFromDb = cache(async (): Promise<DbCategory[]> => {
-	const data = await prisma.category.findMany({
-		orderBy: { sortOrder: "asc" },
-		include: {
-			subcategories: {
-				orderBy: { sortOrder: "asc" },
+	try {
+		const data = await prisma.category.findMany({
+			orderBy: { sortOrder: "asc" },
+			include: {
+				subcategories: {
+					orderBy: { sortOrder: "asc" },
+				},
 			},
-		},
-	});
+		});
 
-	if (!data) return [];
+		if (!data) return [];
 
-	return data.map((cat) => ({
-		id: cat.id,
-		name: cat.name,
-		slug: cat.slug,
-		iconName: cat.iconName,
-		imageUrl: cat.imageUrl ?? undefined,
-		isModular: cat.isModular,
-		adminNotes: cat.adminNotes ?? undefined,
-		subcategories: cat.subcategories.map((sub) => ({
-			id: sub.id,
-			name: sub.name,
-			slug: sub.slug,
-			adminNotes: sub.adminNotes ?? undefined,
-			imageUrl: sub.imageUrl ?? undefined,
-			sortOrder: sub.sortOrder,
-		})),
-	}));
+		return data.map((cat) => ({
+			id: cat.id,
+			name: cat.name,
+			slug: cat.slug,
+			iconName: cat.iconName,
+			imageUrl: cat.imageUrl ?? undefined,
+			isModular: cat.isModular,
+			adminNotes: cat.adminNotes ?? undefined,
+			subcategories: cat.subcategories.map((sub) => ({
+				id: sub.id,
+				name: sub.name,
+				slug: sub.slug,
+				adminNotes: sub.adminNotes ?? undefined,
+				imageUrl: sub.imageUrl ?? undefined,
+				sortOrder: sub.sortOrder,
+			})),
+		}));
+	} catch {
+		console.warn("[Prisma] БД недоступна, возвращаем пустые категории.");
+		return [];
+	}
 });
-
 // ─── History helper ───────────────────────────────────────────────────────────
 
 async function logHistory(
@@ -102,7 +106,6 @@ export async function createCategoryAction(data: {
 				name: data.name.trim(),
 				slug,
 				iconName: data.iconName ?? "Package",
-				// Конвертируем опциональные поля в null
 				imageUrl: data.imageUrl ?? null,
 				isModular: data.isModular ?? false,
 				adminNotes: data.adminNotes ?? null,

@@ -11,10 +11,11 @@ interface UserProfile {
 	nickname?: string | undefined;
 	companyName?: string | undefined;
 	phone?: string | undefined;
+	extraPhone?: string | undefined;
 }
 
 export function useAuth() {
-	const { data: session, status } = useSession();
+	const { data: session, status, update } = useSession();
 	const isLoading = status === "loading";
 	const user = session?.user;
 
@@ -28,6 +29,7 @@ export function useAuth() {
 				nickname: user.nickname ?? "",
 				companyName: user.companyName ?? "",
 				phone: user.phone ?? "",
+				extraPhone: user.extraPhone ?? "",
 			}
 		: null;
 
@@ -44,11 +46,13 @@ export function useAuth() {
 						nickname: user.nickname,
 						company_name: user.companyName,
 						phone: user.phone,
+						extra_phone: user.extraPhone,
 					},
 				}
 			: null,
 		profile,
 		isLoading,
 		isAuthenticated: status === "authenticated",
+		refreshProfile: update,
 	};
 }

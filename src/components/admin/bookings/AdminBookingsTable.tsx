@@ -232,7 +232,6 @@ function BookingDetailPanel({
 					</p>
 					<div className="space-y-1">
 						{booking.equipmentTitles.map((title, i) => (
-							// biome-ignore lint/suspicious/noArrayIndexKey: static list
 							<p key={i} className="text-sm text-foreground/80 truncate">
 								{title}
 							</p>

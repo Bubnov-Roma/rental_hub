@@ -7,7 +7,6 @@ import { toast } from "sonner";
 import { AuthCard } from "@/components/auth/AuthCard";
 import { ValidatedInput } from "@/components/forms";
 import { Button } from "@/components/ui/button";
-import { createClient } from "@/lib/supabase/client";
 import { updatePasswordSchema } from "@/schemas";
 import { getErrorMessage } from "@/utils";
 
@@ -23,9 +22,8 @@ export function UpdatePasswordForm() {
 	const [isLoading, setIsLoading] = useState(false);
 
 	const router = useRouter();
-	const supabase = createClient();
 
-	const handleUpdatePassword = async (e: React.SubmitEvent) => {
+	const handleUpdatePassword = async (e: React.FormEvent) => {
 		e.preventDefault();
 
 		const result = updatePasswordSchema.safeParse({
@@ -46,14 +44,21 @@ export function UpdatePasswordForm() {
 		setIsLoading(true);
 
 		try {
-			const { error } = await supabase.auth.updateUser({
-				password: password,
+			const res = await fetch("/api/user/update-password", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ password }),
 			});
 
-			if (error) throw error;
+			const data = await res.json();
+
+			if (!res.ok) {
+				throw new Error(data.error || "Ошибка обновления пароля");
+			}
 
 			toast.success("Пароль успешно обновлен");
 			router.push("/auth?view=success&redirect=/dashboard");
+			router.refresh();
 		} catch (error) {
 			toast.error(getErrorMessage(error) || "Ошибка обновления пароля");
 		} finally {
@@ -103,7 +108,6 @@ export function UpdatePasswordForm() {
 					value={confirmPassword}
 					onChange={(e) => {
 						setConfirmPassword(e.target.value);
-						// Очищаем ошибку при вводе
 						if (errors.confirmPassword)
 							setErrors((prev) => ({ ...prev, confirmPassword: "" }));
 					}}

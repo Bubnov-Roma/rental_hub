@@ -1,11 +1,13 @@
 "use client";
 
+import type { EquipmentStatus } from "@prisma/client";
 import Papa from "papaparse";
 import type React from "react";
 import { useState } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { importEquipmentCSVAction } from "@/actions/upload-actions";
+import { slugify } from "@/utils";
 
-interface RawCSVRow {
+export interface RawCSVRow {
 	Название: string;
 	Категория: string;
 	Описание?: string;
@@ -15,7 +17,6 @@ interface RawCSVRow {
 	Статус: string;
 }
 
-// 2. Маппинг категорий (из русского в CSV в ID базы данных)
 const CATEGORY_MAP: Record<string, string> = {
 	Камеры: "cameras",
 	Объективы: "lenses",
@@ -26,7 +27,6 @@ const CATEGORY_MAP: Record<string, string> = {
 
 export function CSVUploader() {
 	const [isUploading, setIsUploading] = useState(false);
-	const supabase = createClient();
 
 	const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const file = e.target.files?.[0];
@@ -41,35 +41,40 @@ export function CSVUploader() {
 			complete: async (results): Promise<void> => {
 				const { data } = results;
 
-				// Превращаем данные из CSV в формат таблицы equipment
 				const formattedData = (data as RawCSVRow[]).map((row) => {
 					const replacementValue = parseFloat(row["Стоимость покупки"]) || 0;
-					// Логика цен: 3% от стоимости за сутки, 60% от суток за 4ч, 80% за 8ч
 					const dailyPrice = Math.round(replacementValue * 0.03);
+					let status: EquipmentStatus = "AVAILABLE";
+					if (row.Статус === "Доступен") {
+						status = "AVAILABLE";
+					} else if (row.Статус === "Занят" || row.Статус === "Арендован") {
+						status = "RENTED";
+					} else if (row.Статус === "Резерв") {
+						status = "RESERVED";
+					}
 
 					return {
 						title: row.Название,
-						category: CATEGORY_MAP[row.Категория || "Прочее"] || "other",
-						description: row.Описание || "",
-						inventory_number: row["Инв. номер"],
+						slug: slugify(row.Название),
+						categoryId: CATEGORY_MAP[row.Категория || "Прочее"] || "other",
+						description: row.Описание || null,
+						inventoryNumber: row["Инв. номер"] || null,
 						deposit: parseFloat(row["Сумма депозита"]) || 0,
-						replacement_value: replacementValue,
-						price_per_day: dailyPrice,
-						price_4h: Math.round(dailyPrice * 0.6),
-						price_8h: Math.round(dailyPrice * 0.8),
-						status: row.Статус === "Доступен" ? "available" : "reserved",
-						is_available: true,
+						replacementValue: replacementValue,
+						pricePerDay: dailyPrice,
+						price4h: Math.round(dailyPrice * 0.6),
+						price8h: Math.round(dailyPrice * 0.8),
+						status: status,
+						isAvailable: row.Статус === "Доступен", // true если доступен
 					};
 				});
 
-				const { error } = await supabase
-					.from("equipment")
-					.upsert(formattedData, { onConflict: "inventory_number" });
+				const result = await importEquipmentCSVAction(formattedData);
 
-				if (error) {
-					alert(`Ошибка: ${error.message}`);
+				if (!result.success) {
+					alert(`Ошибка: ${result.error}`);
 				} else {
-					alert(`Загружено ${formattedData.length} позиций!`);
+					alert(`Загружено ${result.count} позиций!`);
 				}
 				setIsUploading(false);
 			},

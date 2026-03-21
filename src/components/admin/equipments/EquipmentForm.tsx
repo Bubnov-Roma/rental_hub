@@ -5,6 +5,8 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { createEquipmentAction } from "@/actions/equipment-actions";
+import { linkImageToEquipmentAction } from "@/actions/upload-actions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -17,7 +19,6 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { createClient } from "@/lib/supabase/client";
 import { getErrorMessage } from "@/utils";
 
 export function EquipmentForm({ categories }: { categories: string[] }) {
@@ -25,7 +26,6 @@ export function EquipmentForm({ categories }: { categories: string[] }) {
 	const [loading, setLoading] = useState(false);
 	const [files, setFiles] = useState<File[]>([]);
 	const [previews, setPreviews] = useState<string[]>([]);
-	const supabase = createClient();
 
 	// Generating previews when selecting files
 	useEffect(() => {
@@ -46,43 +46,45 @@ export function EquipmentForm({ categories }: { categories: string[] }) {
 		setFiles((prev) => prev.filter((_, i) => i !== index));
 	};
 
-	async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+	async function onSubmit(e: React.SubmitEvent<HTMLFormElement>) {
 		e.preventDefault();
 		setLoading(true);
 
 		const formData = new FormData(e.currentTarget);
-		const title = formData.get("title") as string;
-		const description = formData.get("description") as string;
-		const category = formData.get("category") as string;
-		const price = parseFloat(formData.get("price") as string);
 
 		try {
 			// 1. Create an entry
-			const { data: equipment, error: eqError } = await supabase
-				.from("equipment")
-				.insert({ title, description, category, price_per_day: price })
-				.select()
-				.single();
+			const result = await createEquipmentAction({
+				title: formData.get("title") as string,
+				description: formData.get("description") as string,
+				categoryId: formData.get("categoryId") as string,
+				pricePerDay: parseFloat(formData.get("price") as string),
+				status: "AVAILABLE",
+				isAvailable: true,
+				ownershipType: "INTERNAL",
+			});
 
-			if (eqError) throw eqError;
+			if (!result.success || !result.id)
+				throw new Error(result.error || "Ошибка создания");
 
 			// 2. Load image
 			for (const file of files) {
-				const filePath = `${equipment.id}/${Date.now()}-${file.name}`;
-				const { error: uploadError } = await supabase.storage
-					.from("equipment-images")
-					.upload(filePath, file);
+				const fileData = new FormData();
+				fileData.append("file", file);
+				fileData.append("folder", "equipment");
 
-				if (uploadError) throw uploadError;
-
-				const {
-					data: { publicUrl },
-				} = supabase.storage.from("equipment-images").getPublicUrl(filePath);
-
-				await supabase.from("images").insert({
-					equipment_id: equipment.id,
-					url: publicUrl,
+				const res = await fetch("/api/upload", {
+					method: "POST",
+					body: fileData,
 				});
+				if (!res.ok) {
+					toast.error("Ошибка загрузки изображения");
+					throw new Error("Ошибка загрузки изображения");
+				}
+
+				const { url } = await res.json();
+				// 3. Связываем URL картинки с оборудованием в БД
+				await linkImageToEquipmentAction(result.id, url);
 			}
 
 			toast.success("Готово! Оборудование добавлено.");

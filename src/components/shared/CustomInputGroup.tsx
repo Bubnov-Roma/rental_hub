@@ -161,11 +161,11 @@ const InputGroupField = React.forwardRef<HTMLDivElement, InputGroupFieldProps>(
 
 InputGroupField.displayName = "InputGroupField";
 
+export type { CornerRounding, InputGroupOrientation, InputPosition };
 export {
 	InputGroup,
-	InputGroupItem,
-	InputGroupWrapper,
 	InputGroupButton,
 	InputGroupField,
+	InputGroupItem,
+	InputGroupWrapper,
 };
-export type { InputGroupOrientation, InputPosition, CornerRounding };

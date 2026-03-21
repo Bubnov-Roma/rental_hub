@@ -5,10 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useEffect } from "react";
 import { SuccessView } from "@/components/auth/forms/SuccessView";
-import { UpdatePasswordForm } from "@/components/auth/forms/UpdatePasswordForm";
-import { ForgotPasswordForm } from "./forms/ForgotPasswordForm";
 import { LoginForm } from "./forms/LoginForm";
-import { OtpForm } from "./forms/OtpForm";
 import { UniversalAuthForm } from "./forms/UniversalAuthForm";
 
 export function AuthFormController({ view }: { view: string }) {
@@ -18,6 +15,7 @@ export function AuthFormController({ view }: { view: string }) {
 	const searchParams = useSearchParams();
 
 	useEffect(() => {
+		console.log("user:", user, "view:", view);
 		if (user && view !== "update-password") {
 			const redirectUrl = searchParams.get("redirect") || "/dashboard";
 			router.push(redirectUrl);
@@ -34,16 +32,12 @@ export function AuthFormController({ view }: { view: string }) {
 				transition={{ duration: 0.3, ease: "easeInOut" }}
 				className="w-full"
 			>
-				{/* Вход с паролем (по умолчанию) */}
+				{/* Вход с паролем */}
 				{view === "login" && <LoginForm />}
-				{/* Ввод почты для сброса пароля */}
-				{view === "forgot" && <ForgotPasswordForm />}
-				{/* Форма смены пароля (попадаем сюда по ссылке из почты) */}
-				{view === "update-password" && <UpdatePasswordForm />}
-				{/* Вход по коду (OTP) - ввод emailе */}
-				{(view === "otp-login" || view === "register") && <UniversalAuthForm />}
-				{/* Вход по коду: ввод цифр */}
-				{view === "otp" && <OtpForm />}
+				{/* Форма смены пароля */}
+				{/* {view === "update-password" && <UpdatePasswordForm />} */}
+				{/* Вход по MagicLink */}
+				{view === "register" && <UniversalAuthForm />}
 				{/* Экран успеха (опционально) */}
 				{view === "success" && <SuccessView />}
 			</motion.div>

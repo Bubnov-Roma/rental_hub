@@ -2,23 +2,19 @@
 
 import { Mail } from "lucide-react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 import { useState } from "react";
+import { toast } from "sonner";
 import { AuthCard } from "@/components/auth/AuthCard";
 import { ValidatedInput } from "@/components/forms";
 import { Button } from "@/components/ui";
-import { useOtpAuth } from "@/hooks/use-otp-auth";
-import { createClient } from "@/lib/supabase/client";
 import { emailSchema } from "@/schemas";
-import { getURL } from "@/utils";
 
 export function UniversalAuthForm() {
 	const [email, setEmail] = useState("");
 	const [error, setError] = useState("");
 	const [isLoading, setIsLoading] = useState(false);
-	const { sendOtpCode, isSendingCode } = useOtpAuth();
-	const supabase = createClient();
-	const router = useRouter();
+	const [isEmailSent, setIsEmailSent] = useState(false);
 
 	const handleSubmit = async (e: React.SubmitEvent) => {
 		e.preventDefault();
@@ -28,47 +24,61 @@ export function UniversalAuthForm() {
 			return;
 		}
 		setError("");
-		const success = await sendOtpCode(email, "email");
-		if (success) {
-			router.push(`/auth?view=otp&email=${encodeURIComponent(email)}`);
+		setIsLoading(true);
+		const res = await signIn("nodemailer", { email, redirect: false });
+		setIsLoading(false);
+
+		if (res?.error) {
+			toast.error("Ошибка при отправке ссылки");
+		} else {
+			setIsEmailSent(true);
+			toast.success("Ссылка отправлена!");
 		}
 	};
 
-	const handleGoogleLogin = async () => {
-		setIsLoading(true);
-		await supabase.auth.signInWithOAuth({
-			provider: "google",
-			options: { redirectTo: `${getURL()}auth/callback` },
-		});
+	const handleGoogleLogin = () => {
+		signIn("google", { callbackUrl: "/dashboard" });
 	};
+
+	if (isEmailSent) {
+		return (
+			<AuthCard
+				title="Проверьте почту"
+				description={`Мы отправили ссылку для входа на ${email}`}
+			>
+				<p className="text-center text-sm text-muted-foreground py-8">
+					Нажмите на ссылку в письме, чтобы безопасно войти в аккаунт.
+				</p>
+			</AuthCard>
+		);
+	}
 
 	return (
 		<AuthCard
 			title="Войти"
-			description="Если у вас ещё нет аккаунта он будет создан автоматически"
+			description="Безопасный вход по ссылке на почту"
 			footerLink={{
-				text: "Есть постоянный пароль?",
+				text: "Есть пароль?",
 				label: "Войти по паролю",
 				href: "/auth?view=login",
 			}}
-			isLoading={isSendingCode || isLoading}
+			isLoading={isLoading}
 		>
 			<Button
 				variant="social"
 				className="w-full h-12 gap-2 mb-4"
 				onClick={handleGoogleLogin}
 			>
-				Вход с
 				<Image
 					src="https://www.svgrepo.com/show/475656/google-color.svg"
 					width={18}
 					height={18}
 					alt="Google"
 				/>
-				Google
+				Вход с Google
 			</Button>
 
-			<div className="relative flex justify-center text-xs uppercase">
+			<div className="relative flex justify-center text-xs uppercase mb-4">
 				<span className="bg-muted-foreground/6 rounded-xl px-2 text-muted-foreground">
 					Или
 				</span>
@@ -82,7 +92,7 @@ export function UniversalAuthForm() {
 					value={email}
 					onChange={(e) => {
 						setEmail(e.target.value);
-						if (error) setError("");
+						setError("");
 					}}
 					error={error}
 					icon={<Mail className="h-4 w-4" />}
@@ -90,10 +100,10 @@ export function UniversalAuthForm() {
 				/>
 				<Button
 					type="submit"
-					disabled={!email || isSendingCode}
-					className="w-full h-12 font-bold text-base shadow-xl shadow-primary/20 hover:scale-[1.02] transition-transform"
+					disabled={!email || isLoading}
+					className="w-full h-12 font-bold shadow-xl shadow-primary/20"
 				>
-					{isSendingCode ? "Отправка..." : "Продолжить"}
+					{isLoading ? "Отправка..." : "Получить ссылку"}
 				</Button>
 			</form>
 		</AuthCard>

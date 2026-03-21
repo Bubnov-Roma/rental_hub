@@ -1,15 +1,3 @@
-/**
- * Equipment сущности и типы
- *
- * Иерархия:
- * DbEquipmentBase — базовые поля из БД
- * ├─ DbEquipment — для простых операций без relations
- * └─ DbEquipmentWithImages — для edit-режима с equipmentImageLinks relation
- *
- * RawEquipmentRow — raw Prisma result (с flattened relations)
- * GroupedEquipment — для каталога (с агрегацией)
- */
-
 export type EquipmentStatus =
 	| "AVAILABLE"
 	| "RENTED"
@@ -79,10 +67,6 @@ export interface EquipmentImageLinkWithImage {
 	orderIndex: number;
 }
 
-/**
- * RawEquipmentRow — результат findMany из Prisma с include equipmentImageLinks
- * Структура совпадает с DbEquipmentWithImages
- */
 export type RawEquipmentRow = DbEquipmentWithImages;
 
 export interface GroupedEquipment
@@ -100,11 +84,6 @@ export interface GroupedEquipment
 	equipmentImageLinks: EquipmentImageLinkWithImage[];
 }
 
-// ─── DB-driven category types ─────────────────────────────────────────────────
-// Категории и подкатегории приходят из базы данных.
-// Администратор/менеджер добавляет их через admin-панель → они автоматически появляются в меню навигации без деплоя.
-//
-
 export type DbSubcategory = {
 	id: string;
 	name: string;
@@ -120,7 +99,20 @@ export type DbCategory = {
 	adminNotes?: string | undefined;
 	isModular: boolean;
 	imageUrl?: string | undefined;
-	/** Имя иконки из Phosphor Icons (строка), маппится в компоненте */
 	iconName: string;
 	subcategories: DbSubcategory[];
 };
+export interface DbRawCSVRow {
+	title: string;
+	slug: string;
+	categoryId: string;
+	description: string | null;
+	inventoryNumber: string | null;
+	deposit: number;
+	replacementValue: number;
+	pricePerDay: number;
+	price4h: number;
+	price8h: number;
+	status: EquipmentStatus;
+	isAvailable: boolean;
+}

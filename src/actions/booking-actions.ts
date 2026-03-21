@@ -204,7 +204,7 @@ export async function checkAvailabilityAction(
 export async function updateBookingItemsAction(
 	bookingId: string,
 	payload: {
-		items: { equipment_id: string; quantity: number; price_per_unit: number }[];
+		items: { equipmentId: string; quantity: number; pricePerUnit: number }[];
 		totalAmount: number;
 		totalReplacementValue: number;
 	}
@@ -240,8 +240,8 @@ export async function updateBookingItemsAction(
 
 		const newRows = payload.items.flatMap((item) =>
 			Array.from({ length: item.quantity }, () => ({
-				equipmentId: item.equipment_id,
-				priceAtBooking: item.price_per_unit,
+				equipmentId: item.equipmentId,
+				priceAtBooking: item.pricePerUnit,
 			}))
 		);
 

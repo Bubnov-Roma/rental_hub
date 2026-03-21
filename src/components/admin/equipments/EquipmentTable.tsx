@@ -480,7 +480,6 @@ export default function EquipmentTable() {
 					<TableBody>
 						{isLoading
 							? Array.from({ length: SKELETON_COUNT }).map((_, i) => (
-									// biome-ignore lint/suspicious/noArrayIndexKey: skeleton
 									<TableRowSkeleton key={i} />
 								))
 							: items.map((item) => {

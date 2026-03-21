@@ -2,11 +2,10 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { toggleFavoriteAction } from "@/actions/favorites-actions";
-import { createClient } from "@/lib/supabase/client";
-
-// ─── Global favorites cache ───────────────────────────────────────────────────
-// Один fetch на всю страницу. Все EquipmentCard подписываются на один Set.
+import {
+	getUserFavoriteIdsAction,
+	toggleFavoriteAction,
+} from "@/actions/favorites-actions";
 
 let favoritesCache: Set<string> | null = null;
 let fetchPromise: Promise<Set<string>> | null = null;
@@ -17,29 +16,12 @@ function notifyListeners() {
 }
 
 async function loadFavorites(): Promise<Set<string>> {
-	// Уже загружено
 	if (favoritesCache !== null) return favoritesCache;
-	// Уже идёт запрос — возвращаем тот же Promise (дедупликация)
 	if (fetchPromise) return fetchPromise;
 
 	fetchPromise = (async () => {
-		const supabase = createClient();
-		const {
-			data: { user },
-		} = await supabase.auth.getUser();
-
-		if (!user) {
-			favoritesCache = new Set();
-			fetchPromise = null;
-			return favoritesCache;
-		}
-
-		const { data } = await supabase
-			.from("favorites")
-			.select("equipment_id")
-			.eq("user_id", user.id);
-
-		favoritesCache = new Set((data ?? []).map((r) => r.equipment_id as string));
+		const ids = await getUserFavoriteIdsAction();
+		favoritesCache = new Set(ids);
 		fetchPromise = null;
 		return favoritesCache;
 	})();
@@ -94,7 +76,7 @@ export function useFavorite(equipmentId: string, initialState = false) {
 			listeners.delete(refresh);
 			subscribedRef.current = false;
 		};
-	}, []); // нет deps — эффект только при монтировании/размонтировании
+	}, []);
 
 	const isFavorite =
 		optimisticOverride.current !== null

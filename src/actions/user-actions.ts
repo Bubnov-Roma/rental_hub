@@ -1,0 +1,113 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { auth } from "@/auth";
+import { prisma } from "@/lib/prisma";
+import type { ClientFormValues } from "@/schemas";
+
+type AllowedUserField = "nickname" | "email" | "phone" | "extraPhone";
+
+export async function updateUserFieldAction(
+	field: AllowedUserField,
+	value: string | null
+): Promise<{ success: boolean; error?: string }> {
+	try {
+		const session = await auth();
+		if (!session?.user?.id) return { success: false, error: "Не авторизован" };
+
+		await prisma.user.update({
+			where: { id: session.user.id },
+			data: { [field]: value },
+		});
+
+		revalidatePath("/dashboard/profile");
+		return { success: true };
+	} catch (error: unknown) {
+		if (error instanceof Error) return { success: false, error: error.message };
+		return { success: false, error: "Ошибка обновления профиля" };
+	}
+}
+
+export async function updateUserAvatarAction(
+	url: string | null
+): Promise<{ success: boolean; error?: string }> {
+	try {
+		const session = await auth();
+		if (!session?.user?.id) return { success: false, error: "Не авторизован" };
+
+		await prisma.user.update({
+			where: { id: session.user.id },
+			data: { image: url },
+		});
+
+		revalidatePath("/dashboard/profile");
+		return { success: true };
+	} catch (error: unknown) {
+		if (error instanceof Error) return { success: false, error: error.message };
+		return { success: false, error: "Ошибка обновления аватара" };
+	}
+}
+
+export async function scheduleAccountDeletionAction(): Promise<{
+	success: boolean;
+	error?: string;
+}> {
+	try {
+		const session = await auth();
+		if (!session?.user?.id) return { success: false, error: "Не авторизован" };
+
+		const deletionDate = new Date();
+		deletionDate.setDate(deletionDate.getDate() + 7);
+
+		await prisma.user.update({
+			where: { id: session.user.id },
+			data: { deletionScheduledAt: deletionDate },
+		});
+
+		return { success: true };
+	} catch (error: unknown) {
+		if (error instanceof Error) return { success: false, error: error.message };
+		return { success: false, error: "Ошибка удаления аккаунта" };
+	}
+}
+
+export async function updateClientSocialsAction(
+	socials: { url: string }[]
+): Promise<{ success: boolean; error?: string }> {
+	try {
+		const session = await auth();
+		if (!session?.user?.id) return { success: false, error: "Не авторизован" };
+
+		const app = await prisma.clientApplication.findUnique({
+			where: { userId: session.user.id },
+			select: { applicationData: true },
+		});
+
+		if (!app) return { success: false, error: "Анкета не найдена" };
+
+		const currentData =
+			(app.applicationData as Record<string, ClientFormValues>) || {};
+
+		const updatedData = {
+			...currentData,
+			applicationData: {
+				...(currentData.applicationData || {}),
+				contacts: {
+					...(currentData.applicationData?.applicationData.contacts || {}),
+					socials,
+				},
+			},
+		};
+
+		await prisma.clientApplication.update({
+			where: { userId: session.user.id },
+			data: { applicationData: updatedData },
+		});
+
+		revalidatePath("/dashboard/profile");
+		return { success: true };
+	} catch (error: unknown) {
+		if (error instanceof Error) return { success: false, error: error.message };
+		return { success: false, error: "Ошибка сохранения соцсетей" };
+	}
+}

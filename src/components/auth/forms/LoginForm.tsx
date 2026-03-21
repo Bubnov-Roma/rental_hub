@@ -3,11 +3,11 @@
 import { Eye, EyeOff, Lock, Mail } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { ValidatedInput } from "@/components/forms";
 import { Button } from "@/components/ui";
-import { createClient } from "@/lib/supabase/client";
 import { loginSchema } from "@/schemas";
 import { AuthCard } from "../AuthCard";
 
@@ -21,7 +21,6 @@ export function LoginForm() {
 	const [isLoading, setIsLoading] = useState(false);
 
 	const router = useRouter();
-	const supabase = createClient();
 
 	const handlePasswordLogin = async (e: React.SubmitEvent) => {
 		e.preventDefault();
@@ -41,18 +40,20 @@ export function LoginForm() {
 		setIsLoading(true);
 
 		try {
-			const { error } = await supabase.auth.signInWithPassword({
+			const res = await signIn("credentials", {
 				email,
 				password,
+				redirect: false,
 			});
 
-			if (error) {
+			if (res?.error) {
 				toast.error("Неверный email или пароль");
 				return;
 			}
 
 			toast.success("С возвращением!");
 			router.push("/dashboard");
+			router.refresh();
 		} catch {
 			toast.error("Ошибка авторизации");
 		} finally {

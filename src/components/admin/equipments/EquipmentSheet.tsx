@@ -15,7 +15,7 @@ import {
 	syncEquipmentByTitle,
 	updateEquipment,
 } from "@/actions/equipment-actions";
-import { ImageCell } from "@/components/admin/equipments/ImageCell-improved";
+import { ImageCell } from "@/components/admin/equipments/ImageCell";
 import { RelatedEquipmentPicker } from "@/components/admin/equipments/RelatedEquipmentPicker";
 import {
 	Button,
@@ -38,7 +38,6 @@ import { SINKABLE_FIELDS } from "@/constants";
 import type {
 	DbCategory,
 	DbEquipment,
-	// DbEquipmentBase,
 	DbEquipmentWithImages,
 	DbSubcategory,
 	EquipmentStatus,
@@ -89,10 +88,10 @@ interface CreateMode {
 
 export type EquipmentSheetProps = (EditMode | CreateMode) & {
 	open: boolean;
-	/** Категории из БД — передаём сверху, чтобы не дублировать fetch */
+	/** Категории из БД */
 	categories: DbCategory[];
 	onOpenChange: (open: boolean) => void;
-	/** Вызывается после успешного сохранения. В create-режиме получает новый id */
+	/** В create-режиме получает новый id */
 	onSuccess: (id?: string) => void;
 	/** Вызывается когда пользователь создал новую категорию/подкатегорию inline
 	 *  — родитель должен обновить свой список категорий */

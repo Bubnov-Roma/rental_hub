@@ -15,7 +15,7 @@ export default auth((req) => {
 	if (!isLoggedIn && (isProtectedRoute || isAdminRoute)) {
 		const url = req.nextUrl.clone();
 		url.pathname = "/auth";
-		url.searchParams.set("view", "otp-login");
+		url.searchParams.set("view", "register");
 		url.searchParams.set("redirect", pathname);
 		return NextResponse.redirect(url);
 	}
@@ -27,8 +27,8 @@ export default auth((req) => {
 		}
 	}
 
-	// 3. Редирект авторизованных со страницы логина
-	if (isLoggedIn && isAuthRoute) {
+	// 3. Редирект авторизованных со страницы логина (только если нет view)
+	if (isLoggedIn && isAuthRoute && !req.nextUrl.searchParams.has("view")) {
 		return NextResponse.redirect(new URL("/dashboard", req.nextUrl));
 	}
 

@@ -11,15 +11,17 @@ declare module "next-auth" {
       nickname?: string | null;
       companyName?: string | null;
       phone?: string | null;
+      extraPhone?: string | null;
     } & DefaultSession["user"];
   }
 
   interface User extends DefaultUser {
     id: string;
-    role: Role;
+    role?: Role;
     nickname?: string | null;
     companyName?: string | null;
     phone?: string | null;
+    extraPhone?: string | null;
   }
 }
 

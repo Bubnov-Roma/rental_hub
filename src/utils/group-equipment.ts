@@ -1,6 +1,7 @@
 import type {
 	DbEquipmentWithImages,
 	GroupedEquipment,
+	RawEquipmentRow,
 	SupabaseImage,
 } from "@/core/domain/entities/Equipment";
 
@@ -18,7 +19,7 @@ export function extractImages(item: DbEquipmentWithImages): SupabaseImage[] {
 // ─── Group rows by title ──────────────────────────────────────────────────────
 
 export function groupEquipmentRows(
-	rows: DbEquipmentWithImages[]
+	rows: (DbEquipmentWithImages | RawEquipmentRow)[]
 ): GroupedEquipment[] {
 	const map = rows.reduce<Record<string, GroupedEquipment>>((acc, item) => {
 		const title = item.title;
