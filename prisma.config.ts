@@ -1,12 +1,12 @@
 import "dotenv/config";
-import { defineConfig } from "prisma/config";
-
-const databaseUrl = process.env.DATABASE_URL || "postgresql://unused:unused@localhost:5432/unused";
-const directUrl = process.env.DIRECT_URL || databaseUrl;
+import { defineConfig, env } from "prisma/config";
 
 export default defineConfig({
   schema: "prisma/schema.prisma",
+  migrations: {
+    path: "prisma/migrations",
+  },
   datasource: {
-   url: directUrl,
+   url: env("DATABASE_URL"),
   },
 });

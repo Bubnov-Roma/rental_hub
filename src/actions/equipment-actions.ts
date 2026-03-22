@@ -71,9 +71,9 @@ function buildPrismaWhere(
 
 	if (search) {
 		where.OR = [
-			{ title: { contains: search, mode: "insensitive" } },
-			{ description: { contains: search, mode: "insensitive" } },
-			{ inventoryNumber: { contains: search, mode: "insensitive" } },
+			{ title: { contains: search } },
+			{ description: { contains: search } },
+			{ inventoryNumber: { contains: search } },
 		];
 	}
 
@@ -207,7 +207,6 @@ export async function getEquipmentWithFilters(params: {
 		prisma.equipment.count({ where }),
 	]);
 
-	// Cast to our type — структура Prisma совпадает с DbEquipmentWithImages
 	return {
 		data: data as unknown as DbEquipmentWithImages[],
 		count,
@@ -305,7 +304,7 @@ export async function searchEquipmentAction(
 	const data = await prisma.equipment.findMany({
 		where: {
 			isAvailable: true,
-			title: { contains: query, mode: "insensitive" },
+			title: { contains: query },
 		},
 		take: 10,
 		include: {
@@ -347,7 +346,6 @@ export async function duplicateEquipment(id: string): Promise<DbEquipment> {
 	}
 	const newInventoryNumber = `${baseNumber}-${nextIdx}`;
 
-	// Вытаскиваем JSON-поля отдельно для каста
 	const {
 		id: _,
 		createdAt: __,
@@ -425,10 +423,6 @@ export async function exportEquipment(ids?: string[]): Promise<DbEquipment[]> {
 	return data as unknown as DbEquipment[];
 }
 
-/**
- * getEquipmentById — загружает equipment с images для edit-режима
- * Returns DbEquipmentWithImages с заполненными equipmentImageLinks
- */
 export async function getEquipmentById(
 	id: string
 ): Promise<DbEquipmentWithImages | null> {
@@ -456,7 +450,7 @@ const fetchEquipmentCached = cache(
 		const where: Prisma.EquipmentWhereInput = { isAvailable: true };
 
 		if (search) {
-			where.title = { contains: search, mode: "insensitive" };
+			where.title = { contains: search };
 		}
 
 		if (categorySlug && categorySlug !== "all") {

@@ -1,21 +1,14 @@
 import type { NextAuthConfig } from "next-auth";
-import Nodemailer from "next-auth/providers/nodemailer";
+import Google from "next-auth/providers/google";
 
 const providers = [];
 
-if (process.env.EMAIL_SERVER_HOST && process.env.EMAIL_FROM) {
+// Google provider
+if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
 	providers.push(
-		Nodemailer({
-			server: {
-				host: process.env.EMAIL_SERVER_HOST,
-				port: parseInt(process.env.EMAIL_SERVER_PORT || "465", 10),
-				secure: true,
-				auth: {
-					user: process.env.EMAIL_SERVER_USER,
-					pass: process.env.EMAIL_SERVER_PASSWORD,
-				},
-			},
-			from: process.env.EMAIL_FROM,
+		Google({
+			clientId: process.env.GOOGLE_CLIENT_ID,
+			clientSecret: process.env.GOOGLE_CLIENT_SECRET,
 		})
 	);
 }
@@ -35,7 +28,6 @@ export const authConfig = {
 			return token;
 		},
 		async session({ session, token }) {
-			console.log("session callback:", { session, token });
 			if (session.user) {
 				session.user.id = token.id as string;
 				session.user.role = token.role;

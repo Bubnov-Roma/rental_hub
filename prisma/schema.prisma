@@ -1,14 +1,9 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client"
+  output   = "../generated/prisma"
 }
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"
 }
 
 // ─── ENUMS ──────────────────────────────
@@ -85,11 +80,11 @@ enum CategoryEntityType {
 // ─── NEXTAUTH & PROFILES ───────────────────────────────────────────────────
 
 model User {
-  id            String    @id @default(uuid())
-  name          String?
-  email         String?   @unique
-  emailVerified DateTime?
-  image         String?
+  id                  String    @id @default(uuid())
+  name                String?
+  email               String?   @unique
+  emailVerified       DateTime?
+  image               String?
   password String? 
 
   role                Role        @default(USER)
@@ -102,7 +97,7 @@ model User {
   registrationStep    Int         @default(1)
   nickname            String?
   isBlocked           Boolean     @default(false)
-  blockedReason       String?
+  blockedReason       String?     @db.Text
   permissions         Json        @default("{}")
   deletionScheduledAt DateTime?
   createdAt           DateTime    @default(now())
@@ -207,7 +202,7 @@ model Equipment {
   id               String          @id @default(uuid())
   title            String
   slug             String          @unique
-  description      String?
+  description      String?         @db.Text
   pricePerDay      Float
   price4h          Float           @default(0)
   price8h          Float           @default(0)
@@ -221,9 +216,9 @@ model Equipment {
   isPrimary        Boolean         @default(false)
   status           EquipmentStatus @default(AVAILABLE)
   inventoryNumber  String?
-  defects          String?
-  kit              String?
-  kitDescription   String?
+  defects          String?         @db.Text
+  kit              String?         @db.Text
+  kitDescription   String?         @db.Text
   ownershipType    OwnershipType   @default(INTERNAL)
   partnerName      String?
   specifications   Json            @default("{}")
@@ -325,7 +320,7 @@ model CartItem {
 model Favorite {
   id          String   @id @default(uuid())
   userId      String
-  equipmentId String
+  equipmentId String   
   createdAt   DateTime @default(now())
 
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -336,7 +331,7 @@ model EquipmentSet {
   id              String   @id @default(uuid())
   userId          String
   name            String
-  description     String?
+  description     String?  @db.Text
   items           Json     @default("[]")
   totalPricePerDay Int?
   createdAt       DateTime @default(now())
@@ -359,7 +354,7 @@ model AdminNotification {
 model CategoryHistory {
   id         String             @id @default(uuid())
   entityType CategoryEntityType
-  entityId   String
+  entityId   String             
   action     HistoryAction
   changedBy  String?
   changes    Json?
@@ -370,8 +365,8 @@ model CategoryHistory {
 
 model FaqItem {
   id         String   @id @default(uuid())
-  question   String
-  answer     String
+  question   String   @db.Text
+  answer     String   @db.Text
   sortOrder  Int      @default(0)
   category   String?
   isActive   Boolean  @default(true)
@@ -394,7 +389,7 @@ model UserAdminNote {
   id        String   @id @default(uuid())
   userId    String
   authorId  String?
-  note      String
+  note      String   @db.Text
   createdAt DateTime @default(now())
 
   targetUser User  @relation("NoteTarget", fields: [userId], references: [id], onDelete: Cascade)
@@ -407,7 +402,7 @@ model UserDiscount {
   type        DiscountType
   value       Float        @default(0)
   promoCode   String?
-  description String?
+  description String?      @db.Text
   validFrom   DateTime?
   validUntil  DateTime?
   isActive    Boolean      @default(true)

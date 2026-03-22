@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/auth";
+import NextAuth from "next-auth";
+import { authConfig } from "@/auth.config";
+
+const { auth } = NextAuth(authConfig);
 
 export default auth((req) => {
 	const isLoggedIn = !!req.auth;
@@ -11,7 +14,7 @@ export default auth((req) => {
 	const isProtectedRoute =
 		pathname.startsWith("/dashboard") || pathname.startsWith("/booking");
 
-	// 1. Редирект неавторизованных из защищенных зон
+	// 1. Redirect unauthorized persons from protected areas
 	if (!isLoggedIn && (isProtectedRoute || isAdminRoute)) {
 		const url = req.nextUrl.clone();
 		url.pathname = "/auth";
@@ -20,14 +23,14 @@ export default auth((req) => {
 		return NextResponse.redirect(url);
 	}
 
-	// 2. Проверка ролей для админки
+	// 2. Checking roles for the admin panel
 	if (isLoggedIn && isAdminRoute) {
 		if (role !== "ADMIN" && role !== "MANAGER") {
 			return NextResponse.redirect(new URL("/dashboard", req.nextUrl));
 		}
 	}
 
-	// 3. Редирект авторизованных со страницы логина (только если нет view)
+	// 3. Redirect authorized users from the login page (only if there is no view)
 	if (isLoggedIn && isAuthRoute && !req.nextUrl.searchParams.has("view")) {
 		return NextResponse.redirect(new URL("/dashboard", req.nextUrl));
 	}

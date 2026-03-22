@@ -5,21 +5,19 @@ import {
 	ArrowsClockwiseIcon,
 	CameraIcon,
 	CaretDownIcon,
+	CaretRightIcon,
 	CaretUpIcon,
 	CubeIcon,
 	type Icon,
 	type IconProps,
 	LightbulbIcon,
-} from "@phosphor-icons/react";
-import {
-	CaretRightIcon,
 	MicrophoneIcon,
 	MicrophoneStageIcon,
 	SidebarSimpleIcon,
 	SquaresFourIcon,
 	StackIcon,
 	VideoCameraIcon,
-} from "@phosphor-icons/react/dist/ssr";
+} from "@phosphor-icons/react";
 import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
