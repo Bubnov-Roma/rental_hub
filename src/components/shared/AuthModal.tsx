@@ -111,25 +111,6 @@ export function AuthModal({ open, onOpenChange, intent }: AuthModalProps) {
 	const handleYandex = async () => {
 		setIsLoading(true);
 
-		// Проверяем доступность Яндекса перед редиректом
-		try {
-			await fetch("https://oauth.yandex.ru", {
-				mode: "no-cors",
-				signal: AbortSignal.timeout(3000),
-			});
-		} catch {
-			setIsLoading(false);
-			toast.error("Ошибка авторизации", {
-				duration: 6000,
-				className: "font-bold text-base tracking-tight",
-				description:
-					"Яндекс блокирует авторизацию при активном VPN.\nЕсли у вас включен VPN, попробуйте отключить его и авторизоваться снова.",
-				descriptionClassName:
-					"whitespace-pre-line text-xs leading-relaxed opacity-90 mt-1",
-			});
-			return;
-		}
-
 		const callbackUrl =
 			intent.type === "redirect"
 				? intent.url
