@@ -8,11 +8,8 @@ import { faHeart as faHeartSolid } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Info, Video, Zap } from "lucide-react";
 import Image from "next/image";
-import { useSession } from "next-auth/react";
 import NProgress from "nprogress";
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { Components } from "react-markdown";
-import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
 import {
 	checkAvailabilityAction,
@@ -24,11 +21,11 @@ import { Lightbox } from "@/components/core/Lightbox";
 import { PriceSelector } from "@/components/core/PriceSelector";
 import { BookingSuccessScreen } from "@/components/dashboard/bookings/BookingSuccessScreen";
 import {
-	AuthModal,
 	BackButton,
 	BookingButton,
 	defaultRentalPeriod,
 	RentalPeriod,
+	SimpleMarkdown,
 } from "@/components/shared";
 import { EquipmentCard } from "@/components/shared/EquipmentCard";
 import {
@@ -52,66 +49,117 @@ import {
 	SheetTitle,
 } from "@/components/ui";
 import type { GroupedEquipment } from "@/core/domain/entities/Equipment";
-import { useFavorite } from "@/hooks";
+import { useFavorite, useRequireAuth } from "@/hooks";
 import { calculateItemPrice, cn, combineDateAndTime } from "@/lib/utils";
-import { useCartStore } from "@/store/use-cart-store";
-
-// ─── Markdown ─────────────────────────────────────────────────────────────────
-const mdComponents: Components = {
-	h1: ({ children }) => (
-		<h1 className="text-lg font-black uppercase italic mb-2 text-foreground mt-4 first:mt-0">
-			{children}
-		</h1>
-	),
-	h2: ({ children }) => (
-		<h2 className="text-base font-black uppercase italic mb-2 text-foreground mt-3 first:mt-0">
-			{children}
-		</h2>
-	),
-	h3: ({ children }) => (
-		<h3 className="text-sm font-black uppercase italic mb-1.5 text-foreground mt-3 first:mt-0">
-			{children}
-		</h3>
-	),
-	p: ({ children }) => (
-		<p className="text-sm leading-relaxed text-foreground/80 mb-2 last:mb-0">
-			{children}
-		</p>
-	),
-	ul: ({ children }) => (
-		<ul className="list-none space-y-1 mb-2">{children}</ul>
-	),
-	ol: ({ children }) => (
-		<ol className="list-none space-y-1 mb-2">{children}</ol>
-	),
-	li: ({ children }) => (
-		<li className="flex items-start gap-2 text-sm text-foreground/80">
-			<span className="text-primary mt-1 shrink-0">•</span>
-			<span>{children}</span>
-		</li>
-	),
-	strong: ({ children }) => (
-		<strong className="font-bold text-foreground">{children}</strong>
-	),
-	em: ({ children }) => (
-		<em className="italic text-foreground/70">{children}</em>
-	),
-	code: ({ children }) => (
-		<code className="text-xs bg-white/10 rounded px-1 py-0.5 font-mono">
-			{children}
-		</code>
-	),
-	hr: () => <hr className="border-white/10 my-3" />,
-	pre: ({ children }) => (
-		<pre className="bg-white/5 rounded-xl p-3 overflow-x-auto text-xs mb-2">
-			{children}
-		</pre>
-	),
-};
+import { useCartStore } from "@/store/use-cart.store";
 
 function MD({ children }: { children: string | null | undefined }) {
 	if (!children) return null;
-	return <ReactMarkdown components={mdComponents}>{children}</ReactMarkdown>;
+	return <SimpleMarkdown text={children} />;
+}
+
+// ─── Утилита: URL любой платформы → embed URL ────────────────────────────────
+function toEmbedUrl(url: string): string | null {
+	if (!url) return null;
+
+	try {
+		// 1.YouTube (shorts, watch, youtu.be)
+		const ytMatch = url.match(
+			/(?:youtube\.com\/(?:watch\?v=|shorts\/)|youtu\.be\/)([\w-]+)/
+		);
+		if (ytMatch) return `https://www.youtube.com/embed/${ytMatch[1]}`;
+		// 2. VK Video (vk.com/video-123_456)
+		// Формат: oid (id владельца) и id (id видео)
+		const vkMatch = url.match(
+			/(?:vk\.com\/video|vkvideo\.ru\/video_ext\.php\?oid=)(-?\d+)(?:_|&id=)(\d+)/
+		);
+		if (vkMatch) {
+			return `https://vk.com/video_ext.php?oid=${vkMatch[1]}&id=${vkMatch[2]}&hd=2`;
+		}
+
+		// 3. RuTube (rutube.ru/video/HASH/)
+		const rtMatch = url.match(/rutube\.ru\/video\/([\w\d]+)/);
+		if (rtMatch) return `https://rutube.ru/play/embed/${rtMatch[1]}`;
+
+		// 4. Vimeo (vimeo.com/12345678)
+		const vimeoMatch = url.match(/vimeo\.com\/(\d+)/);
+		if (vimeoMatch) return `https://player.vimeo.com/video/${vimeoMatch[1]}`;
+
+		// 5. Reddit (простая попытка подставить /embed)
+		if (url.includes("reddit.com/r/")) {
+			// Reddit плееры капризные, часто лучше оставлять ссылкой,
+			// но можно попробовать такой формат:
+			const redditParts = url?.split("?")[0]?.replace(/\/$/, "");
+			return `${redditParts}/?ref_source=embed&amp;ref=share&amp;embed=true`;
+		}
+
+		// Если ссылка уже является embed-ссылкой (содержит iframe src)
+		if (
+			url.includes("/embed/") ||
+			url.includes("_ext.php") ||
+			url.includes("player.")
+		) {
+			return url;
+		}
+
+		return null;
+	} catch (e) {
+		console.error("Video URL parsing error:", e);
+		return null;
+	}
+}
+
+// ─── VideoReviews: рендерит список видео или заглушку ────────────────────────
+function VideoReviews({ urls }: { urls: string[] }) {
+	if (urls.length === 0) {
+		return (
+			<div className="py-12 text-center">
+				<Video size={32} className="text-muted-foreground/20 mx-auto mb-3" />
+				<p className="text-sm font-medium text-muted-foreground">
+					Видеообзоры появятся позже
+				</p>
+			</div>
+		);
+	}
+
+	return (
+		<div className="space-y-4 py-2">
+			{urls.map((url, i) => {
+				const embedUrl = toEmbedUrl(url);
+				if (!embedUrl) {
+					// Не удалось распознать — показываем ссылку
+					return (
+						<a
+							key={i}
+							href={url}
+							target="_blank"
+							rel="noopener noreferrer"
+							className="flex items-center gap-2 text-sm text-primary hover:underline"
+						>
+							<Video size={14} />
+							{url}
+						</a>
+					);
+				}
+				return (
+					<div
+						key={i}
+						className="relative w-full rounded-2xl overflow-hidden bg-black"
+						style={{ paddingBottom: "56.25%" /* 16:9 */ }}
+					>
+						<iframe
+							src={embedUrl}
+							title={`Видеообзор ${i + 1}`}
+							className="absolute inset-0 w-full h-full"
+							allowFullScreen
+							allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+							loading="lazy"
+						/>
+					</div>
+				);
+			})}
+		</div>
+	);
 }
 
 // ─── Info tabs ────────────────────────────────────────────────────────────────
@@ -181,8 +229,7 @@ export default function EquipmentDetails({
 }: {
 	equipment: EquipmentFormState;
 }) {
-	const { data: session } = useSession();
-	const user = session?.user ?? null;
+	const requireAuth = useRequireAuth();
 	const { items: cartItems } = useCartStore();
 	const [isDesktop, setIsDesktop] = useState(true);
 	useEffect(() => {
@@ -207,10 +254,7 @@ export default function EquipmentDetails({
 	const [isChecking, setIsChecking] = useState(false);
 	const [busyIds, setBusyIds] = useState<string[]>([]);
 	const [isSubmitting, setIsSubmitting] = useState(false);
-	const [showAuth, setShowAuth] = useState(false);
 	const [bookingId, setBookingId] = useState<string | null>(null);
-
-	const isLoggedIn = !!user;
 
 	const quantity = useMemo(() => {
 		const inCart = cartItems.find((i) => i.equipment.id === equipment.id);
@@ -269,11 +313,10 @@ export default function EquipmentDetails({
 
 	const handleQuickBookSubmit = () => {
 		if (!canBook) return;
-		if (!isLoggedIn) {
-			setShowAuth(true);
-			return;
-		}
-		doCreateBooking();
+		requireAuth(doCreateBooking, {
+			type: "callback",
+			fn: doCreateBooking,
+		});
 	};
 
 	const doCreateBooking = async () => {
@@ -377,7 +420,6 @@ export default function EquipmentDetails({
 				onClick={handleQuickBookSubmit}
 				disabled={!canBook}
 				loading={isSubmitting}
-				isLoggedIn={isLoggedIn}
 				mode="new"
 				className="w-full h-14 rounded-2xl shadow-xl shadow-primary/20"
 			/>
@@ -424,6 +466,7 @@ export default function EquipmentDetails({
 													<Image
 														src={img}
 														fill
+														sizes="768px"
 														className="object-cover transition-transform duration-500 group-hover:scale-[1.02]"
 														alt={equipment.title}
 														priority={i === 0}
@@ -554,15 +597,9 @@ export default function EquipmentDetails({
 										<MD>{specDesc}</MD>
 									))}
 								{activeInfoTab === "reviews" && (
-									<div className="py-12 text-center">
-										<Video
-											size={32}
-											className="text-muted-foreground/20 mx-auto mb-3"
-										/>
-										<p className="text-sm font-medium text-muted-foreground">
-											Видеообзоры появятся позже
-										</p>
-									</div>
+									<VideoReviews
+										urls={(equipment.videoUrls as string[] | undefined) ?? []}
+									/>
 								)}
 							</div>
 						</div>
@@ -619,8 +656,6 @@ export default function EquipmentDetails({
 					</DialogContent>
 				</Dialog>
 			)}
-
-			<AuthModal open={showAuth} onOpenChange={setShowAuth} />
 		</>
 	);
 }

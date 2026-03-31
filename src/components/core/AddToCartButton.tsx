@@ -1,14 +1,17 @@
 "use client";
 
-import { faMinus, faPlus } from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { ShoppingCart, Zap } from "lucide-react";
+import {
+	LightningIcon,
+	MinusIcon,
+	PlusIcon,
+	ShoppingCartSimpleIcon,
+} from "@phosphor-icons/react";
 import { useCallback, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui";
 import type { GroupedEquipment } from "@/core/domain/entities/Equipment";
 import { cn } from "@/lib/utils";
-import { useCartStore } from "@/store/use-cart-store";
+import { useCartStore } from "@/store/use-cart.store";
 
 interface AddToCartButtonProps {
 	item: GroupedEquipment;
@@ -150,7 +153,7 @@ export function AddToCartButton({
 					className
 				)}
 			>
-				<ShoppingCart size={s.icon} />
+				<ShoppingCartSimpleIcon size={s.icon} />
 			</button>
 		);
 	}
@@ -173,7 +176,7 @@ export function AddToCartButton({
 						className
 					)}
 				>
-					<ShoppingCart size={s.icon + 2} />В корзину
+					<ShoppingCartSimpleIcon size={s.icon + 2} />В корзину
 				</button>
 			);
 		}
@@ -196,7 +199,7 @@ export function AddToCartButton({
 							s.h
 						)}
 					>
-						<FontAwesomeIcon icon={faMinus} size="xs" />
+						<MinusIcon size="15px" />
 					</button>
 					<span
 						className={cn(
@@ -217,7 +220,7 @@ export function AddToCartButton({
 							s.h
 						)}
 					>
-						<FontAwesomeIcon icon={faPlus} size="xs" />
+						<PlusIcon size="15px" />
 					</button>
 				</div>
 
@@ -233,7 +236,7 @@ export function AddToCartButton({
 						s.text
 					)}
 				>
-					<Zap
+					<LightningIcon
 						size={s.icon}
 						className="fill-current text-primary group-hover:text-foreground transition-all"
 					/>
@@ -282,7 +285,7 @@ export function AddToCartButton({
 					s.side
 				)}
 			>
-				<FontAwesomeIcon icon={faMinus} size="xs" className="text-foreground" />
+				<MinusIcon size="15px" className="text-foreground" />
 			</button>
 
 			<span
@@ -306,7 +309,7 @@ export function AddToCartButton({
 					s.side
 				)}
 			>
-				<FontAwesomeIcon icon={faPlus} size="xs" />
+				<PlusIcon size="15px" />
 			</button>
 		</div>
 	);

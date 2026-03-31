@@ -1,5 +1,6 @@
 "use server";
 
+import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
@@ -109,5 +110,31 @@ export async function updateClientSocialsAction(
 	} catch (error: unknown) {
 		if (error instanceof Error) return { success: false, error: error.message };
 		return { success: false, error: "Ошибка сохранения соцсетей" };
+	}
+}
+
+export async function updateUserPasswordAction(field: string, value: string) {
+	const session = await auth();
+	if (!session?.user?.email) return { success: false, error: "Not authorized" };
+
+	try {
+		let dataToUpdate = {};
+
+		if (field === "password") {
+			const hashedPassword = await bcrypt.hash(value, 10);
+			dataToUpdate = { password: hashedPassword };
+		} else {
+			dataToUpdate = { [field]: value };
+		}
+
+		await prisma.user.update({
+			where: { email: session.user.email },
+			data: dataToUpdate,
+		});
+
+		return { success: true };
+	} catch (error) {
+		console.error("Update error:", error);
+		return { success: false, error: "Ошибка при обновлении" };
 	}
 }

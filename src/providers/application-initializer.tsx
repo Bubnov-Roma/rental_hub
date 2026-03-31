@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef } from "react";
-import { useApplicationStore } from "@/store/use-application-store";
+import { useApplicationStore } from "@/store/use-application.store";
 import type { ClientApplication } from "@/types";
 
 export function ApplicationInitializer({

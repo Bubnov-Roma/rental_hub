@@ -56,7 +56,7 @@ export default async function RootLayout({
 				<meta name="apple-mobile-web-app-title" content="Linza" />
 				<meta name="apple-mobile-web-app-status-bar-style" content="default" />
 			</head>
-			<body>
+			<body suppressHydrationWarning>
 				<NextTopLoader color="#3b82f6" showSpinner={false} />
 				<RootProvider session={session}>
 					{user ? (

@@ -19,7 +19,6 @@ import {
 } from "@/actions/client-application-actions";
 import { RoleBadge } from "@/components/admin/users/RoleBadge";
 import { UserDetailPanel } from "@/components/admin/users/UserDetailPanel";
-import { VerificationBadge } from "@/components/forms";
 import {
 	Badge,
 	Button,
@@ -46,61 +45,61 @@ import {
 import type { UserProfile } from "@/core/domain/entities/User";
 import { cn } from "@/lib/utils";
 
-// const APP_STATUS_CONFIG: Record<string, { label: string; color: string }> = {
-// 	LOADING: {
-// 		label: "...",
-// 		color: "bg-foreground/8 text-foreground/40 border-foreground/10",
-// 	},
-// 	NO_APPLICATION: {
-// 		label: "Нет анкеты",
-// 		color: "bg-foreground/8 text-foreground/40 border-foreground/10",
-// 	},
-// 	DRAFT: {
-// 		label: "Черновик",
-// 		color: "bg-foreground/8 text-foreground/50 border-foreground/10",
-// 	},
-// 	PENDING: {
-// 		label: "На проверке",
-// 		color: "bg-amber-500/15 text-amber-400 border-amber-500/20",
-// 	},
-// 	REVIEWING: {
-// 		label: "Изучается",
-// 		color: "bg-blue-500/15 text-blue-400 border-blue-500/20",
-// 	},
-// 	CLARIFICATION: {
-// 		label: "Уточнение",
-// 		color: "bg-orange-500/15 text-orange-400 border-orange-500/20",
-// 	},
-// 	STANDARD: {
-// 		label: "Стандарт",
-// 		color: "bg-teal-500/15 text-teal-400 border-teal-500/20",
-// 	},
-// 	APPROVED: {
-// 		label: "Одобрено",
-// 		color: "bg-green-500/15 text-green-400 border-green-500/20",
-// 	},
-// 	REJECTED: {
-// 		label: "Отклонено",
-// 		color: "bg-red-500/15 text-red-400 border-red-500/20",
-// 	},
-// 	BLOCKED: {
-// 		label: "Заблокирован",
-// 		color: "bg-red-500/15 text-red-400 border-red-500/20",
-// 	},
-// };
+const APP_STATUS_CONFIG: Record<string, { label: string; color: string }> = {
+	LOADING: {
+		label: "...",
+		color: "bg-foreground/8 text-foreground/40 border-foreground/10",
+	},
+	NO_APPLICATION: {
+		label: "Нет анкеты",
+		color: "bg-foreground/8 text-foreground/40 border-foreground/10",
+	},
+	DRAFT: {
+		label: "Черновик",
+		color: "bg-foreground/8 text-foreground/50 border-foreground/10",
+	},
+	PENDING: {
+		label: "На проверке",
+		color: "bg-amber-500/15 text-amber-400 border-amber-500/20",
+	},
+	REVIEWING: {
+		label: "Изучается",
+		color: "bg-blue-500/15 text-blue-400 border-blue-500/20",
+	},
+	CLARIFICATION: {
+		label: "Уточнение",
+		color: "bg-orange-500/15 text-orange-400 border-orange-500/20",
+	},
+	STANDARD: {
+		label: "Стандарт",
+		color: "bg-teal-500/15 text-teal-400 border-teal-500/20",
+	},
+	APPROVED: {
+		label: "Одобрено",
+		color: "bg-green-500/15 text-green-400 border-green-500/20",
+	},
+	REJECTED: {
+		label: "Отклонено",
+		color: "bg-red-500/15 text-red-400 border-red-500/20",
+	},
+	BLOCKED: {
+		label: "Заблокирован",
+		color: "bg-red-500/15 text-red-400 border-red-500/20",
+	},
+};
 
-// function AppStatusBadge({ status }: { status?: string | undefined }) {
-// 	const s = status ?? "NO_APPLICATION";
-// 	const cfg = APP_STATUS_CONFIG[s] ?? APP_STATUS_CONFIG.no_application;
-// 	return (
-// 		<Badge
-// 			variant="outline"
-// 			className={cn("text-[10px] border font-semibold", cfg?.color)}
-// 		>
-// 			{cfg?.label}
-// 		</Badge>
-// 	);
-// }
+function AppStatusBadge({ status }: { status?: string | undefined }) {
+	const s = status ?? "NO_APPLICATION";
+	const cfg = APP_STATUS_CONFIG[s] ?? APP_STATUS_CONFIG.no_application;
+	return (
+		<Badge
+			variant="outline"
+			className={cn("text-[10px] border font-semibold", cfg?.color)}
+		>
+			{cfg?.label}
+		</Badge>
+	);
+}
 
 export default function UsersTable({
 	initialUsers,
@@ -159,19 +158,19 @@ export default function UsersTable({
 	return (
 		<div className="space-y-4">
 			{/* Filters */}
-			<Card>
-				<CardContent className="p-3 flex flex-col sm:flex-row gap-3 flex-wrap">
-					<div className="relative flex-1 min-w-48">
-						<Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-						<Input
-							placeholder="Поиск по имени, email, телефону..."
-							className="pl-9 h-9"
-							value={search}
-							onChange={(e) => setSearch(e.target.value)}
-						/>
-					</div>
+			<CardContent className="flex flex-col sm:flex-row gap-3 flex-wrap justify-between">
+				<div className="relative flex-1 min-w-48">
+					<Search className="z-1 absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/50" />
+					<Input
+						placeholder="Поиск по имени, email, телефону..."
+						className="pl-9 h-9"
+						value={search}
+						onChange={(e) => setSearch(e.target.value)}
+					/>
+				</div>
+				<div className="flex justify-between gap-2">
 					<Select value={roleFilter} onValueChange={setRoleFilter}>
-						<SelectTrigger className="h-9 w-40">
+						<SelectTrigger className="h-9 w-35">
 							<SelectValue placeholder="Все роли" />
 						</SelectTrigger>
 						<SelectContent>
@@ -183,7 +182,7 @@ export default function UsersTable({
 						</SelectContent>
 					</Select>
 					<Select value={appFilter} onValueChange={setAppFilter}>
-						<SelectTrigger className="h-9 w-48">
+						<SelectTrigger className="h-9 w-35">
 							<SelectValue placeholder="Статус анкеты" />
 						</SelectTrigger>
 						<SelectContent>
@@ -196,11 +195,17 @@ export default function UsersTable({
 							<SelectItem value="clarification">Уточнение</SelectItem>
 						</SelectContent>
 					</Select>
-				</CardContent>
-			</Card>
+				</div>
+			</CardContent>
 
 			{/* Stats strip */}
-			<div className="flex gap-4 text-sm text-muted-foreground px-1">
+			<div className="flex gap-4 text-sm text-muted-foreground px-1 justify-center sm:justify-start">
+				{pendingCount > 0 && (
+					<span className="bg-secondary px-1 rounded-2xl font-black text-primary-accent">
+						Ожидает проверки:{" "}
+						<strong className="text-foreground">{pendingCount}</strong>
+					</span>
+				)}
 				<span>
 					Всего: <strong className="text-foreground">{users.length}</strong>
 				</span>
@@ -208,11 +213,6 @@ export default function UsersTable({
 					Показано:{" "}
 					<strong className="text-foreground">{filtered.length}</strong>
 				</span>
-				{pendingCount > 0 && (
-					<span className="text-amber-400 font-medium">
-						⏳ {pendingCount} анкет ожидают проверки
-					</span>
-				)}
 			</div>
 
 			{/* Table */}
@@ -296,7 +296,7 @@ export default function UsersTable({
 								</TableCell>
 
 								<TableCell>
-									<VerificationBadge />
+									<AppStatusBadge status={user.application?.status} />
 								</TableCell>
 
 								<TableCell>

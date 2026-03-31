@@ -1,10 +1,10 @@
 "use client";
 
-import { CheckCircle2, LayoutDashboard, Package, Send } from "lucide-react";
+import { CheckCircle2, LayoutDashboard, Package } from "lucide-react";
 import Link from "next/link";
 
 // Replace with your actual Telegram bot link
-const TG_BOT_LINK = "https://t.me/linza_bot";
+// const TG_BOT_LINK = "https://t.me/linza_bot";
 
 interface BookingSuccessScreenProps {
 	bookingId: string;
@@ -14,7 +14,7 @@ interface BookingSuccessScreenProps {
 
 export function BookingSuccessScreen({
 	bookingId,
-	telegramUrl = TG_BOT_LINK,
+	// telegramUrl = TG_BOT_LINK,
 }: BookingSuccessScreenProps) {
 	const shortId = bookingId.split("-")[0]?.toUpperCase() ?? bookingId;
 
@@ -46,14 +46,15 @@ export function BookingSuccessScreen({
 				</div>
 
 				{/* ── What's next hint ── */}
-				<div className="hidden md:inline px-5 py-4 rounded-2xl border border-foreground/5 bg-card/40 space-y-2">
-					<p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/50">
-						Что дальше
+				<div>
+					<p className="text-[10px] pl-8 font-bold uppercase tracking-widest text-muted-foreground/50">
+						Что будет дальше
 					</p>
-					<ol className="space-y-2">
+					<ol className="hidden md:flex flex-col items-start gap-4 px-5 py-4 rounded-2xl border border-foreground/5 bg-card/40 space-y-2 transition-colors group">
 						{[
-							"Менеджер проверит и подготовит технику",
-							"Вы получите уведомление в личном кабинете",
+							"Менеджер проверит и подготовит технику для вашего заказа",
+							"Мы свяжемся с вами по телефону или email для подтверждения аренды",
+							"После внесения предоплаты статус вашего заказа обновится на - 'Готов к выдаче'",
 						].map((step, i) => (
 							<li
 								key={`${step}` + `${i}`}
@@ -69,7 +70,7 @@ export function BookingSuccessScreen({
 				</div>
 
 				{/* ── Telegram Bot CTA ── */}
-				<a
+				{/* <a
 					href={telegramUrl}
 					target="_blank"
 					rel="noopener noreferrer"
@@ -86,7 +87,7 @@ export function BookingSuccessScreen({
 							и получайте статусы заказа прямо в мессенджер
 						</p>
 					</div>
-				</a>
+				</a> */}
 
 				{/* ── Navigation buttons ── */}
 				<div className="grid grid-cols-2 gap-3">
@@ -110,7 +111,7 @@ export function BookingSuccessScreen({
 							className="text-muted-foreground group-hover:text-foreground transition-colors"
 						/>
 						<span className="text-xs font-semibold text-muted-foreground group-hover:text-foreground transition-colors">
-							В дашборд
+							В личный кабинет
 						</span>
 					</Link>
 				</div>

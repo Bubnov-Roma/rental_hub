@@ -23,7 +23,7 @@ export function UpdatePasswordForm() {
 
 	const router = useRouter();
 
-	const handleUpdatePassword = async (e: React.FormEvent) => {
+	const handleUpdatePassword = async (e: React.SubmitEvent) => {
 		e.preventDefault();
 
 		const result = updatePasswordSchema.safeParse({

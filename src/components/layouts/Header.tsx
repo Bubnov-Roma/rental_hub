@@ -1,6 +1,11 @@
 "use client";
 
-import { PanelLeft, Search, ShoppingCart, X } from "lucide-react";
+import {
+	MagnifyingGlassIcon,
+	ShoppingCartSimpleIcon,
+	SidebarSimpleIcon,
+	XIcon,
+} from "@phosphor-icons/react";
 import Link from "next/link";
 import { useRef, useState } from "react";
 import { useOnClickOutside } from "usehooks-ts";
@@ -11,7 +16,7 @@ import type { DbCategory } from "@/core/domain/entities/Equipment";
 import { useSearchState } from "@/hooks";
 import { useSearchHistory } from "@/hooks/use-search-history";
 import { cn } from "@/lib/utils";
-import { useCartStore } from "@/store/use-cart-store";
+import { useCartStore } from "@/store/use-cart.store";
 
 interface HeaderProps {
 	categories: DbCategory[];
@@ -44,8 +49,8 @@ export function Header({ categories }: HeaderProps) {
 	return (
 		<header
 			className={cn(
-				"fixed top-0 left-20 right-0 z-5",
-				isMobile && "left-0",
+				"fixed top-0 left-0 right-0 z-15",
+				!isMobile && "left-20",
 				!isCollapsed && "md:left-(--sidebar-width)",
 				"transition-[left] duration-300 ease-in-out",
 				"flex h-16 items-center justify-between gap-4 border-b border-foreground/5 bg-background/60 px-4 md:px-6 backdrop-blur-xl group"
@@ -68,7 +73,7 @@ export function Header({ categories }: HeaderProps) {
 					onClick={toggleSidebar}
 					className="items-center justify-center h-8 w-8 rounded-lg text-foreground transition-all duration-300 hover:scale-110"
 				>
-					<PanelLeft size={16} />
+					<SidebarSimpleIcon size={16} />
 				</Button>
 			)}
 
@@ -89,7 +94,7 @@ export function Header({ categories }: HeaderProps) {
 
 				<div className="relative z-10 flex flex-col">
 					<div className="flex items-center h-11 px-4">
-						<Search
+						<MagnifyingGlassIcon
 							className={cn(
 								"transition-colors shrink-0",
 								isFocused ? "text-primary" : "text-muted-foreground"
@@ -114,7 +119,7 @@ export function Header({ categories }: HeaderProps) {
 								onClick={() => searchState.setQuery("")}
 								className="p-1 hover:bg-foreground/10 rounded-full transition-colors"
 							>
-								<X size={14} className="text-muted-foreground" />
+								<XIcon size={14} className="text-muted-foreground" />
 							</button>
 						)}
 					</div>
@@ -141,7 +146,7 @@ export function Header({ categories }: HeaderProps) {
 					data-cart-icon
 					className="relative group/cart p-2 hover:bg-foreground/5 rounded-lg transition-colors"
 				>
-					<ShoppingCart
+					<ShoppingCartSimpleIcon
 						size={20}
 						className="text-muted-foreground group-hover/cart:text-foreground transition-colors"
 					/>

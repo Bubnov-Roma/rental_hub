@@ -41,6 +41,7 @@ export interface DbEquipmentBase {
 	kitDescription: string | null;
 	specifications: Record<string, unknown>;
 	comments: Comment[];
+	videoUrls: string[];
 	slug: string;
 	createdAt: Date;
 	updatedAt: Date;
@@ -50,9 +51,9 @@ export interface DbEquipment extends DbEquipmentBase {
 	// relatedIds хранится в другой таблице EquipmentRelation, не в Equipment
 }
 
-/** DbEquipmentWithImages — оснащен equipmentImageLinks relation для edit-режима */
 export interface DbEquipmentWithImages extends DbEquipmentBase {
 	equipmentImageLinks: EquipmentImageLinkWithImage[];
+	relatedEquipment?: { relatedId: string }[];
 }
 
 /** Link между Equipment и Image с полной информацией */
@@ -82,6 +83,7 @@ export interface GroupedEquipment
 	rating: number;
 	reviewsCount: number;
 	equipmentImageLinks: EquipmentImageLinkWithImage[];
+	relatedIds?: string[];
 }
 
 export type DbSubcategory = {
@@ -103,9 +105,11 @@ export type DbCategory = {
 	subcategories: DbSubcategory[];
 };
 export interface DbRawCSVRow {
+	id: string;
 	title: string;
 	slug: string;
-	categoryId: string;
+	category: string;
+	subcategory: string;
 	description: string | null;
 	inventoryNumber: string | null;
 	deposit: number;
@@ -115,4 +119,5 @@ export interface DbRawCSVRow {
 	price8h: number;
 	status: EquipmentStatus;
 	isAvailable: boolean;
+	videoUrls?: string[];
 }

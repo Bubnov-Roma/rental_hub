@@ -5,5 +5,6 @@ export * from "./use-equipment";
 export * from "./use-favorites";
 export * from "./use-mobile";
 export * from "./use-rental-time";
+export * from "./use-require-auth";
 export * from "./use-search-history";
 export * from "./use-search-state";

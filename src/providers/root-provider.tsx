@@ -6,6 +6,7 @@ import { ThemeProvider } from "next-themes";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { Toaster } from "@/components/ui/sonner";
+import { AuthModalProvider } from "@/providers/auth-modal-provider";
 import { CartSync } from "@/providers/cart-syncer";
 import QueryProvider from "@/providers/query-provider";
 import { UnsavedChangesGuard } from "@/providers/unsaved-changes-guard";
@@ -32,6 +33,7 @@ export function RootProvider({ children, session }: RootProviderProps) {
 						disableTransitionOnChange
 					>
 						<UnsavedChangesGuard />
+						<AuthModalProvider />
 						<SidebarProvider>
 							{children}
 							<Toaster

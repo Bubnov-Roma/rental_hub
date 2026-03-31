@@ -1,7 +1,7 @@
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider = "prisma-client-js"
 }
+
 datasource db {
   provider = "mysql"
 }
@@ -117,6 +117,7 @@ model User {
   faqUpdated         FaqItem[]            @relation("FaqUpdater")
   notesReceived      UserAdminNote[]      @relation("NoteTarget")
   notesWritten       UserAdminNote[]      @relation("NoteAuthor")
+  bannersCreated     Banner[] @relation("BannerCreator")
 }
 
 model Account {
@@ -223,6 +224,7 @@ model Equipment {
   partnerName      String?
   specifications   Json            @default("{}")
   comments         Json            @default("[]")
+  videoUrls        Json            @default("[]")
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt
 
@@ -383,6 +385,25 @@ model SiteSetting {
   key       String   @id
   value     String
   updatedAt DateTime @updatedAt
+}
+
+model Banner {
+  id         String    @id @default(uuid())
+  title      String
+  subtitle   String?
+  body       String?   @db.Text
+  imageUrl   String?
+  linkUrl    String?
+  linkLabel  String?
+  type       String    @default("info")
+  isActive   Boolean   @default(true)
+  sortOrder  Int       @default(0)
+  eventDate  DateTime?
+  createdBy  String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  creator User? @relation("BannerCreator", fields: [createdBy], references: [id], onDelete: SetNull)
 }
 
 model UserAdminNote {

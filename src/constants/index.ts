@@ -1,5 +1,6 @@
 export * from "./booking-status";
 export * from "./equipment-sheet-fields";
+export * from "./event.config";
 export * from "./form-steps.config";
 export * from "./navigation";
 export * from "./plurals";

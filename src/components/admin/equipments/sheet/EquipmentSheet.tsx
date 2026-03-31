@@ -1,4 +1,3 @@
-/** biome-ignore-all lint/suspicious/noArrayIndexKey: <this is> */
 "use client";
 
 import { TooltipContent, TooltipTrigger } from "@radix-ui/react-tooltip";
@@ -17,6 +16,8 @@ import {
 } from "@/actions/equipment-actions";
 import { ImageCell } from "@/components/admin/equipments/ImageCell";
 import { RelatedEquipmentPicker } from "@/components/admin/equipments/RelatedEquipmentPicker";
+import { RelatedItemChip } from "@/components/admin/equipments/RelatedItemChip";
+import { MarkdownEditor } from "@/components/shared";
 import {
 	Button,
 	Input,
@@ -45,30 +46,6 @@ import type {
 } from "@/core/domain/entities/Equipment";
 import { cn } from "@/lib/utils";
 import { useUnsavedChanges } from "@/store";
-
-// ─── RelatedItemChip — shows an existing related item with remove button ──────
-function RelatedItemChip({
-	id,
-	onRemove,
-}: {
-	id: string;
-	onRemove: () => void;
-}) {
-	// We show just the short UUID since we don't fetch titles here
-	// (titles are visible in the RelatedEquipmentPicker below)
-	return (
-		<span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-foreground/8 border border-foreground/10 text-xs font-medium text-foreground/70 group">
-			<span className="font-mono text-[10px]">{id.slice(0, 8)}…</span>
-			<button
-				type="button"
-				onClick={onRemove}
-				className="opacity-0 group-hover:opacity-100 transition-opacity text-foreground/40 hover:text-red-400"
-			>
-				<X size={11} />
-			</button>
-		</span>
-	);
-}
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -126,104 +103,6 @@ function safeParseSpecs(text: string): Record<string, unknown> {
 	} catch {
 		return text.trim() ? { description: text.trim() } : {};
 	}
-}
-
-// ─── MarkdownEditor ───────────────────────────────────────────────────────────
-
-function MarkdownEditor({
-	label,
-	value,
-	onChange,
-	placeholder,
-	rows = 5,
-}: {
-	label: string;
-	value: string;
-	onChange: (v: string) => void;
-	placeholder?: string;
-	rows?: number;
-}) {
-	const [tab, setTab] = useState<"write" | "preview">("write");
-	return (
-		<div className="space-y-1.5">
-			<div className="flex items-center justify-between">
-				<Label>{label}</Label>
-				<div className="flex items-center gap-0.5 rounded-md border border-white/10 bg-muted/10 p-0.5">
-					{(["write", "preview"] as const).map((t) => (
-						<button
-							key={t}
-							type="button"
-							onClick={() => setTab(t)}
-							className={cn(
-								"flex items-center gap-1 rounded px-2 py-0.5 text-[11px] transition-colors",
-								tab === t
-									? "bg-primary/10 text-foreground"
-									: "text-muted-foreground hover:text-foreground"
-							)}
-						>
-							{t === "write" ? <Pencil size={9} /> : <Eye size={9} />}
-							{t === "write" ? "Write" : "Preview"}
-						</button>
-					))}
-				</div>
-			</div>
-			{tab === "write" ? (
-				<Textarea
-					rows={rows}
-					value={value}
-					onChange={(e) => onChange(e.target.value)}
-					placeholder={placeholder}
-					className="font-mono text-xs resize-none"
-				/>
-			) : (
-				<div
-					className="rounded-md border border-white/10 bg-muted/10 p-3 overflow-auto"
-					style={{ minHeight: `${rows * 24}px` }}
-				>
-					{value ? (
-						<SimpleMarkdown text={value} />
-					) : (
-						<span className="text-muted-foreground text-xs italic">
-							Нет содержимого
-						</span>
-					)}
-				</div>
-			)}
-		</div>
-	);
-}
-
-function SimpleMarkdown({ text }: { text: string }) {
-	return (
-		<div className="space-y-0.5">
-			{text.split("\n").map((line, i) => {
-				if (line.startsWith("# "))
-					return (
-						<h1 key={i} className="text-base font-bold mb-1 mt-2">
-							{line.slice(2)}
-						</h1>
-					);
-				if (line.startsWith("## "))
-					return (
-						<h2 key={i} className="text-sm font-semibold mb-1 mt-2">
-							{line.slice(3)}
-						</h2>
-					);
-				if (line.startsWith("- ") || line.startsWith("* "))
-					return (
-						<li key={i} className="text-sm ml-4 list-disc">
-							{line.slice(2)}
-						</li>
-					);
-				if (line === "") return <br key={i} />;
-				return (
-					<p key={i} className="text-sm leading-relaxed">
-						{line}
-					</p>
-				);
-			})}
-		</div>
-	);
 }
 
 // ─── SpecsEditor ──────────────────────────────────────────────────────────────
@@ -606,9 +485,12 @@ function CategorySubcategorySelector({
 
 type EquipmentFormState = DbEquipment & {
 	relatedIds: string[];
+	videoUrls: string[];
 };
 
-function buildInitialForm(equipment?: DbEquipment): EquipmentFormState {
+function buildInitialForm(
+	equipment?: DbEquipmentWithImages
+): EquipmentFormState {
 	return {
 		id: equipment?.id ?? "",
 		isPrimary: equipment?.isPrimary ?? false,
@@ -634,9 +516,8 @@ function buildInitialForm(equipment?: DbEquipment): EquipmentFormState {
 		slug: equipment?.slug ?? "",
 		createdAt: equipment?.createdAt ?? new Date(),
 		updatedAt: equipment?.updatedAt ?? new Date(),
-		// Так как мы пока не загружаем связи из EquipmentRelation при редактировании,
-		// оставляем пустой массив. Позже мы обновим getEquipmentById, чтобы он отдавал их.
-		relatedIds: [],
+		videoUrls: (equipment?.videoUrls as string[]) ?? [],
+		relatedIds: equipment?.relatedEquipment?.map((r) => r.relatedId) ?? [],
 	};
 }
 
@@ -736,8 +617,8 @@ export function EquipmentSheet(props: EquipmentSheetProps) {
 			if (mode === "create") {
 				const payload: CreateEquipmentData = {
 					title: formData.title.trim(),
-					categoryId: formData.categoryId,
-					subcategoryId: formData.subcategoryId || null,
+					category: formData.categoryId,
+					subcategory: formData.subcategoryId || null,
 					inventoryNumber: formData.inventoryNumber || undefined,
 					pricePerDay: Number(formData.pricePerDay),
 					price4h: formData.price4h ? Number(formData.price4h) : undefined,
@@ -753,8 +634,8 @@ export function EquipmentSheet(props: EquipmentSheetProps) {
 					isAvailable: formData.isAvailable,
 					ownershipType: formData.ownershipType,
 					partnerName: formData.partnerName || undefined,
-					// related_ids: formData.relatedIds,
 					specifications: specs,
+					videoUrls: formData.videoUrls ?? [],
 				};
 				const result = await createEquipmentAction(payload);
 				if (!result.success) {
@@ -778,9 +659,9 @@ export function EquipmentSheet(props: EquipmentSheetProps) {
 					replacementValue: Number(formData.replacementValue) || 0,
 					subcategoryId: formData.subcategoryId || null,
 					partnerName: formData.partnerName || null,
-					// relatedIds: formData.relatedIds,
 					specifications: specs,
 					comments: commentsPayload,
+					videoUrls: formData.videoUrls ?? [],
 				});
 				if (syncFields.length > 0) {
 					const result = await syncEquipmentByTitle(equipment.id, syncFields);
@@ -804,8 +685,7 @@ export function EquipmentSheet(props: EquipmentSheetProps) {
 	const isEdit = mode === "edit";
 	const title = isEdit ? `Редактирование: ${equipment.title}` : "Новая позиция";
 	const isPrimary =
-		isEdit &&
-		!!(equipment as DbEquipment & { is_primary?: boolean }).is_primary;
+		isEdit && !!(equipment as DbEquipment & { isPrimary?: boolean }).isPrimary;
 
 	const initialImages = isEdit
 		? (equipment.equipmentImageLinks
@@ -852,7 +732,7 @@ export function EquipmentSheet(props: EquipmentSheetProps) {
 												className="relative z-5 text-background duration-300 max-w-fit px-2 pb-2 bg-foreground/80 rounded-xl backdrop-blur-2xl my-2 mx-5 flex flex-col gap-1 flex-wrap"
 											>
 												<span className="p-1 pt-2 bg-primary text-primary-foreground text-center rounded-b-md">
-													Данные отмеченныые галочкой " ✅ " будут видны
+													Поля отмеченныые галочкой " ✅ " будут видны
 													пользователям сайта
 												</span>
 												<span className="text-background/80 lowercase">
@@ -879,6 +759,7 @@ export function EquipmentSheet(props: EquipmentSheetProps) {
 							<Label>✅ Галерея изображений</Label>
 							<ImageCell
 								equipmentId={equipment.id}
+								equipmentSlug={equipment.slug}
 								initialImages={initialImages}
 							/>
 						</div>
@@ -1024,11 +905,11 @@ export function EquipmentSheet(props: EquipmentSheetProps) {
 									<SelectValue />
 								</SelectTrigger>
 								<SelectContent>
-									<SelectItem value="available"> Свободно</SelectItem>
-									<SelectItem value="reserved">Зарезервировано</SelectItem>
-									<SelectItem value="rented">В аренде</SelectItem>
-									<SelectItem value="maintenance">На обслуживании</SelectItem>
-									<SelectItem value="broken">Неисправно</SelectItem>
+									<SelectItem value="AVAILABLE"> Свободно</SelectItem>
+									<SelectItem value="RESERVED">Зарезервировано</SelectItem>
+									<SelectItem value="RENTED">В аренде</SelectItem>
+									<SelectItem value="MAINTENACE">На обслуживании</SelectItem>
+									<SelectItem value="BROKEN">Неисправно</SelectItem>
 								</SelectContent>
 							</Select>
 						</div>
@@ -1061,8 +942,8 @@ export function EquipmentSheet(props: EquipmentSheetProps) {
 									<SelectValue />
 								</SelectTrigger>
 								<SelectContent>
-									<SelectItem value="sublease">Да</SelectItem>
-									<SelectItem value="internal">Нет</SelectItem>
+									<SelectItem value="SUBLEASE">Да</SelectItem>
+									<SelectItem value="INTERNAL">Нет</SelectItem>
 								</SelectContent>
 							</Select>
 						</div>
@@ -1123,6 +1004,39 @@ export function EquipmentSheet(props: EquipmentSheetProps) {
 						}
 						rows={5}
 					/>
+
+					{/* VIDEO URLS — только для isPrimary */}
+					{(!isEdit || isPrimary) && (
+						<div className="space-y-3">
+							<Label>
+								✅ Видеообзоры{" "}
+								<span className="font-normal text-muted-foreground text-xs ml-1">
+									— по одной ссылке на строку (YouTube, VK Video, RuTube)
+								</span>
+							</Label>
+							<Textarea
+								value={(formData.videoUrls ?? []).join("\n")}
+								onChange={(e) =>
+									set({
+										videoUrls: e.target.value
+											.split("\n")
+											.map((u) => u.trim())
+											.filter(Boolean),
+									})
+								}
+								placeholder={
+									"https://youtube.com/watch?v=...\nhttps://vk.com/video...\nhttps://rutube.ru/video/..."
+								}
+								rows={4}
+								className="font-mono text-xs resize-none"
+							/>
+							{(formData.videoUrls ?? []).length > 0 && (
+								<p className="text-[11px] text-muted-foreground">
+									{(formData.videoUrls ?? []).length} видео добавлено
+								</p>
+							)}
+						</div>
+					)}
 
 					{/* SYNC (только в edit-режиме, когда есть siblings) */}
 

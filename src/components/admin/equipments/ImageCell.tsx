@@ -1,16 +1,18 @@
 "use client";
 
-import { Plus, X } from "lucide-react";
+import { DotsNineIcon, PlusIcon, XIcon } from "@phosphor-icons/react";
 import Image from "next/image";
-import { useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
 	deleteImageAction,
 	linkImageToEquipmentAction,
+	reorderImagesAction,
 } from "@/actions/upload-actions";
 import { ImageUploader } from "@/components/shared";
 import {
 	Button,
+	Card,
 	Dialog,
 	DialogContent,
 	DialogDescription,
@@ -19,141 +21,212 @@ import {
 	DialogTrigger,
 } from "@/components/ui";
 import { Progress } from "@/components/ui/progress";
+import { cn } from "@/lib/utils";
+
+interface ImageItem {
+	id: string; // image.id из БД
+	url: string;
+}
 
 interface ImageCellProps {
 	equipmentId: string;
-	initialImages: { id: string; url: string }[];
+	equipmentSlug?: string; // slug isPrimary позиции → папка в S3
+	initialImages: ImageItem[];
 }
 
-export function ImageCell({ equipmentId, initialImages }: ImageCellProps) {
-	const [images, setImages] = useState(initialImages);
+export function ImageCell({
+	equipmentId,
+	equipmentSlug,
+	initialImages,
+}: ImageCellProps) {
+	const [images, setImages] = useState<ImageItem[]>(initialImages);
 	const [isUploading, setIsUploading] = useState(false);
 	const [uploadProgress, setUploadProgress] = useState(0);
 	const [open, setOpen] = useState(false);
-	const [galleryOpen, setGalleryOpen] = useState(false);
 
-	const handleDelete = async (
-		imageId: string,
-		imageUrl: string,
-		e?: React.MouseEvent
-	) => {
-		e?.stopPropagation();
+	// ── Drag & drop ────────────────────────────────────────────────────────────
+	const dragIndex = useRef<number | null>(null);
+	const dragOverIndex = useRef<number | null>(null);
 
-		if (!confirm("Удалить это фото?")) return;
+	const handleDragStart = useCallback((index: number) => {
+		dragIndex.current = index;
+	}, []);
 
-		try {
-			const result = await deleteImageAction(imageId, imageUrl);
+	const handleDragOver = useCallback((e: React.DragEvent, index: number) => {
+		e.preventDefault();
+		dragOverIndex.current = index;
+	}, []);
 
-			if (!result.success) {
-				toast.error(result.error || "Ошибка удаления");
-				return;
-			}
+	const handleDrop = useCallback(async () => {
+		const from = dragIndex.current;
+		const to = dragOverIndex.current;
+		if (from === null || to === null || from === to) return;
 
-			// Update local state
-			setImages((prev) => prev.filter((img) => img.id !== imageId));
-			toast.success("Изображение удалено");
-		} catch (error) {
-			console.error("Unexpected error:", error);
-			toast.error("Ошибка удаления");
+		const reordered = [...images];
+		const [moved] = reordered.splice(from, 1);
+		if (!moved) return;
+		reordered.splice(to, 0, moved);
+
+		setImages(reordered);
+		dragIndex.current = null;
+		dragOverIndex.current = null;
+
+		// Сохраняем новый порядок в БД
+		const result = await reorderImagesAction(
+			equipmentId,
+			reordered.map((img) => img.id)
+		);
+		if (!result.success) {
+			toast.error("Не удалось сохранить порядок");
+			setImages(images); // откатываем
 		}
-	};
+	}, [images, equipmentId]);
 
+	// ── Upload ─────────────────────────────────────────────────────────────────
 	const handleUpload = async (file: File | null) => {
 		if (!file) return;
-
 		setIsUploading(true);
 		setUploadProgress(0);
 
 		try {
 			const formData = new FormData();
 			formData.append("file", file);
-			formData.append("folder", "equipment"); // Папка для оборудования
+			// Папка = slug позиции если есть, иначе equipment
+			formData.append(
+				"folder",
+				equipmentSlug ? `equipment/${equipmentSlug}` : "equipment"
+			);
 
-			// 1. Загружаем файл на наш API Route
 			const res = await fetch("/api/upload", {
 				method: "POST",
 				body: formData,
 			});
-
-			if (!res.ok) throw new Error("Ошибка загрузки файла на сервер");
+			if (!res.ok) {
+				const err = await res.json().catch(() => ({}));
+				throw new Error(err.error || "Ошибка загрузки");
+			}
 
 			const { url } = await res.json();
 			setUploadProgress(50);
 
-			// 2. Связываем полученный URL с оборудованием в БД
 			const newImageData = await linkImageToEquipmentAction(equipmentId, url);
 			setUploadProgress(100);
 
+			// Новое фото добавляем в конец (порядок сохраняется)
 			setImages((prev) => [...prev, newImageData]);
 			setOpen(false);
-			toast.success("Файл успешно загружен");
+			toast.success("Фото загружено");
 		} catch (error) {
-			console.error("Финальная ошибка загрузки:", error);
-			toast.error("Не удалось загрузить файл");
+			console.error("Upload error:", error);
+			toast.error(
+				error instanceof Error ? error.message : "Не удалось загрузить фото"
+			);
 		} finally {
 			setIsUploading(false);
 			setUploadProgress(0);
 		}
 	};
 
-	const mainImage = images[0];
-	const hasMultiple = images.length > 1;
+	// ── Delete ─────────────────────────────────────────────────────────────────
+	const handleDelete = async (
+		imageId: string,
+		imageUrl: string,
+		e: React.MouseEvent
+	) => {
+		e.stopPropagation();
+		if (!confirm("Удалить фото?")) return;
+
+		try {
+			const result = await deleteImageAction(imageId, imageUrl);
+			if (!result.success) {
+				toast.error(result.error || "Ошибка удаления");
+				return;
+			}
+			setImages((prev) => prev.filter((img) => img.id !== imageId));
+			toast.success("Фото удалено");
+		} catch {
+			toast.error("Ошибка удаления");
+		}
+	};
 
 	return (
-		<div className="flex items-center gap-2">
-			{/* Main Image Preview */}
-			<button
-				type="button"
-				onClick={() => setGalleryOpen(true)}
-				className="relative w-12 h-12 rounded-lg border-2 border-background overflow-hidden bg-muted hover:border-primary transition-colors"
-			>
-				{mainImage ? (
-					<>
-						<Image
-							src={mainImage.url}
-							alt="Equipment"
-							fill
-							sizes="48px"
-							className="object-cover"
-							onError={(e) => {
-								(e.target as HTMLImageElement).src =
-									"/placeholder-equipment.png";
-							}}
-						/>
-						{hasMultiple && (
-							<div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-								<span className="text-white text-xs font-bold">
-									+{images.length - 1}
-								</span>
-							</div>
-						)}
-					</>
-				) : (
-					<Image
-						src="/placeholder-equipment.png"
-						alt="Placeholder"
-						fill
-						sizes="48px"
-						className="object-cover opacity-50"
-					/>
-				)}
-			</button>
+		<div className="space-y-3">
+			{/* Ряд всех загруженных фото с drag & drop */}
+			{images.length > 0 && (
+				<div className="flex flex-wrap gap-2">
+					{images.map((img, index) => (
+						<Card
+							key={img.id}
+							draggable
+							onDragStart={() => handleDragStart(index)}
+							onDragOver={(e) => handleDragOver(e, index)}
+							onDrop={handleDrop}
+							className={cn(
+								"relative group w-20 h-20 rounded-xl overflow-hidden border border-foreground/10",
+								"cursor-grab active:cursor-grabbing transition-all duration-150",
+								"hover:border-primary/40 hover:shadow-md"
+							)}
+						>
+							<Image
+								src={img.url}
+								alt={`Фото ${index + 1}`}
+								fill
+								sizes="80px"
+								className="object-cover"
+								onError={(e) => {
+									(e.target as HTMLImageElement).src =
+										"/placeholder-equipment.png";
+								}}
+							/>
 
-			{/* Add Image Button */}
+							{/* Порядковый номер */}
+							<div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[9px] font-bold text-center py-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+								#{index + 1}
+							</div>
+
+							{/* Иконка перетаскивания */}
+							<div className="absolute top-1 left-1 opacity-0 group-hover:opacity-100 transition-opacity">
+								<DotsNineIcon
+									weight="bold"
+									size={16}
+									className="text-primary drop-shadow"
+								/>
+							</div>
+
+							<button
+								type="button"
+								onClick={(e) => handleDelete(img.id, img.url, e)}
+								className="absolute rounded-md top-1 right-1 h-4 w-4 bg-red-500/80 hover:bg-red-500 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity p-0"
+							>
+								<XIcon weight="bold" size={16} className="text-white" />
+							</button>
+						</Card>
+					))}
+				</div>
+			)}
+
+			{images.length === 0 && (
+				<p className="text-xs text-muted-foreground/50 italic">
+					Нет фотографий. Нажмите «+» чтобы добавить.
+				</p>
+			)}
+
+			{/* Кнопка добавления */}
 			<Dialog open={open} onOpenChange={setOpen}>
 				<DialogTrigger asChild>
 					<Button
 						variant="outline"
-						size="icon"
-						className="w-10 h-10 rounded-lg border-dashed"
+						size="sm"
+						className="gap-2 rounded-xl border-dashed"
 					>
-						<Plus size={16} />
+						<PlusIcon size={14} />
+						Добавить фото
 					</Button>
 				</DialogTrigger>
 				<DialogContent className="sm:max-w-md p-6">
 					<DialogHeader>
 						<DialogTitle className="text-lg font-bold italic uppercase tracking-tighter">
-							Добавить медиафайл
+							Добавить фото
 						</DialogTitle>
 					</DialogHeader>
 					<DialogDescription asChild>
@@ -166,10 +239,6 @@ export function ImageCell({ equipmentId, initialImages }: ImageCellProps) {
 										<span>{uploadProgress}%</span>
 									</div>
 									<Progress value={uploadProgress} className="h-1.5" />
-									<p className="text-[9px] text-muted-foreground leading-tight italic">
-										Если загрузка замерла более чем на минуту, попробуйте
-										перезагрузить страницу или сменить сеть.
-									</p>
 								</div>
 							)}
 						</div>
@@ -177,43 +246,11 @@ export function ImageCell({ equipmentId, initialImages }: ImageCellProps) {
 				</DialogContent>
 			</Dialog>
 
-			{/* Gallery Dialog */}
-			<Dialog open={galleryOpen} onOpenChange={setGalleryOpen}>
-				<DialogContent className="max-w-4xl">
-					<DialogHeader>
-						<DialogTitle>Галерея ({images.length})</DialogTitle>
-					</DialogHeader>
-					{images.length > 0 ? (
-						<div className="grid grid-cols-3 gap-4 mt-4">
-							{images.map((img) => (
-								<div
-									key={img.id}
-									className="relative aspect-square group rounded-lg overflow-hidden border border-white/10"
-								>
-									<Image
-										src={img.url}
-										alt="Equipment"
-										fill
-										className="object-cover"
-									/>
-									<Button
-										variant="glass"
-										size="icon"
-										onClick={(e) => handleDelete(img.id, img.url, e)}
-										className="absolute top-1 right-1 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity border-none"
-									>
-										<X size={14} />
-									</Button>
-								</div>
-							))}
-						</div>
-					) : (
-						<div className="py-12 text-center text-muted-foreground">
-							<p>Нет изображений</p>
-						</div>
-					)}
-				</DialogContent>
-			</Dialog>
+			{images.length > 1 && (
+				<p className="text-[10px] text-muted-foreground/40 italic">
+					Перетащите фото для изменения порядка. Первое фото — обложка.
+				</p>
+			)}
 		</div>
 	);
 }

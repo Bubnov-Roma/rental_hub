@@ -94,10 +94,6 @@ linza/
 │   ├── lib/                        # Configs, clients
 │   │   ├── prisma/
 │   │   │   └── prisma.ts
-│   │   └── supabase/
-│   │       ├── client.ts
-│   │       ├── middleware.ts
-│   │       └── server.ts
 │   ├── providers/ 
 │   │   ├── auth-provider.ts
 │   │   └── unsaved-changes-guard.ts

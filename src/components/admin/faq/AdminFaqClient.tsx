@@ -279,7 +279,7 @@ export default function AdminFaqClient({
 	const active = items.filter((i) => i.isActive).length;
 
 	return (
-		<div className="space-y-6 p-6">
+		<div className="space-y-6">
 			<div className="flex items-center justify-between">
 				<div>
 					<h1 className="text-2xl font-black uppercase italic tracking-tight flex items-center gap-2">

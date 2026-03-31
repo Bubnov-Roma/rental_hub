@@ -9,44 +9,6 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { type IndividualClient, socialMediaObjectSchema } from "@/schemas";
 
-function getSocialMeta(url: string): { label: string; color: string } {
-	const lower = url.toLowerCase();
-	if (lower.includes("t.me") || (lower.startsWith("@") && lower.length < 20))
-		return {
-			label: "Telegram",
-			color: "bg-sky-500/15 text-sky-400 border-sky-500/20",
-		};
-	if (lower.includes("vk.com") || lower.includes("vk."))
-		return {
-			label: "VK",
-			color: "bg-blue-500/15 text-blue-400 border-blue-500/20",
-		};
-	if (lower.includes("wa.me") || lower.includes("whatsapp"))
-		return {
-			label: "WhatsApp",
-			color: "bg-emerald-500/15 text-emerald-400 border-emerald-500/20",
-		};
-	if (lower.includes("instagram") || lower.includes("instagr.am"))
-		return {
-			label: "Instagram",
-			color: "bg-pink-500/15 text-pink-400 border-pink-500/20",
-		};
-	if (lower.includes("facebook") || lower.includes("fb.com"))
-		return {
-			label: "Facebook",
-			color: "bg-indigo-500/15 text-indigo-400 border-indigo-500/20",
-		};
-	if (lower.includes("youtube") || lower.includes("youtu.be"))
-		return {
-			label: "YouTube",
-			color: "bg-red-500/15 text-red-400 border-red-500/20",
-		};
-	return {
-		label: "Ссылка",
-		color: "bg-foreground/5 text-foreground/60 border-foreground/10",
-	};
-}
-
 export const SocialsSection = () => {
 	const {
 		control,
@@ -190,7 +152,6 @@ export const SocialsSection = () => {
 			{fields.length > 0 && (
 				<div className="space-y-2">
 					{fields.map((field, index) => {
-						const { label, color } = getSocialMeta(field.url);
 						const isEditing = editingIndex === index;
 
 						return (
@@ -204,14 +165,6 @@ export const SocialsSection = () => {
 								)}
 							>
 								{/* Platform badge */}
-								<span
-									className={cn(
-										"shrink-0 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border",
-										color
-									)}
-								>
-									{label}
-								</span>
 
 								{/* URL */}
 								<span className="flex-1 text-sm truncate text-foreground/80 min-w-0">

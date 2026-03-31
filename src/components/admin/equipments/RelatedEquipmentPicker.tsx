@@ -1,11 +1,21 @@
 "use client";
 
-import { GripVertical, Plus, Search, X } from "lucide-react";
+import {
+	DotsNineIcon,
+	MagnifyingGlassIcon,
+	PlusIcon,
+	XIcon,
+} from "@phosphor-icons/react";
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { useDebounceValue } from "usehooks-ts";
 import { searchEquipmentAction } from "@/actions/equipment-actions";
-import { InputGroup, InputGroupInput } from "@/components/ui";
+import {
+	Button,
+	CardContent,
+	InputGroup,
+	InputGroupInput,
+} from "@/components/ui";
 import type { DbEquipmentWithImages } from "@/core/domain/entities/Equipment";
 import { cn } from "@/lib/utils";
 
@@ -142,21 +152,21 @@ export function RelatedEquipmentPicker({
 					</p>
 					<div className="space-y-1.5">
 						{selectedItems.map((item, index) => (
-							<button
-								type="button"
+							<CardContent
 								key={item.id}
 								draggable
 								onDragStart={() => handleDragStart(index)}
 								onDragOver={(e) => handleDragOver(e, index)}
 								onDrop={handleDrop}
 								className={cn(
-									"flex items-center gap-2 p-2 rounded-xl border border-white/8 bg-foreground/3",
+									"flex items-center gap-2 p-2 rounded-xl border border-foreground/8 bg-foreground/3",
 									"hover:bg-foreground/5 transition-colors group cursor-grab active:cursor-grabbing"
 								)}
 							>
-								<GripVertical
+								<DotsNineIcon
 									size={14}
-									className="text-muted-foreground/40 shrink-0 group-hover:text-muted-foreground transition-colors"
+									weight="bold"
+									className="text-muted-foreground shrink-0 group-hover:text-primary transition-colors"
 								/>
 								<div className="w-8 h-8 rounded-lg overflow-hidden bg-foreground/8 shrink-0">
 									<Image
@@ -178,14 +188,16 @@ export function RelatedEquipmentPicker({
 								<span className="text-[10px] text-muted-foreground/40 font-mono shrink-0">
 									#{index + 1}
 								</span>
-								<button
-									type="button"
+								<Button
+									asChild
+									size="icon-xs"
+									variant="outline"
 									onClick={() => removeItem(item.id)}
 									className="p-1 rounded-lg hover:bg-red-500/10 hover:text-red-500 transition-colors shrink-0"
 								>
-									<X size={12} />
-								</button>
-							</button>
+									<XIcon size={10} />
+								</Button>
+							</CardContent>
 						))}
 					</div>
 				</div>
@@ -194,7 +206,10 @@ export function RelatedEquipmentPicker({
 			{/* Search input */}
 			<div className="relative">
 				<InputGroup className="flex items-center gap-2  px-3 rounded-xl border border-white/10 bg-foreground/5 focus-within:border-primary/50 transition-colors">
-					<Search size={13} className="text-muted-foreground shrink-0" />
+					<MagnifyingGlassIcon
+						size={13}
+						className="text-muted-foreground shrink-0"
+					/>
 					<InputGroupInput
 						type="text"
 						className="flex-1 input-glass bg-transparent text-sm outline-none placeholder:text-muted-foreground/50"
@@ -216,9 +231,8 @@ export function RelatedEquipmentPicker({
 				{isOpen && results.length > 0 && (
 					<div className="absolute left-0 right-0 top-full mt-1 z-50  border border-foreground/10 rounded-xl shadow-xl overflow-hidden max-h-64 overflow-y-auto backdrop-blur-2xl bg-background/80">
 						{results.map((item) => (
-							<button
+							<CardContent
 								key={item.id}
-								type="button"
 								onClick={() => addItem(item)}
 								className="flex items-center gap-3 w-full px-3 py-2.5 hover:bg-foreground/5 transition-colors text-left group"
 							>
@@ -240,11 +254,11 @@ export function RelatedEquipmentPicker({
 										{item.pricePerDay} ₽/сут
 									</p>
 								</div>
-								<Plus
+								<PlusIcon
 									size={14}
 									className="text-primary opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
 								/>
-							</button>
+							</CardContent>
 						))}
 					</div>
 				)}

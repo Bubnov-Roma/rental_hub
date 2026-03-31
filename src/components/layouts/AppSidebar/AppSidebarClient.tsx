@@ -122,7 +122,7 @@ const RenderIcon = ({
 				? "text-foreground opacity-100"
 				: "opacity-70 group-hover/btn:opacity-100 text-muted-foreground group-hover/btn:text-foreground"
 		)}
-		weight={isActive ? "fill" : "fill"}
+		weight={isActive ? "fill" : "regular"}
 		strokeWidth={isActive ? 2.5 : 2}
 	/>
 );

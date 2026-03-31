@@ -31,7 +31,6 @@ export function EquipmentGrid({ items, isLoading }: EquipmentGridProps) {
 		return (
 			<div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-x-3 gap-y-6">
 				{Array.from({ length: 12 }).map((_, i) => (
-					// biome-ignore lint/suspicious/noArrayIndexKey: skeleton
 					<CardSkeleton key={i} />
 				))}
 			</div>

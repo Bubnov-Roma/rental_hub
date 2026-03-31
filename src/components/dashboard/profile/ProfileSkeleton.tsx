@@ -30,7 +30,6 @@ export function ProfileSkeleton({
 							<div className="space-y-3">
 								{[...Array(2)].map((_, i) => (
 									<div
-										// biome-ignore lint/suspicious/noArrayIndexKey: <skeleton>
 										key={i}
 										className="flex justify-between items-center p-2"
 									>
@@ -49,7 +48,6 @@ export function ProfileSkeleton({
 							<div className="space-y-3">
 								{[...Array(2)].map((_, i) => (
 									<div
-										// biome-ignore lint/suspicious/noArrayIndexKey: <skeleton>
 										key={i}
 										className="flex justify-between items-center p-2"
 									>
@@ -88,7 +86,6 @@ export function ProfileSkeleton({
 						{/* Дата + Телефон */}
 						<div className="grid grid-cols-2 gap-3">
 							{[...Array(2)].map((_, i) => (
-								// biome-ignore lint/suspicious/noArrayIndexKey: <skeleton>
 								<div key={i} className="space-y-2">
 									<Skeleton className="h-3 w-20" />
 									<Skeleton className="h-11 w-full rounded-xl" />
@@ -108,7 +105,6 @@ export function ProfileSkeleton({
 						{/* Серия + Дата выдачи */}
 						<div className="grid grid-cols-2 gap-3">
 							{[...Array(2)].map((_, i) => (
-								// biome-ignore lint/suspicious/noArrayIndexKey: <skeleton>
 								<div key={i} className="space-y-2">
 									<Skeleton className="h-3 w-20" />
 									<Skeleton className="h-11 w-full rounded-xl" />
@@ -135,7 +131,6 @@ export function ProfileSkeleton({
 					<Skeleton className="h-10 w-20 rounded-xl" />
 					<div className="flex gap-2">
 						{[...Array(3)].map((_, i) => (
-							// biome-ignore lint/suspicious/noArrayIndexKey: <skeleton>
 							<Skeleton key={i} className="w-10 h-10 rounded-xl" />
 						))}
 					</div>

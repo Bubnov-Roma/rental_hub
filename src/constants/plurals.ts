@@ -4,6 +4,7 @@ export const PLURAL_FORMS = {
 	reviews: ["отзыв", "отзыва", "отзывов"],
 	items: ["товар", "товара", "товаров"],
 	unavailable: ["недоступен", "недоступны", "недоступны"],
+	users: ["пользователь", "пользователя", "пользователей"],
 } as const;
 
 export type PluralType = keyof typeof PLURAL_FORMS;

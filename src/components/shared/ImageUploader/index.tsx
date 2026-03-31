@@ -14,6 +14,7 @@ import {
 	AlertDialogTitle,
 	Button,
 } from "@/components/ui";
+import { cn } from "@/lib/utils";
 import { CropEditor } from "./CropEditor";
 import { FileDropzone } from "./FileDropzone";
 
@@ -21,12 +22,14 @@ interface Props {
 	currentImageUrl?: string;
 	onFileSelect: (file: File | null) => void;
 	aspectRatio?: number;
+	className?: string;
 }
 
 export function ImageUploader({
 	currentImageUrl,
 	onFileSelect,
 	aspectRatio = 1,
+	className,
 }: Props) {
 	const [imageToCrop, setImageToCrop] = useState<string | null>(null);
 	const [preview, setPreview] = useState<string | null>(
@@ -74,7 +77,7 @@ export function ImageUploader({
 	};
 
 	return (
-		<div className="w-full max-w-sm mx-auto">
+		<div className={cn("w-full max-w-sm mx-auto", className)}>
 			<FileDropzone
 				preview={preview}
 				aspectRatio={aspectRatio}

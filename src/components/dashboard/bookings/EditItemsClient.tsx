@@ -1,16 +1,16 @@
 "use client";
 
-import { AnimatePresence, motion } from "framer-motion";
 import {
-	AlertCircle,
-	ArrowLeft,
-	Clock,
-	Info,
-	Minus,
-	Package,
-	Plus,
-	ShoppingBag,
-} from "lucide-react";
+	ArrowLeftIcon,
+	ClockIcon,
+	InfoIcon,
+	MinusIcon,
+	PackageIcon,
+	PlusIcon,
+	TrolleyIcon,
+	WarningCircleIcon,
+} from "@phosphor-icons/react";
+import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import NProgress from "nprogress";
@@ -192,7 +192,7 @@ export function EditItemsClient({ booking }: EditItemsClientProps) {
 						href={`/dashboard/bookings/${booking.id}`}
 						className="w-10 h-10 rounded-xl border border-foreground/10 flex items-center justify-center hover:bg-foreground/5 transition-all shrink-0"
 					>
-						<ArrowLeft size={18} />
+						<ArrowLeftIcon size={18} />
 					</Link>
 					<div>
 						<p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/40">
@@ -219,7 +219,7 @@ export function EditItemsClient({ booking }: EditItemsClientProps) {
 					{/* Инфо о периоде (Read-only) */}
 					<div className="card-surface p-4 flex items-center gap-4 bg-muted/20 border-dashed">
 						<div className="w-10 h-10 rounded-full bg-foreground/5 flex items-center justify-center shrink-0">
-							<Clock size={18} className="opacity-40" />
+							<ClockIcon size={18} className="opacity-40" />
 						</div>
 						<div className="flex-1 text-sm">
 							<p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/50">
@@ -258,7 +258,7 @@ export function EditItemsClient({ booking }: EditItemsClientProps) {
 										animate={{ opacity: 1 }}
 										className="py-20 text-center space-y-3"
 									>
-										<ShoppingBag size={40} className="mx-auto opacity-10" />
+										<TrolleyIcon size={40} className="mx-auto opacity-10" />
 										<p className="text-sm text-muted-foreground">Заказ пуст</p>
 									</motion.div>
 								) : (
@@ -291,7 +291,7 @@ export function EditItemsClient({ booking }: EditItemsClientProps) {
 																: "bg-foreground/5 border-foreground/5 text-muted-foreground"
 														)}
 													>
-														<Package size={20} />
+														<PackageIcon size={20} />
 													</div>
 													<div className="min-w-0">
 														<p
@@ -307,7 +307,8 @@ export function EditItemsClient({ booking }: EditItemsClientProps) {
 														</p>
 														{isBusy && (
 															<div className="flex items-center gap-1 mt-1 text-destructive font-bold text-[9px] uppercase">
-																<AlertCircle size={10} /> Занято на эти даты
+																<WarningCircleIcon size={10} /> Занято на эти
+																даты
 															</div>
 														)}
 													</div>
@@ -337,7 +338,7 @@ export function EditItemsClient({ booking }: EditItemsClientProps) {
 															}
 															className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-background transition-colors shadow-sm"
 														>
-															<Minus size={14} />
+															<MinusIcon size={14} />
 														</button>
 														<span className="w-8 text-center text-sm font-black font-mono">
 															{item.quantity}
@@ -357,7 +358,7 @@ export function EditItemsClient({ booking }: EditItemsClientProps) {
 															disabled={item.quantity >= item.maxQuantity}
 															className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-background disabled:opacity-20 transition-colors shadow-sm"
 														>
-															<Plus size={14} />
+															<PlusIcon size={14} />
 														</button>
 													</div>
 
@@ -428,7 +429,7 @@ export function EditItemsClient({ booking }: EditItemsClientProps) {
 
 								{!hasChanges && items.length > 0 && (
 									<div className="mt-4 flex gap-2 p-3 rounded-xl bg-foreground/5 border border-foreground/5 items-center justify-center">
-										<Info size={14} className="opacity-40" />
+										<InfoIcon size={14} className="opacity-40" />
 										<p className="text-[11px] text-muted-foreground/60 font-medium">
 											Нет изменений для сохранения
 										</p>
@@ -438,7 +439,7 @@ export function EditItemsClient({ booking }: EditItemsClientProps) {
 								{hasConflict && (
 									<div className="mt-4 p-4 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive space-y-2">
 										<div className="flex items-center gap-2 font-bold text-[10px] uppercase">
-											<AlertCircle size={14} /> Внимание: Конфликт
+											<WarningCircleIcon size={14} /> Внимание: Конфликт
 										</div>
 										<p className="text-[11px] leading-relaxed font-medium">
 											Некоторые позиции уже забронированы на выбранные даты.

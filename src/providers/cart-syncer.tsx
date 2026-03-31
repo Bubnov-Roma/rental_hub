@@ -4,7 +4,7 @@ import { useSession } from "next-auth/react";
 import { useEffect } from "react";
 import { getRelatedEquipmentAction } from "@/actions/equipment-actions";
 import type { GroupedEquipment } from "@/core/domain/entities/Equipment";
-import { useCartStore } from "@/store/use-cart-store";
+import { useCartStore } from "@/store/use-cart.store";
 
 async function adaptRelatedEquipment(
 	ids: string[]
@@ -38,5 +38,5 @@ export function CartSync() {
 		}
 	}, [session, status, authenticatedUserId, syncWithServer, clearOnLogout]);
 
-	return null; // Ничего не рендерит
+	return null;
 }

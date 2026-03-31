@@ -12,7 +12,6 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
 import NProgress from "nprogress";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -22,7 +21,6 @@ import {
 } from "@/actions/booking-actions";
 import { BookingSuccessScreen } from "@/components/dashboard/bookings/BookingSuccessScreen";
 import {
-	AuthModal,
 	BookingButton,
 	defaultRentalPeriod,
 	RentalPeriod,
@@ -31,18 +29,18 @@ import {
 import { Button } from "@/components/ui";
 import { SUPPORT_PHONE_DEFAULT } from "@/constants";
 import { useApplicationStatus } from "@/hooks/use-application-status";
+import { useRequireAuth } from "@/hooks/use-require-auth";
 import { calculateItemPrice, cn, combineDateAndTime } from "@/lib/utils";
-import { useCartStore } from "@/store/use-cart-store";
+import { useCartStore } from "@/store/use-cart.store";
 import type { ApplicationStatus } from "@/types";
 import { formatPlural } from "@/utils";
 
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function CheckoutPage() {
+	const requireAuth = useRequireAuth();
 	const router = useRouter();
 	const { items, addItem, removeOne, clearCart } = useCartStore();
-	const { data: session } = useSession();
-	const user = session?.user ?? null;
 	const { status } = useApplicationStatus();
 
 	// Hydration guard
@@ -61,7 +59,6 @@ export default function CheckoutPage() {
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [isChecking, setIsChecking] = useState(false);
 	const [busyIds, setBusyIds] = useState<string[]>([]);
-	const [showAuth, setShowAuth] = useState(false);
 	const [bookingId, setBookingId] = useState<string | null>(null);
 	const [itemsExpanded, setItemsExpanded] = useState(false);
 
@@ -151,7 +148,6 @@ export default function CheckoutPage() {
 		!hasAnyBusy &&
 		!!math.startFull &&
 		!!math.endFull;
-	const isLoggedIn = !!user;
 
 	// ── Submit ─────────────────────────────────────────────────────────────
 	const doCreateBooking = async (): Promise<boolean> => {
@@ -186,14 +182,17 @@ export default function CheckoutPage() {
 
 	const handleBookClick = () => {
 		if (!isCanBook) return;
-		if (!isLoggedIn) {
-			setShowAuth(true);
-			return;
-		}
-		if (status === "APPROVED") {
-			doCreateBooking();
-			return;
-		}
+		requireAuth(
+			() => {
+				doCreateBooking();
+			},
+			{
+				type: "callback",
+				fn: () => {
+					doCreateBooking();
+				},
+			}
+		);
 	};
 
 	// ── Success screen ─────────────────────────────────────────────────────
@@ -414,7 +413,6 @@ export default function CheckoutPage() {
 							onClick={handleBookClick}
 							disabled={!isCanBook}
 							loading={isSubmitting}
-							isLoggedIn={isLoggedIn}
 							mode="new"
 						/>
 					)}
@@ -426,9 +424,6 @@ export default function CheckoutPage() {
 					</p>
 				</div>
 			</div>
-
-			{/* ── Dialogs ── */}
-			<AuthModal open={showAuth} onOpenChange={setShowAuth} />
 		</div>
 	);
 }

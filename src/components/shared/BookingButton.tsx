@@ -1,13 +1,11 @@
 "use client";
 
-import { Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface BookingButtonProps {
 	onClick: () => void;
 	disabled?: boolean;
 	loading?: boolean;
-	isLoggedIn?: boolean;
 	mode?: "new" | "update";
 	className?: string;
 }
@@ -16,17 +14,13 @@ export function BookingButton({
 	onClick,
 	disabled = false,
 	loading = false,
-	isLoggedIn = true,
 	mode = "new",
 	className,
 }: BookingButtonProps) {
 	const isDisabled = disabled || loading;
 
-	const label = !isLoggedIn
-		? "Войти и забронировать"
-		: mode === "update"
-			? "Обновить заказ"
-			: "Отправить заявку на бронирование";
+	const label =
+		mode === "update" ? "Обновить заказ" : "Отправить заявку на бронирование";
 
 	return (
 		<button
@@ -46,11 +40,6 @@ export function BookingButton({
 		>
 			{loading ? (
 				<span className="w-4 h-4 rounded-full border-2 border-current border-t-transparent animate-spin" />
-			) : !isLoggedIn ? (
-				<>
-					<Lock size={14} />
-					{label}
-				</>
 			) : (
 				label
 			)}

@@ -18,7 +18,7 @@ import type {
 import type { SearchPanelState } from "@/hooks";
 import { useSearchHistory } from "@/hooks/use-search-history";
 import { cn } from "@/lib/utils";
-import { useCartStore } from "@/store/use-cart-store";
+import { useCartStore } from "@/store/use-cart.store";
 import { slugify } from "@/utils";
 
 function ResultSkeleton({
@@ -32,7 +32,6 @@ function ResultSkeleton({
 		<div className="space-y-1 py-2">
 			{Array.from({ length: count }).map((_, i) => (
 				<div
-					// biome-ignore lint/suspicious/noArrayIndexKey: <skeleton>
 					key={i}
 					className={cn(
 						"flex items-center gap-3 px-2",

@@ -19,7 +19,7 @@ import { EquipmentCard } from "@/components/shared/EquipmentCard";
 import { Button } from "@/components/ui";
 import type { GroupedEquipment } from "@/core/domain/entities/Equipment";
 import { cn } from "@/lib/utils";
-import { useCartStore } from "@/store/use-cart-store";
+import { useCartStore } from "@/store/use-cart.store";
 import { FavoriteSetEditor } from "./FavoriteSetEditor";
 import type { EquipmentSet, FavoriteItem } from "./types";
 

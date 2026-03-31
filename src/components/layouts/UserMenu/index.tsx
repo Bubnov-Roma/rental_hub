@@ -1,52 +1,30 @@
 "use client";
 
-import {
-	ArrowUpRightFromSquare,
-	ChevronsUpDown,
-	Heart,
-	LayoutDashboard,
-	LogIn,
-	Package,
-	User as UserIcon,
-	WifiOff,
-} from "lucide-react";
+import { ChevronsUpDown, LogIn, WifiOff } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useTheme } from "next-themes";
-import { useEffect, useState } from "react";
-import { ThemeToggle } from "@/components/layouts/ThemeToggle";
-import {
-	Button,
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuGroup,
-	DropdownMenuItem,
-	DropdownMenuLabel,
-	DropdownMenuSeparator,
-	DropdownMenuTrigger,
-} from "@/components/ui";
+import { useEffect, useRef, useState } from "react";
+import { UserMenuDropdown } from "@/components/shared/UserMenuDropdown";
+import { Button } from "@/components/ui";
 import { useSidebar } from "@/components/ui/sidebar";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
-import { useApplicationStore } from "@/store";
-import { getClientDisplayData } from "@/utils/client-data.utils";
+import { useAuthModalStore } from "@/store/auth-modal.store";
 
 function useDisplayName() {
-	const { user } = useAuth();
-	const applicationData = useApplicationStore((s) => s.applicationData);
-	const nickname = user?.user_metadata?.nickname as string | undefined;
-	const appName = getClientDisplayData(applicationData)?.name ?? null;
-	const metaName = user?.user_metadata?.name as string | undefined;
-	const emailPrefix = user?.email?.split("@")[0];
-	return nickname ?? appName ?? metaName ?? emailPrefix ?? "?";
+	const { user, profile } = useAuth();
+
+	const name =
+		profile?.name || user?.user_metadata?.name || user?.email?.split("@")[0];
+	return name;
 }
 
 export function UserMenu() {
-	const { user, profile, isLoading } = useAuth();
-	const { theme, setTheme } = useTheme();
+	const { user, isLoading } = useAuth();
+	const userBtnRef = useRef<HTMLButtonElement>(null);
 	const { state, isMobile } = useSidebar();
 	const router = useRouter();
-
+	const { open } = useAuthModalStore();
 	const [mounted, setMounted] = useState(false);
 	const [isOnline, setIsOnline] = useState(true);
 	const isCollapsed = state === "collapsed" && !isMobile;
@@ -75,7 +53,7 @@ export function UserMenu() {
 			return (
 				<button
 					type="button"
-					onClick={() => router.push("/auth?view=register")}
+					onClick={() => open({ type: "auth" })}
 					title="Войти"
 					className="h-12 w-12 flex items-center justify-center rounded-xl mx-auto bg-muted-foreground/10 text-foreground/80 hover:bg-primary hover:text-primary-foreground transition-all duration-200 active:scale-95"
 				>
@@ -83,6 +61,7 @@ export function UserMenu() {
 				</button>
 			);
 		}
+
 		return (
 			<button
 				type="button"
@@ -100,13 +79,8 @@ export function UserMenu() {
 
 	// Используем user_metadata из SessionProvider
 	const avatarUrl = user.user_metadata?.avatar_url || user.image;
-	const isAdmin =
-		profile?.role === "admin" ||
-		profile?.role === "manager" ||
-		profile?.role === "ADMIN" ||
-		profile?.role === "MANAGER";
 	const isOffline = !isOnline;
-	const initial = displayName.charAt(0).toUpperCase();
+	const initial = displayName?.charAt(0).toUpperCase();
 
 	const Avatar = ({ size = 36 }: { size?: number }) => (
 		<div className="relative shrink-0" style={{ width: size, height: size }}>
@@ -115,7 +89,7 @@ export function UserMenu() {
 					<Image
 						key={avatarUrl}
 						src={avatarUrl}
-						alt={displayName}
+						alt={initial || "user avatar"}
 						width={size}
 						height={size}
 						className="object-cover w-full h-full"
@@ -143,63 +117,22 @@ export function UserMenu() {
 	);
 
 	return (
-		<DropdownMenu>
-			<DropdownMenuTrigger asChild>
-				<Button
-					variant="ghost"
-					className={cn(
-						"h-14 w-full justify-start gap-3 rounded-xl px-2 hover:bg-foreground/10 transition-all",
-						isCollapsed && "h-12 w-12 justify-center px-0"
-					)}
-				>
-					<Avatar size={36} />
-					{!isCollapsed && (
-						<>
-							<div className="flex flex-col items-start flex-1 text-left min-w-0 leading-tight">
-								<span className="text-sm font-semibold truncate w-full">
-									{displayName}
-								</span>
-								<div className="flex items-center gap-1.5 mt-0.5">
-									<div
-										className={cn(
-											"h-1.5 w-1.5 rounded-full",
-											isOnline ? "bg-green-500" : "bg-yellow-500"
-										)}
-									/>
-									<span className="text-xs text-muted-foreground">
-										{isOnline ? "Онлайн" : "Офлайн"}
-									</span>
-									{!isOnline && (
-										<WifiOff size={9} className="text-yellow-500" />
-									)}
-								</div>
-							</div>
-							<ChevronsUpDown className="ml-auto size-4 text-muted-foreground/50" />
-						</>
-					)}
-				</Button>
-			</DropdownMenuTrigger>
-
-			<DropdownMenuContent
-				className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-xl bg-background/90 backdrop-blur-xl border-foreground/10 shadow-2xl pb-2"
-				side={isMobile ? "bottom" : "right"}
-				align="end"
-				sideOffset={8}
+		<UserMenuDropdown align="end">
+			<Button
+				ref={userBtnRef}
+				variant="ghost"
+				className={cn(
+					"h-14 w-full justify-start gap-3 rounded-xl px-2 hover:bg-foreground/10 transition-all",
+					isCollapsed && "h-12 w-12 justify-center px-0"
+				)}
 			>
-				<DropdownMenuLabel className="pb-3">
-					<div className="flex items-center gap-2.5">
-						<Avatar size={36} />
-						<div className="flex flex-col min-w-0">
-							<div className="flex items-center gap-1.5">
-								<p className="text-sm font-bold truncate max-w-32">
-									{displayName}
-								</p>
-								{isAdmin && (
-									<span className="px-1.5 py-0 rounded-md bg-primary/10 text-primary text-[9px] font-black uppercase tracking-wider">
-										Admin
-									</span>
-								)}
-							</div>
+				<Avatar size={36} />
+				{!isCollapsed && (
+					<>
+						<div className="flex flex-col items-start flex-1 text-left min-w-0 leading-tight">
+							<span className="text-sm font-semibold truncate w-full">
+								{displayName}
+							</span>
 							<div className="flex items-center gap-1.5 mt-0.5">
 								<div
 									className={cn(
@@ -207,59 +140,16 @@ export function UserMenu() {
 										isOnline ? "bg-green-500" : "bg-yellow-500"
 									)}
 								/>
-								<p className="text-[11px] text-muted-foreground">
-									{isOnline ? "Онлайн" : "Офлайн · нет сети"}
-								</p>
+								<span className="text-xs text-muted-foreground">
+									{isOnline ? "Онлайн" : "Офлайн"}
+								</span>
+								{!isOnline && <WifiOff size={9} className="text-yellow-500" />}
 							</div>
 						</div>
-					</div>
-				</DropdownMenuLabel>
-
-				<DropdownMenuSeparator />
-				<DropdownMenuGroup>
-					<DropdownMenuItem onClick={() => router.push("/dashboard")}>
-						<LayoutDashboard className="mr-2 h-4 w-4" />
-						<span>Дашборд</span>
-					</DropdownMenuItem>
-					<DropdownMenuItem onClick={() => router.push("/dashboard/bookings")}>
-						<Package className="mr-2 h-4 w-4" />
-						<span>Бронирования</span>
-					</DropdownMenuItem>
-					<DropdownMenuItem onClick={() => router.push("/favorites")}>
-						<Heart className="mr-2 h-4 w-4" />
-						<span>Избранное</span>
-					</DropdownMenuItem>
-					<DropdownMenuItem onClick={() => router.push("/dashboard/profile")}>
-						<UserIcon className="mr-2 h-4 w-4" />
-						<span>Профиль</span>
-					</DropdownMenuItem>
-					<DropdownMenuItem
-						onSelect={(e) => {
-							e.preventDefault();
-							setTheme(theme === "dark" ? "light" : "dark");
-							if (navigator.vibrate) navigator.vibrate(5);
-						}}
-						className="cursor-pointer"
-					>
-						<ThemeToggle className="mr-2 h-4 w-full" />
-					</DropdownMenuItem>
-				</DropdownMenuGroup>
-
-				{isAdmin && (
-					<>
-						<DropdownMenuSeparator />
-						<DropdownMenuGroup>
-							<DropdownMenuItem
-								onClick={() => window.open("/?client=true", "_blank")}
-								className="text-muted-foreground"
-							>
-								<ArrowUpRightFromSquare className="mr-2 h-4 w-4" />
-								<span>Открыть сайт</span>
-							</DropdownMenuItem>
-						</DropdownMenuGroup>
+						<ChevronsUpDown className="ml-auto size-4 text-muted-foreground/50" />
 					</>
 				)}
-			</DropdownMenuContent>
-		</DropdownMenu>
+			</Button>
+		</UserMenuDropdown>
 	);
 }

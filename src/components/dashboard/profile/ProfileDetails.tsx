@@ -1,5 +1,6 @@
 "use client";
 
+import { LockIcon } from "@phosphor-icons/react";
 import {
 	AlertTriangle,
 	ArrowLeft,
@@ -26,6 +27,7 @@ import {
 	updateClientSocialsAction,
 	updateUserAvatarAction,
 	updateUserFieldAction,
+	updateUserPasswordAction,
 } from "@/actions/user-actions";
 import { ApplicationDataEditor } from "@/components/dashboard/profile/ApplicationDataEditor";
 import { VerificationBadge } from "@/components/forms";
@@ -372,7 +374,6 @@ export function ProfileDetails({
 							<ThemeCard />
 						</div>
 					</SectionCard>
-
 					{/* Nickname */}
 					<SectionCard title="Никнейм">
 						<div className="px-5 py-4">
@@ -394,7 +395,6 @@ export function ProfileDetails({
 							Отображается вместо полного имени по всему сайту
 						</p>
 					</SectionCard>
-
 					{/* Email change */}
 					<SectionCard title="Email-адрес">
 						<div className="detail-row">
@@ -424,7 +424,6 @@ export function ProfileDetails({
 							/>
 						</div>
 					</SectionCard>
-
 					{/* Extra phone */}
 					<SectionCard title="Дополнительный телефон">
 						<div className="px-5 py-4">
@@ -444,10 +443,34 @@ export function ProfileDetails({
 							/>
 						</div>
 					</SectionCard>
+					{/* Password Settings */}
+					<SectionCard title="Безопасность">
+						<div className="px-5 py-4 space-y-4">
+							<p className="text-[11px] text-muted-foreground/60 leading-relaxed">
+								Установите пароль, если хотите входить в систему без
+								использования почтовой ссылки.
+							</p>
+							<InlineEditField
+								value=""
+								type="password"
+								placeholder="Новый пароль"
+								icon={<LockIcon size={14} />}
+								onSave={async (val) => {
+									// Валидация на фронте (минимум 8 символов)
+									if (val.length < 8) throw new Error("Минимум 8 символов");
 
+									// Вызов серверного действия для хеширования и сохранения
+									const res = await updateUserPasswordAction("password", val);
+									if (!res.success) throw new Error(res.error);
+
+									toast.success("Пароль успешно установлен");
+								}}
+								onCancel={() => {}}
+							/>
+						</div>
+					</SectionCard>
 					{/* Logout */}
 					<SignOutButton />
-
 					{/* Update application data — only for verified clients */}
 					{(status === "APPROVED" || status === "STANDARD") && (
 						<button
@@ -459,7 +482,6 @@ export function ProfileDetails({
 							<span className="text-md font-medium">Обновить данные</span>
 						</button>
 					)}
-
 					{/* Delete */}
 					<button
 						type="button"
@@ -611,7 +633,7 @@ function ProfileSocialsCard({ data, onUpdated }: ProfileSocialsCardProps) {
 			{socials.map((s, i) => {
 				return (
 					<div
-						key={`${s}`}
+						key={`social-${i}-${s.url}`}
 						className="px-5 py-3 border-b border-foreground/5 last:border-b-0 space-y-2 gap-2 flex items-center"
 					>
 						<InlineEditField

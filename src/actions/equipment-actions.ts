@@ -18,8 +18,8 @@ import { groupEquipmentRows } from "@/utils/group-equipment";
 
 export type CreateEquipmentData = {
 	title: string;
-	categoryId: string;
-	subcategoryId?: string | null;
+	category: string;
+	subcategory?: string | null;
 	inventoryNumber?: string | undefined;
 	pricePerDay: number;
 	price4h?: number | undefined;
@@ -35,6 +35,7 @@ export type CreateEquipmentData = {
 	partnerName?: string | undefined;
 	specifications?: Record<string, unknown>;
 	relatedIds?: string[] | undefined;
+	videoUrls?: string[] | undefined;
 };
 
 export type FilterOperator =
@@ -130,12 +131,19 @@ export async function createEquipmentAction(
 	data: CreateEquipmentData
 ): Promise<{ success: boolean; id?: string; error?: string }> {
 	try {
+		// Проверяем, есть ли уже техника с таким названием
+		const existing = await prisma.equipment.findFirst({
+			where: { title: data.title },
+		});
+
+		// Если техники с таким именем нет, новая позиция автоматически становится основной
+		const isPrimary = !existing;
 		const created = await prisma.equipment.create({
 			data: {
 				title: data.title,
 				slug: slugify(data.title),
-				categoryId: data.categoryId,
-				subcategoryId: data.subcategoryId ?? null,
+				categoryId: data.category,
+				subcategoryId: data.subcategory ?? null,
 				inventoryNumber: data.inventoryNumber ?? null,
 				pricePerDay: data.pricePerDay,
 				price4h: data.price4h ?? 0,
@@ -149,11 +157,13 @@ export async function createEquipmentAction(
 				isAvailable: data.isAvailable ?? true,
 				ownershipType: data.ownershipType ?? "INTERNAL",
 				partnerName: data.partnerName ?? null,
-				// Строгое приведение к JSON-формату Prisma
+				isPrimary,
 				specifications: data.specifications
 					? (data.specifications as Prisma.InputJsonValue)
 					: Prisma.JsonNull,
-				// Условный спред: ключ relatedEquipment добавится в объект только если есть id
+				videoUrls: data.videoUrls
+					? (data.videoUrls as Prisma.InputJsonValue)
+					: [],
 				...(data.relatedIds && data.relatedIds.length > 0
 					? {
 							relatedEquipment: {
@@ -198,7 +208,6 @@ export async function getEquipmentWithFilters(params: {
 		},
 	};
 
-	// Добавляем лимиты только если они есть (решает проблему exactOptionalPropertyTypes)
 	if (params.limit !== undefined) queryArgs.take = params.limit;
 	if (params.offset !== undefined) queryArgs.skip = params.offset;
 
@@ -217,17 +226,58 @@ export async function updateEquipment(
 	id: string,
 	updates: Partial<DbEquipment>
 ): Promise<DbEquipment> {
-	const withSlug = updates.title
-		? { ...updates, slug: slugify(updates.title) }
-		: updates;
+	// 1. Формируем slug, если нужно
+	const withSlug =
+		updates.title && !updates.slug
+			? { ...updates, slug: slugify(updates.title) }
+			: updates;
 
+	// Очищаем от undefined
 	const cleanUpdates = Object.fromEntries(
 		Object.entries(withSlug).filter(([, v]) => v !== undefined)
 	);
 
+	// 2. Реляционные поля (categoryId, subcategoryId) и поле relatedIds (которого физически нет в схеме Prisma, но оно приходит с фронта)
+	const {
+		categoryId,
+		subcategoryId,
+		relatedIds,
+		...restData // Здесь остались только скалярные поля (title, price и т.д.)
+	} = cleanUpdates;
+
+	// 3. Формируем правильный объект для Prisma
+	const prismaData: Prisma.EquipmentUpdateInput = { ...restData };
+
+	// --- Подключаем Категорию ---
+	if (categoryId) {
+		prismaData.category = { connect: { id: String(categoryId) } };
+	}
+
+	// --- Подключаем Подкатегорию ---
+	if (subcategoryId !== undefined) {
+		if (subcategoryId === null) {
+			prismaData.subcategory = { disconnect: true };
+		} else {
+			prismaData.subcategory = { connect: { id: String(subcategoryId) } };
+		}
+	}
+
+	// --- RELATED_IDS ---
+	// Если с фронта пришел массив relatedIds (даже пустой), обновляем связи
+	if (Array.isArray(relatedIds)) {
+		prismaData.relatedEquipment = {
+			// Удаляем старые связи
+			deleteMany: {},
+			// Создаем новые. Убеждаемся, что мы работаем со строками (ID)
+			create: relatedIds.map((relatedId: unknown) => ({
+				related: { connect: { id: String(relatedId) } },
+			})),
+		};
+	}
+
 	const updated = await prisma.equipment.update({
 		where: { id },
-		data: cleanUpdates,
+		data: prismaData,
 	});
 
 	revalidatePath("/admin/equipment");
@@ -353,6 +403,7 @@ export async function duplicateEquipment(id: string): Promise<DbEquipment> {
 		equipmentImageLinks,
 		specifications,
 		comments,
+		videoUrls,
 		...data
 	} = original;
 
@@ -361,12 +412,14 @@ export async function duplicateEquipment(id: string): Promise<DbEquipment> {
 			...data,
 			inventoryNumber: newInventoryNumber,
 			slug: slugify(`${data.title}-${newInventoryNumber}`),
-			// Строгий каст JSON для записи или установка null
 			specifications: specifications
 				? (specifications as Prisma.InputJsonValue)
 				: Prisma.JsonNull,
 			comments: comments
 				? (comments as Prisma.InputJsonValue)
+				: Prisma.JsonNull,
+			videoUrls: videoUrls
+				? (videoUrls as Prisma.InputJsonValue)
 				: Prisma.JsonNull,
 			equipmentImageLinks: {
 				create: equipmentImageLinks.map((link) => ({
@@ -432,6 +485,9 @@ export async function getEquipmentById(
 			equipmentImageLinks: {
 				include: { image: { select: { id: true, url: true } } },
 				orderBy: { orderIndex: "asc" },
+			},
+			relatedEquipment: {
+				select: { relatedId: true },
 			},
 		},
 	});
@@ -505,13 +561,30 @@ export async function getEquipmentBySlug(
 				include: { image: true },
 				orderBy: { orderIndex: "asc" },
 			},
+			relatedEquipment: {
+				select: { relatedId: true },
+			},
 		},
 	});
 
 	if (!data.length) return null;
 
-	const grouped = groupEquipmentRows(data as unknown as RawEquipmentRow[]);
-	return grouped[0] ?? null;
+	const dataWithRelated = data.map((item) => ({
+		...item,
+		relatedIds: item.relatedEquipment?.map((r) => r.relatedId) ?? [],
+	}));
+
+	const grouped = groupEquipmentRows(
+		dataWithRelated as unknown as RawEquipmentRow[]
+	);
+
+	const result = grouped[0];
+	if (!result) return null;
+
+	return {
+		...result,
+		relatedIds: dataWithRelated[0]?.relatedIds ?? [],
+	};
 }
 
 export async function getRelatedEquipmentAction(ids: string[] | undefined) {

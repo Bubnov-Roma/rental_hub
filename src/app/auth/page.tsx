@@ -11,7 +11,7 @@ export default async function AuthPage({
 	const view = (params.view as string) || "otp-login";
 
 	return (
-		<div className="container flex min-h-screen w-full items-top md:items-center justify-center">
+		<div className="container mx-auto flex min-h-screen items-top md:items-center justify-center">
 			<Suspense
 				fallback={
 					<div className="flex h-64 items-center justify-center">

@@ -12,7 +12,7 @@ interface AuthCardProps {
 		text?: string;
 		href: string;
 		label: string;
-		onClick?: () => void;
+		onClick?: (e: Event) => void;
 	};
 	isLoading?: boolean;
 }

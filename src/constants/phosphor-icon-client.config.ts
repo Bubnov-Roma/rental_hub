@@ -1,0 +1,73 @@
+"use client";
+import type { Icon } from "@phosphor-icons/react";
+import * as Icons from "@phosphor-icons/react";
+
+export const PHOSPHOR_ICON_MAP: Record<string, Icon> = {
+	// Фото/Видео
+	Camera: Icons.CameraIcon,
+	VideoCamera: Icons.VideoCameraIcon,
+	Aperture: Icons.ApertureIcon,
+	FilmSlate: Icons.FilmSlateIcon,
+	Slideshow: Icons.SlideshowIcon,
+	Projector: Icons.RecordIcon,
+	// Звук
+	Microphone: Icons.MicrophoneIcon,
+	MicrophoneStage: Icons.MicrophoneStageIcon,
+	Headphones: Icons.HeadphonesIcon,
+	SpeakerHifi: Icons.SpeakerHifiIcon,
+	Music: Icons.MusicNotesSimpleIcon,
+	Note: Icons.NoteIcon,
+	Piano: Icons.PianoKeysIcon,
+	Guitar: Icons.GuitarIcon,
+	Drum: Icons.FadersIcon,
+	// Свет
+	Lightbulb: Icons.LightbulbIcon,
+	Lightning: Icons.LightningIcon,
+	Sun: Icons.SunIcon,
+	Flashlight: Icons.FlashlightIcon,
+	Lamp: Icons.LampIcon,
+	// Оборудование / хранение
+	Package: Icons.PackageIcon,
+	Archive: Icons.ArchiveIcon,
+	Briefcase: Icons.BriefcaseIcon,
+	Toolbox: Icons.ToolboxIcon,
+	// Инструменты
+	Wrench: Icons.WrenchIcon,
+	Gear: Icons.GearIcon,
+	Screwdriver: Icons.ScrewdriverIcon,
+	Hammer: Icons.HammerIcon,
+	Scissors: Icons.ScissorsIcon,
+	// Техника
+	Monitor: Icons.MonitorIcon,
+	Laptop: Icons.LaptopIcon,
+	Tablet: Icons.TableIcon,
+	DeviceMobile: Icons.DeviceMobileIcon,
+	Television: Icons.TelevisionIcon,
+	Cpu: Icons.CpuIcon,
+	HardDrive: Icons.HardDriveIcon,
+	Usb: Icons.UsbIcon,
+	Wifi: Icons.WifiHighIcon,
+	Bluetooth: Icons.BluetoothIcon,
+	// Прочее
+	Star: Icons.StarIcon,
+	Heart: Icons.HeartIcon,
+	Flag: Icons.FlagIcon,
+	Tag: Icons.TagIcon,
+	Bookmark: Icons.BookmarkIcon,
+	MagnifyingGlass: Icons.MagnifyingGlassIcon,
+	Binoculars: Icons.BinocularsIcon,
+	Compass: Icons.CompassIcon,
+	Globe: Icons.GlobeIcon,
+	MapPin: Icons.MapPinIcon,
+	Truck: Icons.TruckIcon,
+	Car: Icons.CarIcon,
+	Airplane: Icons.AirplaneIcon,
+	Rocket: Icons.RocketIcon,
+	Drone: Icons.DroneIcon,
+	Robot: Icons.RobotIcon,
+	Image: Icons.ImageIcon,
+	Images: Icons.ImagesIcon,
+	Crop: Icons.CropIcon,
+	Palette: Icons.PaletteIcon,
+	PaintBrush: Icons.PaintBrushIcon,
+};
