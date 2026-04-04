@@ -61,7 +61,13 @@ export function BookingDetailClient({
 		differenceInHours(new Date(booking.endDate), new Date(booking.startDate))
 	);
 
-	const canCancel = !["active", "completed", "cancelled"].includes(status);
+	const editable = ![
+		"PENDING_REVIEW",
+		"ACTIVE",
+		"COMPLETED",
+		"CANCELLED",
+		"EXPIRED",
+	].includes(status);
 
 	// Определяем индекс текущего шага
 	const currentStepIndex = STATUS_STEPS.findIndex((s) => s.key === status);
@@ -232,8 +238,8 @@ export function BookingDetailClient({
 					</div>
 
 					{/* Редактирование и действия */}
-					<div className="space-y-3">
-						{canCancel && (
+					{editable && (
+						<div className="space-y-3">
 							<div className="relative">
 								<Button
 									variant="outline"
@@ -291,13 +297,13 @@ export function BookingDetailClient({
 									)}
 								</AnimatePresence>
 							</div>
-						)}
-						<SupportBlock
-							info={support}
-							variant="inline"
-							className="justify-center opacity-60"
-						/>
-					</div>
+						</div>
+					)}
+					<SupportBlock
+						info={support}
+						variant="inline"
+						className="justify-center opacity-60"
+					/>
 				</aside>
 
 				{/* ПРАВАЯ КОЛОНКА: Техника и Оплата */}
@@ -374,14 +380,12 @@ export function BookingDetailClient({
 					</div>
 				</div>
 			</div>
-			{/* Диалоги (без изменений) */}
 			<CancelBookingDialog
 				bookingId={booking.id}
 				open={showCancel}
 				onOpenChange={setShowCancel}
 				onSuccess={() => setShowCancelledDialog(true)}
 			/>
-			{/* ── Post-cancellation dialog ── */}
 			<AlertDialog
 				open={showCancelledDialog}
 				onOpenChange={setShowCancelledDialog}

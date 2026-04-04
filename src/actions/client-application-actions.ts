@@ -249,6 +249,24 @@ export async function updateUserRoleAction(
 	permissions?: Record<string, boolean>
 ): Promise<{ success: boolean; error?: string }> {
 	try {
+		const session = await auth();
+
+		// 1. Проверка прав (только ADMIN)
+		if (session?.user?.role !== "ADMIN") {
+			return {
+				success: false,
+				error: "Только администратор может изменять роли",
+			};
+		}
+
+		// 2. Защита от потери доступа (админ не может понизить сам себя)
+		if (session.user.id === userId) {
+			return {
+				success: false,
+				error: "Вы не можете изменить роль самому себе",
+			};
+		}
+
 		await prisma.user.update({
 			where: { id: userId },
 			data: {
@@ -258,6 +276,7 @@ export async function updateUserRoleAction(
 				}),
 			},
 		});
+
 		revalidatePath("/admin/users");
 		return { success: true };
 	} catch (error: unknown) {

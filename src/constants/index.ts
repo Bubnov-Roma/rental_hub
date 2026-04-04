@@ -5,5 +5,6 @@ export * from "./form-steps.config";
 export * from "./navigation";
 export * from "./plurals";
 export * from "./referral";
+export * from "./sidebar-icon.config";
 export * from "./support";
 export * from "./verification-config";

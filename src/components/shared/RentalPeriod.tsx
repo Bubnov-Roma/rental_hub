@@ -20,7 +20,8 @@ import {
 	DrawerHeader,
 	DrawerTitle,
 } from "@/components/ui";
-import { ALL_SLOTS, clampTime, cn, WORK_END, WORK_START } from "@/lib/utils";
+import { clampTime, cn, generateTimeSlots } from "@/lib/utils";
+import { useSiteSettingsStore } from "@/store";
 
 export interface RentalPeriodValue {
 	startDate: Date;
@@ -38,6 +39,39 @@ interface RentalPeriodProps {
 
 type PickerType = "start-date" | "end-date" | "start-time" | "end-time" | null;
 
+export function getDefaultRentalPeriod(
+	workStart: number,
+	workEnd: number
+): RentalPeriodValue {
+	const now = new Date();
+	const start = new Date(now);
+	const mins = Math.ceil((now.getMinutes() + 1) / 10) * 10;
+	start.setMinutes(mins, 0, 0);
+	if (start.getHours() < workStart) start.setHours(workStart, 0, 0, 0);
+	if (start.getHours() >= workEnd) {
+		start.setDate(start.getDate() + 1);
+		start.setHours(workStart, 0, 0, 0);
+	}
+	const end = new Date(start.getTime() + 4 * 60 * 60 * 1000);
+	const pad = (n: number) => String(n).padStart(2, "0");
+	return {
+		startDate: start,
+		endDate: end,
+		startTime: clampTime(
+			`${pad(start.getHours())}:${pad(start.getMinutes())}`,
+			start,
+			workStart,
+			workEnd
+		),
+		endTime: clampTime(
+			`${pad(end.getHours())}:${pad(end.getMinutes())}`,
+			end,
+			workStart,
+			workEnd
+		),
+	};
+}
+
 export function RentalPeriod({
 	value,
 	onChange,
@@ -46,6 +80,8 @@ export function RentalPeriod({
 }: RentalPeriodProps) {
 	const [openPicker, setOpenPicker] = useState<PickerType>(null);
 	const [isMobile, setIsMobile] = useState(false);
+
+	const { workStart, workEnd, disabledDates } = useSiteSettingsStore();
 
 	// Определяем мобильный размер экрана
 	useEffect(() => {
@@ -68,7 +104,7 @@ export function RentalPeriod({
 			if (!d) return;
 			const newStart = new Date(d);
 			const [sh, sm] = value.startTime.split(":").map(Number);
-			newStart.setHours(sh ?? WORK_START, sm ?? 0, 0, 0);
+			newStart.setHours(sh ?? workStart, sm ?? 0, 0, 0);
 			let newEnd = new Date(value.endDate);
 			if (isBefore(newEnd, newStart))
 				newEnd = new Date(newStart.getTime() + 4 * 60 * 60 * 1000);
@@ -76,11 +112,11 @@ export function RentalPeriod({
 				...value,
 				startDate: newStart,
 				endDate: newEnd,
-				startTime: clampTime(value.startTime, d),
+				startTime: clampTime(value.startTime, d, workStart, workEnd),
 			});
 			close();
 		},
-		[value, onChange, close]
+		[value, onChange, close, workStart, workEnd]
 	);
 
 	const handleEndDateSelect = useCallback(
@@ -88,11 +124,11 @@ export function RentalPeriod({
 			if (!d || isBefore(d, startOfDay(value.startDate))) return;
 			const newEnd = new Date(d);
 			const [eh, em] = value.endTime.split(":").map(Number);
-			newEnd.setHours(eh ?? WORK_START, em ?? 0, 0, 0);
+			newEnd.setHours(eh ?? workStart, em ?? 0, 0, 0);
 			onChange({ ...value, endDate: newEnd });
 			close();
 		},
-		[value, onChange, close]
+		[value, onChange, close, workStart]
 	);
 
 	const handleStartTimeSelect = useCallback(
@@ -111,13 +147,25 @@ export function RentalPeriod({
 		[value, onChange, close]
 	);
 
-	const disableStartDate = disablePast
-		? (d: Date) => isBefore(d, today)
-		: () => false;
+	const disabledDatesObjects = useMemo(
+		() => disabledDates.map((d) => new Date(d)),
+		[disabledDates]
+	);
 
-	const disableEndDate = (d: Date) =>
-		(disablePast && isBefore(d, today)) ||
-		isBefore(d, startOfDay(value.startDate));
+	const disableStartDate = (d: Date) => {
+		if (disablePast && isBefore(d, today)) return true;
+		return disabledDatesObjects.some(
+			(dis) => dis.toDateString() === d.toDateString()
+		);
+	};
+
+	const disableEndDate = (d: Date) => {
+		if (disablePast && isBefore(d, today)) return true;
+		if (isBefore(d, startOfDay(value.startDate))) return true;
+		return disabledDatesObjects.some(
+			(dis) => dis.toDateString() === d.toDateString()
+		);
+	};
 
 	return (
 		<div className={cn("space-y-2", className)}>
@@ -145,6 +193,8 @@ export function RentalPeriod({
 						onSelect={handleStartTimeSelect}
 						selectedDate={value.startDate}
 						isMobile={isMobile}
+						workStart={workStart}
+						workEnd={workEnd}
 					/>
 				)}
 			/>
@@ -172,6 +222,8 @@ export function RentalPeriod({
 						onSelect={handleEndTimeSelect}
 						selectedDate={value.endDate}
 						isMobile={isMobile}
+						workStart={workStart}
+						workEnd={workEnd}
 					/>
 				)}
 			/>
@@ -220,7 +272,7 @@ function PeriodRow({
 		[mounted, date]
 	);
 
-	// На мобильных используем Drawer для календаря
+	// Mobile Drawer
 	if (isMobile) {
 		return (
 			<div className="space-y-1.5">
@@ -315,83 +367,77 @@ function PeriodRow({
 		);
 	}
 
-	// На десктопе используем AnchoredPortal (исходное поведение)
+	// Desktop AnchoredPortal
 	return (
-		<div className="space-y-1.5">
-			<p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/50 px-1">
-				{label}
+		<div className="flex gap-2 items-center">
+			{/* Date button - Desktop */}
+			<p className="w-20 text-sm font-bold uppercase tracking-widest text-muted-foreground">
+				{label}:
 			</p>
-			<div className="flex gap-2">
-				{/* Date button - Desktop */}
-				<div className="relative flex-1">
-					<button
-						ref={dateBtnRef}
-						type="button"
-						onClick={onDateToggle}
-						className={cn(
-							"w-full flex items-center gap-2.5 px-3.5 py-3 rounded-xl border text-sm font-medium transition-all select-none",
-							isDateOpen
-								? "border-primary/50 bg-primary/5 text-primary"
-								: "border-foreground/10 bg-card/60 text-foreground hover:border-foreground/20 hover:bg-foreground/5"
-						)}
-					>
-						<CalendarIcon
-							size={13}
-							className="text-muted-foreground/50 shrink-0"
-						/>
-						<span className="flex-1 text-left">{dateLabel}</span>
-						<ChevronDown
-							size={13}
-							className={cn(
-								"text-muted-foreground/40 transition-transform shrink-0",
-								isDateOpen && "rotate-180"
-							)}
-						/>
-					</button>
-					{isDateOpen && (
-						<AnchoredPortal
-							anchorRef={dateBtnRef}
-							align="left"
-							onClose={onClose}
-						>
-							{renderCalendar()}
-						</AnchoredPortal>
+			<div className="relative flex-1">
+				<button
+					ref={dateBtnRef}
+					type="button"
+					onClick={onDateToggle}
+					className={cn(
+						"w-full flex items-center gap-2.5 px-3.5 py-3 rounded-xl border text-sm font-medium transition-all select-none",
+						isDateOpen
+							? "border-primary/50 bg-primary/5 text-primary"
+							: "border-foreground/10 bg-card/60 text-foreground hover:border-foreground/20 hover:bg-foreground/5"
 					)}
-				</div>
+				>
+					<CalendarIcon
+						size={13}
+						className="text-muted-foreground/50 shrink-0"
+					/>
+					<span className="flex-1 text-left">{dateLabel}</span>
+					<ChevronDown
+						size={13}
+						className={cn(
+							"text-muted-foreground/40 transition-transform shrink-0",
+							isDateOpen && "rotate-180"
+						)}
+					/>
+				</button>
+				{isDateOpen && (
+					<AnchoredPortal anchorRef={dateBtnRef} align="left" onClose={onClose}>
+						{renderCalendar()}
+					</AnchoredPortal>
+				)}
+			</div>
 
-				{/* Time button - Desktop */}
-				<div className="w-30 relative">
-					<button
-						ref={timeBtnRef}
-						type="button"
-						onClick={onTimeToggle}
-						className={cn(
-							"w-full flex items-center gap-2 px-3 py-3 rounded-xl border text-sm font-medium transition-all select-none",
-							isTimeOpen
-								? "border-primary/50 bg-primary/5 text-primary"
-								: "border-foreground/10 bg-card/60 text-foreground hover:border-foreground/20 hover:bg-foreground/5"
-						)}
-					>
-						<Clock size={13} className="text-muted-foreground/50 shrink-0" />
-						<span className="flex-1 text-left font-mono">{time}</span>
-						<ChevronDown
-							size={13}
-							className={cn(
-								"text-muted-foreground/40 transition-transform shrink-0",
-								isTimeOpen && "rotate-180"
-							)}
-						/>
-					</button>
-					{isTimeOpen && (
-						<AnchoredPortal
-							anchorRef={timeBtnRef}
-							align="right"
-							onClose={onClose}
-						>
-							{renderTime()}
-						</AnchoredPortal>
+			{/* Time button - Desktop */}
+			<div className="w-30 relative">
+				<button
+					ref={timeBtnRef}
+					type="button"
+					onClick={onTimeToggle}
+					className={cn(
+						"w-full flex items-center gap-2 px-3 py-3 rounded-xl border text-sm font-medium transition-all select-none",
+						isTimeOpen
+							? "border-primary/50 bg-primary/5 text-primary"
+							: "border-foreground/10 bg-card/60 text-foreground hover:border-foreground/20 hover:bg-foreground/5"
 					)}
-				</div>
+				>
+					<Clock size={13} className="text-muted-foreground/50 shrink-0" />
+					<span className="flex-1 text-left font-mono">{time}</span>
+					<ChevronDown
+						size={13}
+						className={cn(
+							"text-muted-foreground/40 transition-transform shrink-0",
+							isTimeOpen && "rotate-180"
+						)}
+					/>
+				</button>
+				{isTimeOpen && (
+					<AnchoredPortal
+						anchorRef={timeBtnRef}
+						align="right"
+						onClose={onClose}
+					>
+						{renderTime()}
+					</AnchoredPortal>
+				)}
 			</div>
 		</div>
 	);
@@ -580,23 +626,30 @@ function PortalCalendar({
 	);
 }
 
-// ─── PortalTimeDropdown (Обновлен под iOS style) ────────────────────────────────
+// ─── PortalTimeDropdown ────────────────────────────────
 
 function PortalTimeDropdown({
 	value,
 	onSelect,
 	selectedDate,
 	isMobile,
+	workStart,
+	workEnd,
 }: {
 	value: string;
 	onSelect: (t: string) => void;
 	selectedDate?: Date;
-	isMobile?: boolean; // Добавлен пропс
+	isMobile?: boolean;
+	workStart: number;
+	workEnd: number;
 }) {
 	const now = new Date();
 	const isToday = selectedDate?.toDateString() === now.toDateString();
 
-	const slots = ALL_SLOTS.filter((s) => {
+	// Генерируем слоты на лету исходя из настроек БД
+	const dynamicSlots = generateTimeSlots(workStart, workEnd);
+
+	const slots = dynamicSlots.filter((s) => {
 		if (!isToday) return true;
 		const [h, m] = s.split(":").map(Number);
 		const d = new Date();
@@ -645,29 +698,4 @@ function PortalTimeDropdown({
 			))}
 		</div>
 	);
-}
-
-// ─── defaultRentalPeriod ──────────────────────────────────────────────────────
-
-export function defaultRentalPeriod(): RentalPeriodValue {
-	const now = new Date();
-	const start = new Date(now);
-	const mins = Math.ceil((now.getMinutes() + 1) / 10) * 10;
-	start.setMinutes(mins, 0, 0);
-	if (start.getHours() < WORK_START) start.setHours(WORK_START, 0, 0, 0);
-	if (start.getHours() >= WORK_END) {
-		start.setDate(start.getDate() + 1);
-		start.setHours(WORK_START, 0, 0, 0);
-	}
-	const end = new Date(start.getTime() + 4 * 60 * 60 * 1000);
-	const pad = (n: number) => String(n).padStart(2, "0");
-	return {
-		startDate: start,
-		endDate: end,
-		startTime: clampTime(
-			`${pad(start.getHours())}:${pad(start.getMinutes())}`,
-			start
-		),
-		endTime: clampTime(`${pad(end.getHours())}:${pad(end.getMinutes())}`, end),
-	};
 }

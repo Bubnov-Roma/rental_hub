@@ -108,9 +108,9 @@ export function AddToCartButton({
 
 	// Убрали жесткий min-width, добавили гибкость
 	const s = {
-		sm: { h: "h-10", side: "w-9", text: "text-xs", icon: 14 },
-		md: { h: "h-12", side: "w-11", text: "text-sm", icon: 16 },
-		lg: { h: "h-14", side: "w-14", text: "text-base", icon: 18 },
+		sm: { h: "h-10", side: "w-6", text: "text-xs", icon: 12 },
+		md: { h: "h-12", side: "w-10", text: "text-sm", icon: 14 },
+		lg: { h: "h-14", side: "w-12", text: "text-base", icon: 16 },
 	}[size];
 
 	const handleAdd = useCallback(
@@ -167,7 +167,7 @@ export function AddToCartButton({
 					type="button"
 					onClick={handleAdd}
 					className={cn(
-						"w-full flex items-center justify-center gap-2.5 rounded-2xl",
+						"w-full flex items-center justify-center gap-2.5  min-h-13 rounded-2xl",
 						"bg-primary text-primary-foreground font-black uppercase italic tracking-wider",
 						"shadow-xl shadow-primary/20 hover:brightness-110 active:scale-[0.98] transition-all",
 						pulse && "scale-95 opacity-70",
@@ -176,17 +176,23 @@ export function AddToCartButton({
 						className
 					)}
 				>
-					<ShoppingCartSimpleIcon size={s.icon + 2} />В корзину
+					<ShoppingCartSimpleIcon size={s.icon + 2} />
+					{size === "lg" ? "Добавить в корзину" : "В корзину"}
 				</button>
 			);
 		}
 
 		return (
-			<div className={cn("flex items-center gap-0 w-full", className)}>
+			<div
+				className={cn(
+					"flex items-center gap-0 w-full border border-primary/20 bg-primary/5 rounded-2xl",
+					className
+				)}
+			>
 				{/* Stepper - фиксированная ширина, чтобы не «схлопывался» */}
 				<div
 					className={cn(
-						"flex items-center bg-foreground/5 border border-foreground/10 rounded-l-2xl rounded-r-md overflow-hidden shrink-0",
+						"flex items-center bg-foreground/5 rounded-l-2xl rounded-r-xs overflow-hidden shrink-0",
 						s.h
 					)}
 				>
@@ -199,7 +205,7 @@ export function AddToCartButton({
 							s.h
 						)}
 					>
-						<MinusIcon size="15px" />
+						<MinusIcon size="14px" />
 					</button>
 					<span
 						className={cn(
@@ -220,7 +226,7 @@ export function AddToCartButton({
 							s.h
 						)}
 					>
-						<PlusIcon size="15px" />
+						<PlusIcon size="14px" />
 					</button>
 				</div>
 
@@ -229,8 +235,8 @@ export function AddToCartButton({
 					type="button"
 					onClick={onQuickBook}
 					className={cn(
-						"flex-1 flex px-1 items-center justify-center gap-2 rounded-r-2xl rounded-l-md font-black uppercase italic tracking-wider group",
-						"bg-primary/10 text-foreground border border-primary/20",
+						"flex-1 flex px-1 items-center justify-center gap-2 rounded-r-2xl rounded-l-xs font-black uppercase italic tracking-wider group",
+						"bg-primary/10 text-foreground",
 						"hover:bg-primary hover:text-primary-foreground transition-all active:scale-[0.98]",
 						s.h,
 						s.text
@@ -238,10 +244,11 @@ export function AddToCartButton({
 				>
 					<LightningIcon
 						size={s.icon}
+						weight="fill"
 						className="fill-current text-primary group-hover:text-foreground transition-all"
 					/>
-					<span className="hidden sm:inline">Быстрая бронь</span>
-					<span className="inline sm:hidden text">Бронь</span>
+					<span className="hidden md:inline">Оформить</span>
+					<span className="shorthand md:hidden">Бронь</span>
 				</Button>
 			</div>
 		);

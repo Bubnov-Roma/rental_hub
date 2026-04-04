@@ -37,6 +37,5 @@ export interface UserProfile {
 	blockedReason: string | null;
 	permissions: Record<string, boolean>;
 	isVerified: boolean | null;
-	// Enriched by admin page — not in DB
 	application?: UserApplication | null;
 }

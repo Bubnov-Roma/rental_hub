@@ -22,15 +22,15 @@ import {
 import { BookingSuccessScreen } from "@/components/dashboard/bookings/BookingSuccessScreen";
 import {
 	BookingButton,
-	defaultRentalPeriod,
+	getDefaultRentalPeriod,
 	RentalPeriod,
-	type RentalPeriodValue,
 } from "@/components/shared";
 import { Button } from "@/components/ui";
 import { SUPPORT_PHONE_DEFAULT } from "@/constants";
 import { useApplicationStatus } from "@/hooks/use-application-status";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import { calculateItemPrice, cn, combineDateAndTime } from "@/lib/utils";
+import { useSiteSettingsStore } from "@/store";
 import { useCartStore } from "@/store/use-cart.store";
 import type { ApplicationStatus } from "@/types";
 import { formatPlural } from "@/utils";
@@ -42,6 +42,8 @@ export default function CheckoutPage() {
 	const router = useRouter();
 	const { items, addItem, removeOne, clearCart } = useCartStore();
 	const { status } = useApplicationStatus();
+
+	const { workStart, workEnd } = useSiteSettingsStore();
 
 	// Hydration guard
 	const [hydrated, setHydrated] = useState(false);
@@ -70,7 +72,9 @@ export default function CheckoutPage() {
 	}, [items.length]);
 
 	// ── Rental period ──────────────────────────────────────────────────────
-	const [period, setPeriod] = useState<RentalPeriodValue>(defaultRentalPeriod);
+	const [period, setPeriod] = useState(() =>
+		getDefaultRentalPeriod(workStart, workEnd)
+	);
 
 	// ── Math ───────────────────────────────────────────────────────────────
 	const math = useMemo(() => {

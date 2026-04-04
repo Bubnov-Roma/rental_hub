@@ -64,7 +64,7 @@ export default async function RootLayout({
 							userId={user.id}
 							initialData={typedInitialApp}
 						>
-							<AppSidebar isAdmin={isAdmin} />
+							<AppSidebar isAdmin={isAdmin} categories={categories} />
 							<SidebarInset className="flex flex-col min-h-screen">
 								<Header categories={categories} />
 								<main className="flex-1 pt-16">{children}</main>
@@ -74,7 +74,7 @@ export default async function RootLayout({
 						</ApplicationInitializer>
 					) : (
 						<>
-							<AppSidebar isAdmin={false} />
+							<AppSidebar isAdmin={false} categories={categories} />
 							<SidebarInset className="flex flex-col min-h-screen">
 								<Header categories={categories} />
 								<main className="flex-1 pt-16">{children}</main>

@@ -1,5 +1,5 @@
 import { notFound, redirect } from "next/navigation";
-import { getSupportInfo } from "@/actions/support-actions";
+import { getSupportInfo } from "@/actions/settings-actions";
 import { auth } from "@/auth";
 import { BookingDetailClient } from "@/components/dashboard/bookings/BookingDetailClient";
 import { prisma } from "@/lib/prisma";

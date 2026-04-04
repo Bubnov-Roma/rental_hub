@@ -1,0 +1,21 @@
+import { redirect } from "next/navigation";
+import { getSiteSettings } from "@/actions/settings-actions";
+import { auth } from "@/auth";
+import { SettingsClient } from "@/components/admin/settings/SettingsClient";
+
+export const metadata = {
+	title: "Настройки сайта | Linza Admin",
+};
+
+export default async function SettingsPage() {
+	const session = await auth();
+
+	if (session?.user?.role !== "ADMIN") {
+		console.log(session?.user?.role);
+		redirect("/admin");
+	}
+
+	const settings = await getSiteSettings();
+
+	return <SettingsClient initialSettings={settings} />;
+}
