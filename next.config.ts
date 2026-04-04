@@ -3,7 +3,7 @@ import type { NextConfig } from "next";
 const cspHeader = `
     default-src 'self';
     script-src 'self' 'unsafe-eval' 'unsafe-inline' https://va.vercel-scripts.com;
-    connect-src 'self' https://va.vercel-scripts.com;
+    connect-src 'self' https://va.vercel-scripts.com https://suggestions.dadata.ru;
     style-src 'self' 'unsafe-inline';
     img-src 'self' blob: data: https://i.ibb.co https://ibb.co https://*.beget.cloud https://avatars.yandex.net https://lh3.googleusercontent.com;
     font-src 'self';

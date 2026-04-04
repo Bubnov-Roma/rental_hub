@@ -1,9 +1,11 @@
+import { auth } from "@/auth";
 import UsersTable from "@/components/admin/users/UsersTable";
 import type { UserProfile } from "@/core/domain/entities/User";
 import { prisma } from "@/lib/prisma";
 import { formatPlural } from "@/utils";
 
 export default async function AdminUsersPage() {
+	const session = await auth();
 	const users = await prisma.user.findMany({
 		orderBy: { createdAt: "desc" },
 		include: {
@@ -16,7 +18,7 @@ export default async function AdminUsersPage() {
 		name: u.name,
 		email: u.email,
 		phone: u.phone,
-		avatarUrl: u.image, // В NextAuth аватарка хранится в поле image
+		avatarUrl: u.image,
 		role: u.role as UserProfile["role"],
 		entityType: u.entityType as UserProfile["entityType"],
 		companyName: u.companyName,
@@ -49,7 +51,10 @@ export default async function AdminUsersPage() {
 					Управление профилми · {formatPlural(enriched.length, "users")}
 				</p>
 			</div>
-			<UsersTable initialUsers={enriched} />
+			<UsersTable
+				initialUsers={enriched}
+				currentUserRole={session?.user?.role}
+			/>
 		</div>
 	);
 }

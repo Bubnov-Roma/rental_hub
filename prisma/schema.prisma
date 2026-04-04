@@ -404,6 +404,17 @@ model Banner {
   updatedAt  DateTime  @updatedAt
 
   creator User? @relation("BannerCreator", fields: [createdBy], references: [id], onDelete: SetNull)
+  images BannerImage[]
+}
+
+model BannerImage {
+  id         String   @id @default(uuid())
+  bannerId   String
+  url        String
+  orderIndex Int      @default(0)
+  createdAt  DateTime @default(now())
+
+  banner Banner @relation(fields: [bannerId], references: [id], onDelete: Cascade)
 }
 
 model UserAdminNote {

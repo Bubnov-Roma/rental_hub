@@ -1,6 +1,7 @@
 "use client";
 
 import {
+	ClipboardIcon,
 	ClipboardTextIcon,
 	NoteBlankIcon,
 	PlusIcon,
@@ -11,7 +12,6 @@ import {
 	UserIcon,
 	XIcon,
 } from "@phosphor-icons/react";
-import { ClipboardIcon } from "@phosphor-icons/react/dist/ssr";
 import Image from "next/image";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";

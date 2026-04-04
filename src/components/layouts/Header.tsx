@@ -49,7 +49,7 @@ export function Header({ categories }: HeaderProps) {
 	return (
 		<header
 			className={cn(
-				"fixed top-0 left-0 right-0 z-15",
+				"fixed top-0 left-0 right-0 z-5",
 				!isMobile && "left-20",
 				!isCollapsed && "md:left-(--sidebar-width)",
 				"transition-[left] duration-300 ease-in-out",
@@ -71,7 +71,7 @@ export function Header({ categories }: HeaderProps) {
 				<Button
 					variant="ghost"
 					onClick={toggleSidebar}
-					className="items-center justify-center h-8 w-8 rounded-lg text-foreground transition-all duration-300 hover:scale-110"
+					className="items-center justify-center h-8 w-8 rounded-lg text-foreground transition-all duration-300 hover:scale-110 ml-2"
 				>
 					<SidebarSimpleIcon size={16} />
 				</Button>

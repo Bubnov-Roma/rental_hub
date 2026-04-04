@@ -103,8 +103,10 @@ function AppStatusBadge({ status }: { status?: string | undefined }) {
 
 export default function UsersTable({
 	initialUsers,
+	currentUserRole,
 }: {
 	initialUsers: UserProfile[];
+	currentUserRole?: string | undefined;
 }) {
 	const [users, setUsers] = useState(initialUsers);
 	const [search, setSearch] = useState("");
@@ -266,22 +268,24 @@ export default function UsersTable({
 								</TableCell>
 
 								<TableCell onClick={(e) => e.stopPropagation()}>
-									<DropdownMenu>
-										<DropdownMenuTrigger asChild>
-											<button
-												type="button"
-												className="flex items-center gap-1 hover:opacity-80"
-											>
-												<RoleBadge role={user.role ?? "user"} />
-												<ChevronDown
-													size={10}
-													className="text-muted-foreground"
-												/>
-											</button>
-										</DropdownMenuTrigger>
-										<DropdownMenuContent>
-											{(["USER", "PARTNER", "MANAGER", "ADMIN"] as Role[]).map(
-												(r) => (
+									{currentUserRole === "ADMIN" ? (
+										<DropdownMenu>
+											<DropdownMenuTrigger asChild>
+												<button
+													type="button"
+													className="flex items-center gap-1 hover:opacity-80"
+												>
+													<RoleBadge role={user.role ?? "user"} />
+													<ChevronDown
+														size={10}
+														className="text-muted-foreground"
+													/>
+												</button>
+											</DropdownMenuTrigger>
+											<DropdownMenuContent>
+												{(
+													["USER", "PARTNER", "MANAGER", "ADMIN"] as Role[]
+												).map((r) => (
 													<DropdownMenuItem
 														key={r}
 														onClick={() => handleRoleChange(user.id, r)}
@@ -289,10 +293,13 @@ export default function UsersTable({
 													>
 														{r}
 													</DropdownMenuItem>
-												)
-											)}
-										</DropdownMenuContent>
-									</DropdownMenu>
+												))}
+											</DropdownMenuContent>
+										</DropdownMenu>
+									) : (
+										/* Если не админ — просто показываем бейдж без дропдауна */
+										<RoleBadge role={user.role ?? "user"} />
+									)}
 								</TableCell>
 
 								<TableCell>

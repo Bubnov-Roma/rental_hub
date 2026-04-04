@@ -194,7 +194,7 @@ export function BannerManager({
 			<BannerFormDialog
 				open={showCreate}
 				onOpenChange={setShowCreate}
-				onCheckIcond={refresh}
+				onSaved={refresh}
 			/>
 
 			{/* Диалог редактирования */}
@@ -204,7 +204,7 @@ export function BannerManager({
 					onOpenChange={(v) => !v && setEditTarget(null)}
 					initial={editTarget}
 					bannerId={editTarget.id}
-					onCheckIcond={refresh}
+					onSaved={refresh}
 				/>
 			)}
 

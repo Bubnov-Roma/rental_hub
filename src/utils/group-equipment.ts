@@ -29,7 +29,7 @@ export function groupEquipmentRows(
 		if (!acc[title]) {
 			acc[title] = {
 				...item,
-				description: item.description || "Нет описания",
+				description: item.description || "",
 				status: item.status,
 				kit: item.kitDescription ?? null,
 				imageUrl: imageUrls[0] || "/placeholder-equipment.png",

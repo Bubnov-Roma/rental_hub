@@ -7,7 +7,11 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 // Длина рабочего дня (часы выдачи/приёма 10:00–20:00)
-const WORK_DAY_HOURS = 10;
+export const WORK_DAY_HOURS = 10;
+export const DAY_HOURS = 24;
+export const WORK_START = 10; // 10:00
+export const WORK_END = 20; // 20:00
+export const TIME_STEP = 10; // минуты
 
 /**
  * Расчёт цены с учётом рабочих тарифов и рабочего дня 10 ч.
@@ -32,15 +36,15 @@ export function calculateItemPrice(
 	if (hours <= 0) return 0;
 
 	// ── В пределах одного рабочего дня ──────────────────────────────────────
-	if (hours <= WORK_DAY_HOURS) {
+	if (hours <= DAY_HOURS) {
 		if (hours <= 4 && p4 > 0) return p4;
 		if (hours <= 8 && p8 > 0) return p8;
 		return pDay;
 	}
 
-	// ── Несколько рабочих дней ───────────────────────────────────────────────
-	const fullDays = Math.floor(hours / WORK_DAY_HOURS);
-	const remainder = hours % WORK_DAY_HOURS;
+	// ── Свыше суток ──
+	const fullDays = Math.floor(hours / DAY_HOURS);
+	const remainder = hours % DAY_HOURS;
 
 	let total = fullDays * pDay;
 
@@ -137,15 +141,8 @@ export function clientTimeFormat(date: Date, fmt: Fmt): string {
  * Шаг — 10 минут, рабочий день 10:00–20:00.
  */
 
-export const WORK_START = 10; // 10:00
-export const WORK_END = 20; // 20:00
-export const TIME_STEP = 10; // минуты
-
 /** Все слоты в рабочем диапазоне с шагом TIME_STEP */
-export function generateTimeSlots(
-	fromHour = WORK_START,
-	toHour = WORK_END
-): string[] {
+export function generateTimeSlots(fromHour: number, toHour: number): string[] {
 	const slots: string[] = [];
 	for (let h = fromHour; h <= toHour; h++) {
 		const maxMin = h === toHour ? 0 : 60 - TIME_STEP;
@@ -156,22 +153,25 @@ export function generateTimeSlots(
 	return slots;
 }
 
-export const ALL_SLOTS = generateTimeSlots();
-
 /**
  * Зажимает время в рабочий диапазон.
  * Если selectedDate — сегодня, отрезает прошедшие слоты.
  */
-export function clampTime(time: string, selectedDate?: Date): string {
-	const workSlots = generateTimeSlots();
+export function clampTime(
+	time: string,
+	selectedDate: Date | undefined,
+	workStart: number,
+	workEnd: number
+): string {
+	const workSlots = generateTimeSlots(workStart, workEnd);
 	const now = new Date();
 	const isToday = selectedDate
 		? selectedDate.toDateString() === now.toDateString()
 		: false;
 
 	const available = workSlots.filter((s) => {
-		if (s < `${String(WORK_START).padStart(2, "0")}:00`) return false;
-		if (s > `${String(WORK_END).padStart(2, "0")}:00`) return false;
+		if (s < `${String(workStart).padStart(2, "0")}:00`) return false;
+		if (s > `${String(workEnd).padStart(2, "0")}:00`) return false;
 		if (isToday) {
 			const [h, m] = s.split(":").map(Number);
 			const slotDate = new Date(now);
@@ -181,25 +181,16 @@ export function clampTime(time: string, selectedDate?: Date): string {
 		return true;
 	});
 
-	if (!available.length) return `${String(WORK_START).padStart(2, "0")}:00`;
+	if (!available.length) return `${String(workStart).padStart(2, "0")}:00`;
 	if (available.includes(time)) return time;
 
-	// Найти ближайший доступный >= time
 	const next = available.find((s) => s >= time);
 	return (
 		next ??
 		available[available.length - 1] ??
-		`${String(WORK_START).padStart(2, "0")}:00`
+		`${String(workStart).padStart(2, "0")}:00`
 	);
 }
-
-/**
- * Первый доступный слот для выбранной даты.
- */
-export function firstAvailableSlot(selectedDate?: Date): string {
-	return clampTime(`${String(WORK_START).padStart(2, "0")}:00`, selectedDate);
-}
-
 /**
  * Форматирует дату коротко: "15 июн"
  */
@@ -216,4 +207,30 @@ export function formatFullDate(date: Date): string {
 		month: "long",
 		weekday: "short",
 	});
+}
+
+/**
+ * Корректирует время окончания аренды.
+ * Если время выпадает на нерабочие часы (после WORK_END или до WORK_START),
+ * сдвигает возврат на WORK_START (10:00) ближайшего доступного дня.
+ */
+export function adjustEndTime(
+	endDate: Date,
+	workStart: number,
+	workEnd: number
+): Date {
+	const h = endDate.getHours();
+	const m = endDate.getMinutes();
+	const timeFloat = h + m / 60;
+
+	const adjusted = new Date(endDate);
+
+	if (timeFloat >= workEnd) {
+		adjusted.setDate(adjusted.getDate() + 1);
+		adjusted.setHours(workStart, 0, 0, 0);
+	} else if (timeFloat < workStart) {
+		adjusted.setHours(workStart, 0, 0, 0);
+	}
+
+	return adjusted;
 }
